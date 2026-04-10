@@ -416,8 +416,18 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
   <section class="section">
     <div class="sec-hd">
       <h2>💬 Trading Opinions Board</h2>
-      <span class="badge badge-blue">Friends</span>
+      <span class="badge badge-blue" id="cmtBadge">💾 내 기기 전용</span>
     </div>
+
+    <!-- Firebase 설정 안내 (FB_DB 비어있을 때) -->
+    <div id="fbGuide" style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:.78rem;color:#c4b5fd;line-height:1.7;">
+      🔥 <strong>공유 댓글 설정 방법</strong> — 지금은 이 기기에만 저장됩니다. 친구들과 공유하려면:<br>
+      1. <a href="https://console.firebase.google.com" target="_blank" style="color:#a78bfa">firebase.google.com</a> → 무료 프로젝트 생성 → <strong>Realtime Database</strong> 생성 (미국 서버 선택)<br>
+      2. Database Rules → <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;">".read": true, ".write": true</code> 로 변경 후 Publish<br>
+      3. 데이터베이스 URL 복사 (예: <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;">https://my-project-rtdb.firebaseio.com</code>)<br>
+      4. 이 파일 상단 <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;">const FB_DB = ''</code> 안에 URL 붙여넣기 → GitHub에 다시 업로드
+    </div>
+
     <div class="cmts-wrap">
       <div class="cmts-input-box">
         <textarea id="cTxt" placeholder="여기에 분석 의견을 남겨보세요&#10;예) NVDA $850 지지선 확인. Blackwell 출하량 서프라이즈 기대 — 단기 롱 관심&#10;예) PLTR 정부 계약 모멘텀 강함. 주봉 상승채널 유지 중"></textarea>
@@ -722,54 +732,132 @@ function renderNews() {
 }
 
 // ══════════════════════════════════════════════
-// COMMENTS
+// ★ FIREBASE CONFIG — 아래 값을 입력하면 공유 댓글 활성화
+//   firebase.google.com → 무료 프로젝트 생성 후
+//   Project Settings → General → databaseURL 복사
+//   Realtime Database → Rules → ".read":true, ".write":true 설정
+// ══════════════════════════════════════════════
+const FB_DB = '';  // 예: 'https://my-project-default-rtdb.firebaseio.com'
+                   // 비워두면 → localStorage 모드 (이 기기에만 저장)
+
+// ══════════════════════════════════════════════
+// COMMENTS — Firebase REST API or localStorage
 // ══════════════════════════════════════════════
 const AVCOLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
 function avColor(name) {
   let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))%AVCOLORS.length;
   return AVCOLORS[h];
 }
-function loadCmts() {
+
+const useFirebase = () => FB_DB.trim().length > 0;
+
+// ─ Firebase REST helpers ─
+async function fbGet() {
+  try {
+    const r = await fetch(`${FB_DB.trim()}/comments.json`, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!data) return [];
+    // Firebase returns object keyed by push-id → convert to array
+    return Object.entries(data).map(([k,v]) => ({...v, _fbKey:k}))
+      .sort((a,b) => (a.id||0) - (b.id||0));
+  } catch { return null; }
+}
+async function fbPost(comment) {
+  try {
+    await fetch(`${FB_DB.trim()}/comments.json`, {
+      method:'POST', signal: AbortSignal.timeout(6000),
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(comment)
+    });
+    return true;
+  } catch { return false; }
+}
+
+// ─ localStorage fallback ─
+function lsGet() {
   try { return JSON.parse(localStorage.getItem('td_cmts')||'[]'); } catch { return []; }
 }
-function saveCmts(a) { localStorage.setItem('td_cmts', JSON.stringify(a)); }
-function renderCmts() {
-  let list = loadCmts();
+function lsSet(a) { localStorage.setItem('td_cmts', JSON.stringify(a)); }
+
+// ─ Render ─
+function renderCmts(list) {
+  const el = document.getElementById('cmtsList');
+  const badge = document.getElementById('cmtBadge');
+  if (badge) badge.textContent = useFirebase() ? '🔥 Firebase 공유' : '💾 내 기기 전용';
+
+  if (!list || !list.length) {
+    el.innerHTML = '<div class="no-cmts">💬 아직 의견이 없습니다. 첫 번째 의견을 남겨보세요!</div>';
+    return;
+  }
+  el.innerHTML = [...list].reverse().map(c => `
+    <div class="citem">
+      <div class="citem-hd">
+        <div class="cav" style="background:${c.color}">${(c.author||'?').charAt(0).toUpperCase()}</div>
+        <span class="cauth">${c.author}</span>
+        ${c.ticker ? `<span class="cticker">${c.ticker}</span>` : ''}
+        <span class="cop cop-${c.op}">${(c.op||'watch').toUpperCase()}</span>
+        <span class="ctime">${c.time}</span>
+      </div>
+      <div class="cbody">${c.text}</div>
+    </div>`).join('');
+}
+
+async function loadCmts() {
+  if (useFirebase()) {
+    const list = await fbGet();
+    if (list !== null) { renderCmts(list); return; }
+    // Firebase 실패 시 localStorage로 폴백
+  }
+  let list = lsGet();
   if (!list.length) {
     list = [{
       id:1, author:'Daniel', op:'buy', ticker:'NVDA',
       text:'NVDA Blackwell 출하 모멘텀 + GB300 수요 강함. $850 지지 확인 시 추가 매수 고려. 목표 $1,100.',
       time:'2026-04-10 09:30', color:'#3b82f6'
     }];
-    saveCmts(list);
+    lsSet(list);
   }
-  const el = document.getElementById('cmtsList');
-  el.innerHTML = [...list].reverse().map(c => `
-    <div class="citem">
-      <div class="citem-hd">
-        <div class="cav" style="background:${c.color}">${c.author.charAt(0).toUpperCase()}</div>
-        <span class="cauth">${c.author}</span>
-        ${c.ticker ? `<span class="cticker">${c.ticker}</span>` : ''}
-        <span class="cop cop-${c.op}">${c.op.toUpperCase()}</span>
-        <span class="ctime">${c.time}</span>
-      </div>
-      <div class="cbody">${c.text}</div>
-    </div>`).join('');
+  renderCmts(list);
 }
-function postComment() {
+
+async function postComment() {
   const txt = document.getElementById('cTxt').value.trim();
   const name = document.getElementById('cName').value.trim() || 'Anonymous';
   const op = document.getElementById('cOp').value;
   const ticker = document.getElementById('cTicker').value;
   if (!txt) { alert('의견을 입력해주세요!'); return; }
-  const list = loadCmts();
-  list.push({
+
+  const btn = document.querySelector('.btn-post');
+  btn.disabled = true; btn.textContent = '저장 중…';
+
+  const comment = {
     id: Date.now(), author:name, op, ticker, text:txt, color:avColor(name),
     time: new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
-  });
-  saveCmts(list);
-  renderCmts();
-  document.getElementById('cTxt').value = '';
+  };
+
+  if (useFirebase()) {
+    const ok = await fbPost(comment);
+    if (ok) {
+      document.getElementById('cTxt').value = '';
+      await loadCmts();
+    } else {
+      alert('Firebase 저장 실패. DB URL 확인 또는 Rules를 public으로 설정하세요.');
+    }
+  } else {
+    const list = lsGet();
+    list.push(comment);
+    lsSet(list);
+    document.getElementById('cTxt').value = '';
+    renderCmts(list);
+  }
+  btn.disabled = false; btn.textContent = '📝 Post';
+}
+
+// Firebase 실시간 polling (30초마다 새 댓글 확인)
+function startCmtPolling() {
+  if (!useFirebase()) return;
+  setInterval(loadCmts, 30 * 1000);
 }
 
 // ══════════════════════════════════════════════
@@ -800,7 +888,6 @@ async function loadAll() {
       `Updated: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
 
     const ib = document.getElementById('infoBox');
-    const ib = document.getElementById('infoBox');
     if (_usingMock) {
       ib.className = 'infobox warn';
       ib.innerHTML = '📊 <strong>Demo Mode</strong> — 현재 API 프록시 연결 불가 (시장 마감 후 / 프록시 제한). 최근 실제 종가 기준 샘플 데이터를 표시합니다. 장중에 Refresh 해보세요.';
@@ -824,11 +911,17 @@ async function loadAll() {
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+// Firebase 설정됐으면 안내 박스 숨기기
+if (useFirebase()) {
+  const g = document.getElementById('fbGuide');
+  if (g) g.style.display = 'none';
+}
 initCards();
 renderNews();
-renderCmts();
+loadCmts();
+startCmtPolling();
 loadAll();
-setInterval(loadAll, 5 * 60 * 1000); // auto-refresh every 5 min
+setInterval(loadAll, 5 * 60 * 1000);
 </script>
 </body>
 </html>
