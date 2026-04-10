@@ -102,10 +102,13 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .scard-sym { font-size:1.1rem; font-weight:800; color:var(--txt); }
 .scard-name { font-size:.7rem; color:var(--txt3); margin-top:2px; }
 .tag { font-size:.62rem; font-weight:700; padding:3px 9px; border-radius:100px; }
-.tag-ai  { background:rgba(139,92,246,.15); color:#a78bfa; }
-.tag-semi{ background:rgba(59,130,246,.15); color:#60a5fa; }
-.tag-ev  { background:rgba(16,185,129,.15); color:#34d399; }
-.tag-data{ background:rgba(245,158,11,.15); color:#fbbf24; }
+.tag-ai     { background:rgba(139,92,246,.15); color:#a78bfa; }
+.tag-semi   { background:rgba(59,130,246,.15); color:#60a5fa; }
+.tag-ev     { background:rgba(16,185,129,.15); color:#34d399; }
+.tag-data   { background:rgba(245,158,11,.15); color:#fbbf24; }
+.tag-social { background:rgba(99,102,241,.15); color:#a5b4fc; }
+.tag-cyber  { background:rgba(163,230,53,.12); color:#a3e635; }
+.tag-space  { background:rgba(251,146,60,.15); color:#fb923c; }
 
 .scard-price { font-size:1.85rem; font-weight:800; line-height:1.1; margin-bottom:4px; }
 .scard-chg { display:flex; gap:8px; align-items:center; }
@@ -123,6 +126,28 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .met { display:flex; flex-direction:column; gap:2px; }
 .met-lbl { font-size:.62rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.4px; }
 .met-val { font-size:.82rem; font-weight:600; color:var(--txt); }
+
+/* ─── GOOGLE SHEETS LAYER ─── */
+.gs-strip {
+  margin-top:10px; padding-top:10px;
+  border-top:1px solid var(--border);
+}
+.gs-row { display:flex; justify-content:space-between; margin-bottom:5px; }
+.gs-field { font-size:.68rem; color:var(--txt3); }
+.gs-field strong { color:var(--txt); font-weight:600; }
+.gs-target { color:var(--green) !important; }
+.gs-upside { color:var(--cyan); font-size:.65rem; margin-left:3px; }
+.gs-action-wrap {
+  font-size:.72rem; font-weight:700; padding:5px 10px; border-radius:7px;
+  text-align:center; margin-top:5px;
+  background:rgba(59,130,246,.1); color:#60a5fa;
+  transition: background .2s;
+}
+.gs-action-wrap.gs-buy  { background:rgba(16,185,129,.12); color:#34d399; }
+.gs-action-wrap.gs-wait { background:rgba(245,158,11,.12);  color:#fbbf24; }
+.gs-action-wrap.gs-sell { background:rgba(239,68,68,.12);   color:#f87171; }
+.gs-action-wrap.gs-scale { background:rgba(139,92,246,.12); color:#a78bfa; }
+.gs-source { font-size:.58rem; color:var(--txt3); text-align:right; margin-top:3px; }
 
 /* ─── SKEL ─── */
 .sk {
@@ -441,10 +466,17 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
           </select>
           <select class="inp-ticker" id="cTicker">
             <option value="">종목 선택</option>
-            <option value="PLTR">PLTR</option>
-            <option value="GOOGL">GOOGL</option>
-            <option value="NVDA">NVDA</option>
-            <option value="TSLA">TSLA</option>
+            <option value="PLTR">PLTR 🔮</option>
+            <option value="GOOGL">GOOGL 🔍</option>
+            <option value="NVDA">NVDA ⚡</option>
+            <option value="TSLA">TSLA 🚗</option>
+            <option value="META">META 👁️</option>
+            <option value="INTC">INTC 🔵</option>
+            <option value="ORCL">ORCL 🏛️</option>
+            <option value="TSM">TSM 🌐</option>
+            <option value="SNOW">SNOW ❄️</option>
+            <option value="RKLB">RKLB 🚀</option>
+            <option value="CRWD">CRWD 🛡️</option>
             <option value="전체">전체 시장</option>
           </select>
           <button class="btn-post" onclick="postComment()">📝 Post</button>
@@ -457,7 +489,7 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 </main>
 
 <footer class="footer">
-  📊 Daniel's AI/Semiconductor Trading Dashboard · Data via Yahoo Finance · All content is for reference only and does not constitute investment advice · Built on GitHub Pages
+  📊 Daniel's AI/Semiconductor Trading Dashboard · Live Data: Yahoo Finance · Analysis: Google Sheets (Daniel_AI_Stock_Tracker_V3) · All content is for reference only and does not constitute investment advice · Built on GitHub Pages
 </footer>
 
 <script>
@@ -465,10 +497,17 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 // CONFIG
 // ══════════════════════════════════════════════
 const STOCKS = [
-  { sym:'PLTR',  name:'Palantir Technologies', tag:'ai',   emoji:'🔮', accent:'#8b5cf6' },
-  { sym:'GOOGL', name:'Alphabet Inc.',          tag:'data', emoji:'🔍', accent:'#f59e0b' },
-  { sym:'NVDA',  name:'NVIDIA Corporation',     tag:'semi', emoji:'⚡', accent:'#3b82f6' },
-  { sym:'TSLA',  name:'Tesla Inc.',             tag:'ev',   emoji:'🚗', accent:'#10b981' },
+  { sym:'PLTR',  name:'Palantir Technologies',    tag:'ai',     emoji:'🔮', accent:'#8b5cf6' },
+  { sym:'GOOGL', name:'Alphabet Inc.',            tag:'ai',     emoji:'🔍', accent:'#f59e0b' },
+  { sym:'NVDA',  name:'NVIDIA Corporation',       tag:'semi',   emoji:'⚡', accent:'#3b82f6' },
+  { sym:'TSLA',  name:'Tesla Inc.',               tag:'ev',     emoji:'🚗', accent:'#10b981' },
+  { sym:'META',  name:'Meta Platforms',           tag:'social', emoji:'👁️', accent:'#6366f1' },
+  { sym:'INTC',  name:'Intel Corporation',        tag:'semi',   emoji:'🔵', accent:'#22d3ee' },
+  { sym:'ORCL',  name:'Oracle Corporation',       tag:'data',   emoji:'🏛️', accent:'#f97316' },
+  { sym:'TSM',   name:'Taiwan Semiconductor',     tag:'semi',   emoji:'🌐', accent:'#14b8a6' },
+  { sym:'SNOW',  name:'Snowflake Inc.',           tag:'data',   emoji:'❄️', accent:'#7dd3fc' },
+  { sym:'RKLB',  name:'Rocket Lab USA',           tag:'space',  emoji:'🚀', accent:'#fb923c' },
+  { sym:'CRWD',  name:'CrowdStrike Holdings',     tag:'cyber',  emoji:'🛡️', accent:'#a3e635' },
 ];
 
 const MKT_SYMS = ['^GSPC','^IXIC','^VIX','^SOX','QQQ','USDKRW=X','^TNX'];
@@ -492,12 +531,19 @@ const PROXIES = [
   u => u,   // 직접 시도 (마지막 수단)
 ];
 
-// ── 시장 마감 시 사용할 모의 데이터 (최근 실제 종가 기준) ──
+// ── 시장 마감 시 사용할 모의 데이터 (Google Sheets 기준 최근 실제 종가) ──
 const MOCK_QUOTES = {
-  'PLTR' :{ symbol:'PLTR', regularMarketPrice:121.84, regularMarketChange:2.34,  regularMarketChangePercent:1.96,  fiftyTwoWeekHigh:125.41, fiftyTwoWeekLow:20.33, marketCap:269e9, regularMarketVolume:55e6 },
-  'GOOGL':{ symbol:'GOOGL',regularMarketPrice:155.66, regularMarketChange:-1.82, regularMarketChangePercent:-1.16, fiftyTwoWeekHigh:207.05, fiftyTwoWeekLow:140.53,marketCap:1.92e12,regularMarketVolume:22e6 },
-  'NVDA' :{ symbol:'NVDA', regularMarketPrice:864.41, regularMarketChange:18.55, regularMarketChangePercent:2.19,  fiftyTwoWeekHigh:974.00, fiftyTwoWeekLow:462.86,marketCap:2.13e12,regularMarketVolume:43e6 },
-  'TSLA' :{ symbol:'TSLA', regularMarketPrice:254.77, regularMarketChange:-5.12, regularMarketChangePercent:-1.97, fiftyTwoWeekHigh:488.54, fiftyTwoWeekLow:182.00,marketCap:814e9, regularMarketVolume:82e6 },
+  'PLTR' :{ symbol:'PLTR', regularMarketPrice:130.54, regularMarketChange:1.85,  regularMarketChangePercent:1.44,  fiftyTwoWeekHigh:125.41, fiftyTwoWeekLow:17.46, marketCap:289e9, regularMarketVolume:58e6 },
+  'GOOGL':{ symbol:'GOOGL',regularMarketPrice:154.21, regularMarketChange:-1.24, regularMarketChangePercent:-0.80, fiftyTwoWeekHigh:201.42, fiftyTwoWeekLow:140.53,marketCap:1.89e12,regularMarketVolume:23e6 },
+  'NVDA' :{ symbol:'NVDA', regularMarketPrice:107.49, regularMarketChange:2.31,  regularMarketChangePercent:2.19,  fiftyTwoWeekHigh:149.43, fiftyTwoWeekLow:78.84, marketCap:2.62e12,regularMarketVolume:312e6},
+  'TSLA' :{ symbol:'TSLA', regularMarketPrice:255.84, regularMarketChange:-3.72, regularMarketChangePercent:-1.43, fiftyTwoWeekHigh:488.54, fiftyTwoWeekLow:182.00,marketCap:814e9, regularMarketVolume:82e6 },
+  'META' :{ symbol:'META', regularMarketPrice:561.23, regularMarketChange:4.20,  regularMarketChangePercent:0.75,  fiftyTwoWeekHigh:740.91, fiftyTwoWeekLow:414.50,marketCap:1.42e12,regularMarketVolume:15e6 },
+  'INTC' :{ symbol:'INTC', regularMarketPrice:21.43,  regularMarketChange:-0.28, regularMarketChangePercent:-1.29, fiftyTwoWeekHigh:35.91,  fiftyTwoWeekLow:17.67, marketCap:91e9,  regularMarketVolume:44e6 },
+  'ORCL' :{ symbol:'ORCL', regularMarketPrice:137.86, regularMarketChange:0.65,  regularMarketChangePercent:0.47,  fiftyTwoWeekHigh:198.31, fiftyTwoWeekLow:104.87,marketCap:379e9, regularMarketVolume:8e6  },
+  'TSM'  :{ symbol:'TSM',  regularMarketPrice:172.34, regularMarketChange:-1.45, regularMarketChangePercent:-0.83, fiftyTwoWeekHigh:226.40, fiftyTwoWeekLow:133.70,marketCap:893e9, regularMarketVolume:11e6 },
+  'SNOW' :{ symbol:'SNOW', regularMarketPrice:149.52, regularMarketChange:2.14,  regularMarketChangePercent:1.45,  fiftyTwoWeekHigh:237.72, fiftyTwoWeekLow:107.13,marketCap:51e9,  regularMarketVolume:5e6  },
+  'RKLB' :{ symbol:'RKLB', regularMarketPrice:16.84,  regularMarketChange:0.22,  regularMarketChangePercent:1.33,  fiftyTwoWeekHigh:29.75,  fiftyTwoWeekLow:4.99,  marketCap:7.8e9, regularMarketVolume:18e6 },
+  'CRWD' :{ symbol:'CRWD', regularMarketPrice:394.68, regularMarketChange:-2.31, regularMarketChangePercent:-0.58, fiftyTwoWeekHigh:562.83, fiftyTwoWeekLow:194.50,marketCap:96e9,  regularMarketVolume:4e6  },
   '^GSPC':{ symbol:'^GSPC',regularMarketPrice:5204.34,regularMarketChange:-42.1, regularMarketChangePercent:-0.80 },
   '^IXIC':{ symbol:'^IXIC',regularMarketPrice:16141.0,regularMarketChange:-91.2, regularMarketChangePercent:-0.56 },
   '^VIX' :{ symbol:'^VIX', regularMarketPrice:21.3,   regularMarketChange:0.8,   regularMarketChangePercent:3.90  },
@@ -507,13 +553,134 @@ const MOCK_QUOTES = {
   '^TNX' :{ symbol:'^TNX', regularMarketPrice:4.38,   regularMarketChange:0.02,  regularMarketChangePercent:0.46  },
 };
 const MOCK_CHART = {
-  'PLTR' :[118.2,119.8,120.5,121.0,121.84],
-  'GOOGL':[158.2,157.0,156.8,157.4,155.66],
-  'NVDA' :[840.1,848.5,855.2,860.0,864.41],
-  'TSLA' :[262.1,260.4,258.9,256.0,254.77],
+  'PLTR' :[122.1,126.3,128.0,129.5,130.54],
+  'GOOGL':[156.8,155.2,153.9,154.8,154.21],
+  'NVDA' :[103.2,105.4,106.8,107.1,107.49],
+  'TSLA' :[262.1,260.4,258.9,256.0,255.84],
+  'META' :[554.2,557.8,558.3,560.1,561.23],
+  'INTC' :[22.1, 21.8, 21.5, 21.6, 21.43 ],
+  'ORCL' :[135.0,136.2,137.4,137.2,137.86],
+  'TSM'  :[175.2,174.0,173.1,172.8,172.34],
+  'SNOW' :[145.3,147.2,148.8,149.0,149.52],
+  'RKLB' :[16.1, 16.3, 16.5, 16.7, 16.84 ],
+  'CRWD' :[398.2,396.5,395.0,394.9,394.68],
 };
 
 let _charts = {}, _usingMock = false;
+
+// ══════════════════════════════════════════════
+// GOOGLE SHEETS CONFIG
+// ══════════════════════════════════════════════
+const GS_ID    = '16tR0hz5ge0uI72OQrlXJvYZEkBpqltEbAFDhL3hz5zk';
+const GS_SHEET = 'DASHBOARD';
+let   GS_DATA  = {};   // keyed by ticker: { rsi, target, upside, action, entryZone, w52lo, w52hi }
+let   _gsLoaded = false;
+
+async function fetchGsSheet() {
+  const url = `https://docs.google.com/spreadsheets/d/${GS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GS_SHEET)}`;
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('GS HTTP ' + r.status);
+    const txt = await r.text();
+    // Strip JS wrapper: /*O_o*/\ngoogle.visualization.Query.setResponse({...})
+    const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+    if (!match) throw new Error('GS parse fail');
+    const json = JSON.parse(match[1]);
+    const cols = json.table.cols.map(c => (c.label || '').trim().toUpperCase());
+    const rows = json.table.rows || [];
+
+    const result = {};
+    rows.forEach(row => {
+      const cells = row.c || [];
+      const get = (label) => {
+        const i = cols.indexOf(label);
+        return i >= 0 && cells[i] ? cells[i].v : null;
+      };
+      const ticker = (get('TICKER') || '').toString().trim().toUpperCase();
+      if (!ticker) return;
+      const rawTarget = get('TARGET');
+      const rawUpside = get('UPSIDE%');
+      const rawAction = get('ACTION');
+      const rawEntry  = get('ENTRY ZONE');
+      const rawRsi    = get('RSI');
+      const rawW52lo  = get('52W LOW');
+      const rawW52hi  = get('52W HIGH');
+      const rawPrice  = get('PRICE');
+      const rawChg    = get('CHG%');
+      result[ticker] = {
+        price:     rawPrice  != null ? +rawPrice  : null,
+        chgPct:    rawChg    != null ? +rawChg    : null,
+        rsi:       rawRsi    != null ? rawRsi.toString() : '—',
+        target:    rawTarget != null ? +rawTarget : null,
+        upside:    rawUpside != null ? rawUpside.toString() : null,
+        action:    rawAction != null ? rawAction.toString().trim() : null,
+        entryZone: rawEntry  != null ? rawEntry.toString() : null,
+        w52lo:     rawW52lo  != null ? +rawW52lo  : null,
+        w52hi:     rawW52hi  != null ? +rawW52hi  : null,
+      };
+    });
+    GS_DATA = result;
+    _gsLoaded = true;
+    console.log('[GS] Loaded', Object.keys(result).length, 'tickers from Google Sheets');
+    return result;
+  } catch(e) {
+    console.warn('[GS] Fetch failed:', e.message);
+    return null;
+  }
+}
+
+function gsActionClass(action) {
+  if (!action) return '';
+  const a = action.toLowerCase();
+  if (a.includes('buy') || a.includes('limit'))  return 'gs-buy';
+  if (a.includes('scale'))                        return 'gs-scale';
+  if (a.includes('wait') || a.includes('hold'))   return 'gs-wait';
+  if (a.includes('sell') || a.includes('short'))  return 'gs-sell';
+  return '';
+}
+
+function updateCardGs(ticker) {
+  const d = GS_DATA[ticker];
+  const strip = document.getElementById(`gs-${ticker}`);
+  if (!strip) return;
+  if (!d) { strip.style.display = 'none'; return; }
+  strip.style.display = 'block';
+
+  // RSI
+  const rsiEl = document.getElementById(`gr-${ticker}`);
+  if (rsiEl) rsiEl.textContent = d.rsi || '—';
+
+  // Target + Upside
+  const tgtEl = document.getElementById(`gt-${ticker}`);
+  if (tgtEl) {
+    if (d.target) {
+      const upStr = d.upside ? `<span class="gs-upside">(${d.upside})</span>` : '';
+      tgtEl.innerHTML = `$${d.target.toFixed(2)}${upStr}`;
+    } else {
+      tgtEl.textContent = '—';
+    }
+  }
+
+  // Action
+  const actEl = document.getElementById(`ga-${ticker}`);
+  if (actEl) {
+    actEl.textContent = d.action ? `📌 ${d.action}` : '—';
+    actEl.className = `gs-action-wrap ${gsActionClass(d.action)}`;
+  }
+
+  // GS price overlay (if live API failed = mock mode, use GS price instead)
+  if (_usingMock && d.price) {
+    const pe = document.getElementById(`sp-${ticker}`);
+    if (pe) pe.textContent = `$${d.price.toFixed(2)}`;
+    if (d.chgPct != null) {
+      const ce = document.getElementById(`sc2-${ticker}`);
+      const isUp = d.chgPct >= 0;
+      if (ce) ce.innerHTML = `<span class="chg-pct ${isUp?'up':'dn'}">${isUp?'+':''}${d.chgPct.toFixed(2)}%</span>`;
+    }
+    if (d.w52hi) { const el = document.getElementById(`sh-${ticker}`); if(el) el.textContent = `$${d.w52hi.toFixed(2)}`; }
+    if (d.w52lo) { const el = document.getElementById(`sl-${ticker}`); if(el) el.textContent = `$${d.w52lo.toFixed(2)}`; }
+  }
+}
 
 // ══════════════════════════════════════════════
 // FETCH
@@ -659,6 +826,14 @@ function initCards() {
         <div class="met"><span class="met-lbl">52W Low</span><span class="met-val" id="sl-${s.sym}">—</span></div>
         <div class="met"><span class="met-lbl">Market Cap</span><span class="met-val" id="sm-${s.sym}">—</span></div>
         <div class="met"><span class="met-lbl">Volume</span><span class="met-val" id="sv-${s.sym}">—</span></div>
+      </div>
+      <div class="gs-strip" id="gs-${s.sym}" style="display:none">
+        <div class="gs-row">
+          <span class="gs-field">RSI: <strong id="gr-${s.sym}">—</strong></span>
+          <span class="gs-field">Target: <strong class="gs-target" id="gt-${s.sym}">—</strong></span>
+        </div>
+        <div class="gs-action-wrap" id="ga-${s.sym}">—</div>
+        <div class="gs-source">📊 Daniel's Google Sheets</div>
       </div>`;
     g.appendChild(d);
   });
@@ -869,13 +1044,18 @@ async function loadAll() {
   btn.innerHTML = '<span class="spin">⏳</span> Loading…';
 
   try {
+    // Fetch Yahoo Finance + Google Sheets in parallel
     const allSyms = [...STOCKS.map(s=>s.sym), ...MKT_SYMS];
-    const quotes = await getQuotes(allSyms);
+    const [quotes] = await Promise.all([
+      getQuotes(allSyms),
+      fetchGsSheet()
+    ]);
 
     renderStrip(quotes.filter(q => MKT_SYMS.includes(q.symbol)));
     STOCKS.forEach(s => {
       const q = quotes.find(x=>x.symbol===s.sym);
       if (q) updateCard(q);
+      updateCardGs(s.sym);   // apply GS layer (RSI / Target / Action)
     });
 
     // Charts — parallel
@@ -888,20 +1068,24 @@ async function loadAll() {
       `Updated: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
 
     const ib = document.getElementById('infoBox');
+    const gsNote = _gsLoaded ? ' · 📊 Google Sheets 연동됨' : '';
     if (_usingMock) {
       ib.className = 'infobox warn';
-      ib.innerHTML = '📊 <strong>Demo Mode</strong> — 현재 API 프록시 연결 불가 (시장 마감 후 / 프록시 제한). 최근 실제 종가 기준 샘플 데이터를 표시합니다. 장중에 Refresh 해보세요.';
+      ib.innerHTML = `📊 <strong>Demo Mode</strong> — Yahoo Finance API 연결 불가 (시장 마감 후 / 프록시 제한). Google Sheets 기준 가격 표시 중${gsNote}. 장중에 Refresh 해보세요.`;
     } else {
       ib.className = 'infobox';
-      ib.innerHTML = '✅ <strong>Live Data</strong> · Yahoo Finance (15–20min delay) · 5분마다 자동 새로고침';
+      ib.innerHTML = `✅ <strong>Live Data</strong> · Yahoo Finance (15–20min delay) · 5분마다 자동 새로고침${gsNote}`;
     }
 
   } catch(e) {
     console.warn('Load error:', e);
+    // GS fallback: even if Yahoo fails, show GS data
+    if (!_gsLoaded) await fetchGsSheet();
+    STOCKS.forEach(s => updateCardGs(s.sym));
     const ib = document.getElementById('infoBox');
     ib.className = 'infobox warn';
-    ib.innerHTML = '📊 <strong>Demo Mode</strong> — API 연결 불가. 샘플 데이터 표시 중. 미국 장중(오후 10:30 ~ 오전 5:00 KST)에 Refresh 해보세요.';
-    document.getElementById('updTime').textContent = `Demo at ${new Date().toLocaleTimeString()}`;
+    ib.innerHTML = '📊 <strong>Demo Mode</strong> — Yahoo Finance 연결 불가. Google Sheets 기준 데이터 표시 중. 미국 장중(오후 10:30 ~ 오전 5:00 KST)에 Refresh 해보세요.';
+    document.getElementById('updTime').textContent = `GS Fallback ${new Date().toLocaleTimeString()}`;
   } finally {
     btn.disabled = false;
     btn.innerHTML = '🔄 Refresh';
