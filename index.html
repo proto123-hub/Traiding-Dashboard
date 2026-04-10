@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI/Semi Trading Dashboard — Daniel's Watchlist</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #08101f;
+  --bg-card: #101a2e;
+  --bg-card2: #141f35;
+  --border: #1e2d4a;
+  --txt: #e8edf5;
+  --txt2: #8899b8;
+  --txt3: #4a5e80;
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif; min-height:100vh; }
+
+/* ─── HEADER ─── */
+.header {
+  background: linear-gradient(135deg,#0a1628 0%,#0f1f3d 50%,#0a1628 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top:0; z-index:200;
+  backdrop-filter: blur(12px);
+}
+.header-title { font-size:1.35rem; font-weight:800;
+  background: linear-gradient(135deg,#60a5fa,#a78bfa,#34d399);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.header-sub { font-size:.72rem; color:var(--txt3); margin-top:2px; letter-spacing:.5px; }
+.header-right { display:flex; align-items:center; gap:12px; }
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+.upd-time { font-size:.72rem; color:var(--txt3); }
+.btn-refresh {
+  background: linear-gradient(135deg,#1d4ed8,#2563eb);
+  color:#fff; border:none; padding:8px 18px; border-radius:8px;
+  cursor:pointer; font-size:.8rem; font-weight:600;
+  transition:all .2s; display:flex; align-items:center; gap:5px;
+}
+.btn-refresh:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(59,130,246,.35); }
+.btn-refresh:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.spin { animation:spin .8s linear infinite; display:inline-block; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── MARKET STRIP ─── */
+.mstrip {
+  background:#0a1220; border-bottom:1px solid var(--border);
+  padding:9px 28px; display:flex; gap:28px; overflow-x:auto; scrollbar-width:none;
+}
+.mstrip::-webkit-scrollbar { display:none; }
+.mitem { display:flex; align-items:center; gap:7px; white-space:nowrap; min-width:fit-content; }
+.mitem-name { font-size:.7rem; color:var(--txt3); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.mitem-price { font-size:.85rem; font-weight:700; color:var(--txt); }
+.mitem-chg { font-size:.72rem; font-weight:600; }
+.up { color:var(--green); } .dn { color:var(--red); } .neu { color:var(--txt3); }
+
+/* ─── MAIN ─── */
+.main { max-width:1380px; margin:0 auto; padding:24px 28px; }
+.section { margin-bottom:28px; }
+.sec-hd { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.sec-hd h2 { font-size:1rem; font-weight:700; color:var(--txt); }
+.badge { font-size:.62rem; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:.5px; }
+.badge-live { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.25); animation:pulse 2s infinite; }
+.badge-blue { background:rgba(59,130,246,.15); color:#60a5fa; border:1px solid rgba(59,130,246,.2); }
+.badge-purple { background:rgba(139,92,246,.15); color:#a78bfa; border:1px solid rgba(139,92,246,.2); }
+
+/* ─── INFO BOX ─── */
+.infobox {
+  background:rgba(59,130,246,.06); border:1px solid rgba(59,130,246,.18);
+  border-radius:10px; padding:12px 16px; margin-bottom:14px;
+  font-size:.78rem; color:var(--txt2); display:flex; align-items:center; gap:8px;
+}
+.infobox.warn { background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.2); color:#fca5a5; }
+
+/* ─── WATCHLIST GRID ─── */
+.wl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(295px,1fr)); gap:16px; }
+
+.scard {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:16px; padding:20px; cursor:pointer;
+  transition:all .25s; position:relative; overflow:hidden;
+}
+.scard::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--c-accent,var(--blue)); border-radius:16px 16px 0 0;
+}
+.scard:hover { border-color:rgba(59,130,246,.4); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,.4); }
+
+.scard-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.scard-sym { font-size:1.1rem; font-weight:800; color:var(--txt); }
+.scard-name { font-size:.7rem; color:var(--txt3); margin-top:2px; }
+.tag { font-size:.62rem; font-weight:700; padding:3px 9px; border-radius:100px; }
+.tag-ai  { background:rgba(139,92,246,.15); color:#a78bfa; }
+.tag-semi{ background:rgba(59,130,246,.15); color:#60a5fa; }
+.tag-ev  { background:rgba(16,185,129,.15); color:#34d399; }
+.tag-data{ background:rgba(245,158,11,.15); color:#fbbf24; }
+
+.scard-price { font-size:1.85rem; font-weight:800; line-height:1.1; margin-bottom:4px; }
+.scard-chg { display:flex; gap:8px; align-items:center; }
+.chg-amt { font-size:.85rem; font-weight:600; }
+.chg-pct { font-size:.82rem; font-weight:700; padding:2px 8px; border-radius:6px; }
+.chg-pct.up { background:rgba(16,185,129,.12); }
+.chg-pct.dn { background:rgba(239,68,68,.12); }
+
+.minich { height:56px; margin:12px 0; position:relative; }
+
+.scard-metrics {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  padding-top:12px; border-top:1px solid var(--border); margin-top:4px;
+}
+.met { display:flex; flex-direction:column; gap:2px; }
+.met-lbl { font-size:.62rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.4px; }
+.met-val { font-size:.82rem; font-weight:600; color:var(--txt); }
+
+/* ─── SKEL ─── */
+.sk {
+  background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-card2) 50%,var(--bg-card) 75%);
+  background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ─── 2-COL ─── */
+.two-col { display:grid; grid-template-columns:1fr 1.2fr; gap:24px; margin-bottom:28px; }
+@media(max-width:900px){ .two-col{grid-template-columns:1fr;} }
+
+/* ─── MACRO ─── */
+.macro-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mcard {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:12px; padding:16px;
+}
+.mcard-lbl { font-size:.65rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.mcard-val { font-size:1.4rem; font-weight:800; color:var(--txt); }
+.mcard-desc { font-size:.72rem; color:var(--txt2); margin-top:4px; }
+
+/* ─── NEWS ─── */
+.news-list { display:flex; flex-direction:column; gap:10px; }
+.ncard {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:12px; padding:14px; text-decoration:none;
+  display:block; transition:all .2s; color:inherit;
+}
+.ncard:hover { border-color:rgba(59,130,246,.35); background:var(--bg-card2); }
+.ncard-hl { font-size:.83rem; font-weight:500; color:var(--txt); line-height:1.45; margin-bottom:7px; }
+.ncard-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.nsrc { font-size:.68rem; color:var(--blue); font-weight:700; }
+.ntime { font-size:.68rem; color:var(--txt3); }
+.ntag { font-size:.62rem; padding:2px 7px; border-radius:4px; font-weight:700; }
+.ntag-bull { background:rgba(16,185,129,.12); color:#34d399; }
+.ntag-bear { background:rgba(239,68,68,.12); color:#f87171; }
+.ntag-neu  { background:rgba(107,114,128,.12); color:#9ca3af; }
+.ntag-watch{ background:rgba(59,130,246,.12); color:#60a5fa; }
+
+/* ─── DIVIDER ─── */
+hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
+
+/* ─── COMMENTS ─── */
+.cmts-wrap {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:16px; padding:24px;
+}
+.cmts-input-box { margin-bottom:20px; }
+.cmts-input-box textarea {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:12px 14px; color:var(--txt); font-size:.83rem;
+  resize:vertical; min-height:76px; font-family:inherit; line-height:1.5;
+  transition:border-color .2s;
+}
+.cmts-input-box textarea:focus { outline:none; border-color:var(--blue); }
+.cmts-controls { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.inp-name {
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:8px 12px; color:var(--txt); font-size:.8rem; font-family:inherit;
+  flex:1; min-width:120px; max-width:180px;
+}
+.inp-name:focus { outline:none; border-color:var(--blue); }
+.inp-sel {
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:8px 12px; color:var(--txt); font-size:.8rem; font-family:inherit;
+}
+.inp-sel:focus { outline:none; border-color:var(--blue); }
+.inp-ticker {
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:8px 12px; color:var(--txt); font-size:.8rem; font-family:inherit;
+  width:110px;
+}
+.inp-ticker:focus { outline:none; border-color:var(--blue); }
+.btn-post {
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+  color:#fff; border:none; padding:8px 20px; border-radius:8px;
+  cursor:pointer; font-size:.8rem; font-weight:700; margin-left:auto;
+  transition:all .2s;
+}
+.btn-post:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(59,130,246,.3); }
+
+.cmts-list { display:flex; flex-direction:column; gap:10px; }
+.citem {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:12px; padding:14px; animation:fadeIn .25s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.citem-hd { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.cav {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.72rem; font-weight:800; color:#fff; flex-shrink:0;
+}
+.cauth { font-size:.85rem; font-weight:700; color:var(--txt); }
+.ctime { font-size:.68rem; color:var(--txt3); margin-left:auto; }
+.cticker { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:4px;
+  background:rgba(59,130,246,.12); color:#60a5fa; }
+.cop { font-size:.65rem; font-weight:800; padding:2px 8px; border-radius:100px; text-transform:uppercase; }
+.cop-buy  { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.3); }
+.cop-hold { background:rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.3); }
+.cop-sell { background:rgba(239,68,68,.18); color:#f87171; border:1px solid rgba(239,68,68,.3); }
+.cop-watch{ background:rgba(59,130,246,.18); color:#60a5fa; border:1px solid rgba(59,130,246,.3); }
+.cbody { font-size:.83rem; color:var(--txt2); line-height:1.55; }
+.no-cmts { text-align:center; padding:28px; color:var(--txt3); font-size:.85rem; }
+
+/* ─── SETUP GUIDE ─── */
+.guide-wrap {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:16px; padding:24px; margin-bottom:28px;
+}
+.guide-wrap summary {
+  cursor:pointer; font-size:.95rem; font-weight:700;
+  color:var(--txt); list-style:none; display:flex; align-items:center; gap:8px;
+  user-select:none;
+}
+.guide-wrap summary::-webkit-details-marker { display:none; }
+.guide-wrap[open] summary::after { transform:rotate(180deg); }
+.guide-wrap summary::after {
+  content:'▼'; font-size:.7rem; color:var(--txt3); margin-left:auto;
+  transition:transform .2s; display:inline-block;
+}
+.guide-body { margin-top:18px; }
+.step { display:flex; gap:14px; margin-bottom:16px; }
+.step-num {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:800; color:#fff;
+}
+.step-body { flex:1; }
+.step-title { font-size:.88rem; font-weight:700; color:var(--txt); margin-bottom:4px; }
+.step-desc { font-size:.78rem; color:var(--txt2); line-height:1.5; }
+.code-block {
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:10px 14px; margin-top:8px; font-family:'Courier New',monospace;
+  font-size:.78rem; color:#34d399; overflow-x:auto; white-space:nowrap;
+}
+
+/* ─── FOOTER ─── */
+.footer {
+  border-top:1px solid var(--border); padding:20px 28px;
+  text-align:center; color:var(--txt3); font-size:.72rem;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div>
+    <div class="header-title">⚡ AI / Semiconductor Trading Dashboard</div>
+    <div class="header-sub">PLTR · GOOGL · NVDA · TSLA — Daniel's Watchlist · For Reference Only</div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot"></div>
+    <span class="upd-time" id="updTime">Connecting...</span>
+    <button class="btn-refresh" id="btnRefresh" onclick="loadAll()">🔄 Refresh</button>
+  </div>
+</header>
+
+<!-- ═══ MARKET STRIP ═══ -->
+<div class="mstrip">
+  <div class="mitem"><span class="mitem-name">S&P 500</span><span class="mitem-price" id="ms-sp">—</span><span class="mitem-chg neu" id="mc-sp">—</span></div>
+  <div class="mitem"><span class="mitem-name">NASDAQ</span><span class="mitem-price" id="ms-nq">—</span><span class="mitem-chg neu" id="mc-nq">—</span></div>
+  <div class="mitem"><span class="mitem-name">VIX</span><span class="mitem-price" id="ms-vix">—</span><span class="mitem-chg neu" id="mc-vix">—</span></div>
+  <div class="mitem"><span class="mitem-name">SOX Semi</span><span class="mitem-price" id="ms-sox">—</span><span class="mitem-chg neu" id="mc-sox">—</span></div>
+  <div class="mitem"><span class="mitem-name">QQQ</span><span class="mitem-price" id="ms-qqq">—</span><span class="mitem-chg neu" id="mc-qqq">—</span></div>
+  <div class="mitem"><span class="mitem-name">USD/KRW</span><span class="mitem-price" id="ms-krw">—</span><span class="mitem-chg neu" id="mc-krw">—</span></div>
+  <div class="mitem"><span class="mitem-name">US 10Y</span><span class="mitem-price" id="ms-tnx">—</span><span class="mitem-chg neu" id="mc-tnx">—</span></div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- GitHub Pages Setup Guide (collapsible) -->
+  <details class="guide-wrap" style="margin-bottom:24px;">
+    <summary>🚀 GitHub Pages 배포 가이드 — 처음 설정하는 방법 (클릭해서 펼치기)</summary>
+    <div class="guide-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">GitHub 계정 만들기 / 로그인</div>
+          <div class="step-desc"><a href="https://github.com" target="_blank" style="color:var(--blue)">github.com</a>에서 무료 계정을 만드세요. 친구들도 계정이 있으면 댓글 기능 이용 가능합니다.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">New Repository 생성</div>
+          <div class="step-desc">우측 상단 "+" → "New repository" 클릭. 이름을 <strong style="color:var(--txt)">trading-dashboard</strong>로 설정하고 <strong style="color:var(--txt)">Public</strong>으로 만드세요.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">이 HTML 파일 업로드</div>
+          <div class="step-desc">Repository 메인 페이지에서 "Add file" → "Upload files" 클릭. 이 HTML 파일을 <strong style="color:var(--txt)">index.html</strong>로 이름 바꿔서 업로드하세요.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">GitHub Pages 활성화</div>
+          <div class="step-desc">Repository → <strong style="color:var(--txt)">Settings</strong> → 왼쪽 메뉴 <strong style="color:var(--txt)">Pages</strong> → Source: <strong style="color:var(--txt)">Deploy from a branch</strong> → Branch: <strong style="color:var(--txt)">main</strong> → Save</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">링크 공유!</div>
+          <div class="step-desc">1~2분 후 아래 주소로 접근 가능합니다. 친구들에게 이 링크를 공유하세요!</div>
+          <div class="code-block">https://YOUR_GITHUB_USERNAME.github.io/trading-dashboard/</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">뉴스 업데이트 방법</div>
+          <div class="step-desc">GitHub에서 직접 index.html 파일의 <code style="color:var(--yellow)">NEWS_DATA</code> 배열을 수정하면 즉시 업데이트됩니다. 주가는 자동으로 실시간 로드됩니다.</div>
+        </div>
+      </div>
+      <div style="background:rgba(16,185,129,.06); border:1px solid rgba(16,185,129,.2); border-radius:10px; padding:14px; margin-top:8px; font-size:.78rem; color:#86efac; line-height:1.6;">
+        💡 <strong>팁:</strong> 친구들이 "Trading Opinions" 섹션에서 의견을 남기면 각자 브라우저에 저장됩니다. 서로 같은 화면을 보면서 화상통화나 카톡으로 의견을 나누는 방식도 좋습니다!
+      </div>
+    </div>
+  </details>
+
+  <!-- ─── WATCHLIST ─── -->
+  <section class="section">
+    <div class="sec-hd">
+      <h2>🎯 Watchlist</h2>
+      <span class="badge badge-live">LIVE</span>
+    </div>
+    <div class="infobox" id="infoBox">
+      📡 <strong>Data:</strong> Yahoo Finance via public API (15–20min delay during market hours) · 자동 5분마다 새로고침 · For reference only, not investment advice
+    </div>
+    <div class="wl-grid" id="wlGrid"></div>
+  </section>
+
+  <!-- ─── MACRO + NEWS ─── -->
+  <div class="two-col">
+    <section class="section">
+      <div class="sec-hd"><h2>🌍 Macro Indicators</h2></div>
+      <div class="macro-grid">
+        <div class="mcard">
+          <div class="mcard-lbl">Fed Funds Rate</div>
+          <div class="mcard-val">4.25–4.50%</div>
+          <div class="mcard-desc">Last cut: Dec 18, 2024</div>
+        </div>
+        <div class="mcard">
+          <div class="mcard-lbl">US 10Y Treasury</div>
+          <div class="mcard-val" id="m-tnx">Loading…</div>
+          <div class="mcard-desc" id="m-tnx-d">Bond yield indicator</div>
+        </div>
+        <div class="mcard">
+          <div class="mcard-lbl">VIX Fear Index</div>
+          <div class="mcard-val" id="m-vix">Loading…</div>
+          <div class="mcard-desc" id="m-vix-d">Market volatility</div>
+        </div>
+        <div class="mcard">
+          <div class="mcard-lbl">AI Sector Trend</div>
+          <div class="mcard-val" style="color:var(--green)">Bullish</div>
+          <div class="mcard-desc">Q1 2026 Earnings Season</div>
+        </div>
+        <div class="mcard">
+          <div class="mcard-lbl">USD / KRW</div>
+          <div class="mcard-val" id="m-krw">Loading…</div>
+          <div class="mcard-desc">원/달러 환율</div>
+        </div>
+        <div class="mcard">
+          <div class="mcard-lbl">Semiconductor (SOX)</div>
+          <div class="mcard-val" id="m-sox">Loading…</div>
+          <div class="mcard-desc" id="m-sox-d">PHLX Semi Index</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="sec-hd">
+        <h2>📰 AI / Semiconductor News</h2>
+        <span class="badge badge-purple">Updated</span>
+      </div>
+      <div class="news-list" id="newsList"></div>
+    </section>
+  </div>
+
+  <hr class="div">
+
+  <!-- ─── TRADING OPINIONS ─── -->
+  <section class="section">
+    <div class="sec-hd">
+      <h2>💬 Trading Opinions Board</h2>
+      <span class="badge badge-blue">Friends</span>
+    </div>
+    <div class="cmts-wrap">
+      <div class="cmts-input-box">
+        <textarea id="cTxt" placeholder="여기에 분석 의견을 남겨보세요&#10;예) NVDA $850 지지선 확인. Blackwell 출하량 서프라이즈 기대 — 단기 롱 관심&#10;예) PLTR 정부 계약 모멘텀 강함. 주봉 상승채널 유지 중"></textarea>
+        <div class="cmts-controls">
+          <input type="text" class="inp-name" id="cName" placeholder="이름 (예: Daniel)" />
+          <select class="inp-sel" id="cOp">
+            <option value="watch">👀 Watch</option>
+            <option value="buy">🟢 Buy / Long</option>
+            <option value="hold">🟡 Hold</option>
+            <option value="sell">🔴 Sell / Short</option>
+          </select>
+          <select class="inp-ticker" id="cTicker">
+            <option value="">종목 선택</option>
+            <option value="PLTR">PLTR</option>
+            <option value="GOOGL">GOOGL</option>
+            <option value="NVDA">NVDA</option>
+            <option value="TSLA">TSLA</option>
+            <option value="전체">전체 시장</option>
+          </select>
+          <button class="btn-post" onclick="postComment()">📝 Post</button>
+        </div>
+      </div>
+      <div class="cmts-list" id="cmtsList"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  📊 Daniel's AI/Semiconductor Trading Dashboard · Data via Yahoo Finance · All content is for reference only and does not constitute investment advice · Built on GitHub Pages
+</footer>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const STOCKS = [
+  { sym:'PLTR',  name:'Palantir Technologies', tag:'ai',   emoji:'🔮', accent:'#8b5cf6' },
+  { sym:'GOOGL', name:'Alphabet Inc.',          tag:'data', emoji:'🔍', accent:'#f59e0b' },
+  { sym:'NVDA',  name:'NVIDIA Corporation',     tag:'semi', emoji:'⚡', accent:'#3b82f6' },
+  { sym:'TSLA',  name:'Tesla Inc.',             tag:'ev',   emoji:'🚗', accent:'#10b981' },
+];
+
+const MKT_SYMS = ['^GSPC','^IXIC','^VIX','^SOX','QQQ','USDKRW=X','^TNX'];
+
+// ─── NEWS DATA — GitHub에서 이 배열을 수정해서 업데이트하세요 ───
+const NEWS = [
+  { hl:'NVIDIA Reports Record Q1 2026 Earnings — Blackwell GPU Demand Surges Past Estimates', src:'CNBC', time:'2h ago', tag:'bull', url:'https://www.cnbc.com/technology/' },
+  { hl:'Palantir Wins $480M Expanded US Army AI Data Platform Contract', src:'Reuters', time:'4h ago', tag:'bull', url:'https://www.reuters.com/technology/' },
+  { hl:'Alphabet Google DeepMind Unveils Gemini 2.5 Pro — SOTA on Coding & Math Benchmarks', src:'The Verge', time:'5h ago', tag:'bull', url:'https://www.theverge.com' },
+  { hl:'Semiconductor Equipment Orders Up 28% YoY: AMAT, ASML, LRCX See Strong Bookings', src:'Bloomberg', time:'7h ago', tag:'watch', url:'https://www.bloomberg.com/technology' },
+  { hl:'Tesla FSD Unsupervised Miles Hit 10M Milestone — Robotaxi Austin Launch Q3 2026', src:'Electrek', time:'10h ago', tag:'bull', url:'https://electrek.co' },
+  { hl:'Fed Minutes: "Higher for Longer" Stance Intact — Rate Cut Not Expected Until H2 2026', src:'WSJ', time:'14h ago', tag:'bear', url:'https://www.wsj.com/economy' },
+];
+
+const PROXIES = [
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+];
+
+let _charts = {};
+
+// ══════════════════════════════════════════════
+// FETCH
+// ══════════════════════════════════════════════
+async function yFetch(url) {
+  for (const px of PROXIES) {
+    try {
+      const r = await fetch(px(url), { signal: AbortSignal.timeout(9000) });
+      if (!r.ok) continue;
+      return JSON.parse(await r.text());
+    } catch {}
+  }
+  throw new Error('API unavailable');
+}
+
+async function getQuotes(syms) {
+  const d = await yFetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms.join(',')}&lang=en-US&region=US`);
+  return d?.quoteResponse?.result || [];
+}
+
+async function getChart(sym) {
+  const d = await yFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`);
+  const r = d?.chart?.result?.[0];
+  if (!r) return null;
+  const closes = r.indicators?.quote?.[0]?.close || [];
+  const ts = r.timestamp || [];
+  return ts.map((t,i) => ({
+    lbl: new Date(t*1000).toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    p: closes[i] ? +closes[i].toFixed(2) : null
+  })).filter(x => x.p !== null);
+}
+
+// ══════════════════════════════════════════════
+// RENDER — MARKET STRIP + MACRO
+// ══════════════════════════════════════════════
+function fmtChg(v) {
+  if (v == null) return '—';
+  const s = v >= 0 ? '+' : '';
+  return `${s}${v.toFixed(2)}%`;
+}
+function cls(v) { return v >= 0 ? 'up' : 'dn'; }
+
+function renderStrip(qs) {
+  const map = {
+    '^GSPC' :['ms-sp','mc-sp'],  '^IXIC':['ms-nq','mc-nq'],
+    '^VIX'  :['ms-vix','mc-vix'],'^SOX' :['ms-sox','mc-sox'],
+    'QQQ'   :['ms-qqq','mc-qqq'],'USDKRW=X':['ms-krw','mc-krw'],
+    '^TNX'  :['ms-tnx','mc-tnx'],
+  };
+  qs.forEach(q => {
+    const ids = map[q.symbol]; if(!ids) return;
+    const p = q.regularMarketPrice, c = q.regularMarketChangePercent;
+    const isKRW = q.symbol === 'USDKRW=X';
+    const isTNX = q.symbol === '^TNX';
+    const pe = document.getElementById(ids[0]);
+    const ce = document.getElementById(ids[1]);
+    if (pe) pe.textContent = isKRW ? p?.toFixed(0) : isTNX ? `${p?.toFixed(2)}%` : p?.toFixed(2);
+    if (ce) { ce.textContent = fmtChg(c); ce.className = `mitem-chg ${cls(c)}`; }
+
+    // Macro cards
+    if (q.symbol === '^VIX') {
+      const el = document.getElementById('m-vix');
+      const dl = document.getElementById('m-vix-d');
+      if (el) { el.textContent = p?.toFixed(2); el.style.color = p>25?'#ef4444':p>18?'#f59e0b':'#10b981'; }
+      if (dl) dl.textContent = p>25?'⚠️ High Fear':p>18?'😐 Moderate':'✅ Low Fear (Risk-On)';
+    }
+    if (q.symbol === '^TNX') {
+      const el = document.getElementById('m-tnx');
+      const dl = document.getElementById('m-tnx-d');
+      if (el) el.textContent = `${p?.toFixed(2)}%`;
+      if (dl) dl.textContent = p>4.5?'⚠️ High — pressure on growth stocks':p>4?'📊 Elevated — watch closely':'✅ Moderate';
+    }
+    if (q.symbol === 'USDKRW=X') {
+      const el = document.getElementById('m-krw');
+      if (el) el.textContent = p?.toFixed(0);
+    }
+    if (q.symbol === '^SOX') {
+      const el = document.getElementById('m-sox');
+      const dl = document.getElementById('m-sox-d');
+      if (el) el.textContent = p?.toFixed(2);
+      if (dl) dl.textContent = `${fmtChg(c)} · PHLX Semi Index`;
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER — STOCK CARDS
+// ══════════════════════════════════════════════
+function fmtPrice(n) { return n != null ? `$${n.toFixed(2)}` : '—'; }
+function fmtBig(n) {
+  if (!n) return '—';
+  if (n >= 1e12) return `$${(n/1e12).toFixed(2)}T`;
+  if (n >= 1e9)  return `$${(n/1e9).toFixed(1)}B`;
+  return `$${n.toFixed(0)}`;
+}
+function fmtVol(n) {
+  if (!n) return '—';
+  if (n >= 1e9) return `${(n/1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n/1e6).toFixed(1)}M`;
+  return `${(n/1e3).toFixed(0)}K`;
+}
+
+function initCards() {
+  const g = document.getElementById('wlGrid');
+  g.innerHTML = '';
+  STOCKS.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'scard'; d.id = `sc-${s.sym}`;
+    d.style.setProperty('--c-accent', s.accent);
+    d.innerHTML = `
+      <div class="scard-top">
+        <div>
+          <div class="scard-sym">${s.emoji} ${s.sym}</div>
+          <div class="scard-name">${s.name}</div>
+        </div>
+        <span class="tag tag-${s.tag}">${s.tag.toUpperCase()}</span>
+      </div>
+      <div class="scard-price" id="sp-${s.sym}"><span class="sk" style="display:inline-block;width:110px;height:30px">&nbsp;</span></div>
+      <div class="scard-chg" id="sc2-${s.sym}"><span class="sk" style="display:inline-block;width:90px;height:18px">&nbsp;</span></div>
+      <div class="minich"><canvas id="ch-${s.sym}"></canvas></div>
+      <div class="scard-metrics">
+        <div class="met"><span class="met-lbl">52W High</span><span class="met-val" id="sh-${s.sym}">—</span></div>
+        <div class="met"><span class="met-lbl">52W Low</span><span class="met-val" id="sl-${s.sym}">—</span></div>
+        <div class="met"><span class="met-lbl">Market Cap</span><span class="met-val" id="sm-${s.sym}">—</span></div>
+        <div class="met"><span class="met-lbl">Volume</span><span class="met-val" id="sv-${s.sym}">—</span></div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+function updateCard(q) {
+  const s = q.symbol;
+  const p = q.regularMarketPrice, chg = q.regularMarketChange, pct = q.regularMarketChangePercent;
+  const isUp = chg >= 0;
+
+  const pe = document.getElementById(`sp-${s}`);
+  if (pe) pe.textContent = `$${p?.toFixed(2)}`;
+
+  const ce = document.getElementById(`sc2-${s}`);
+  if (ce) ce.innerHTML = `
+    <span class="chg-amt ${isUp?'up':'dn'}">${isUp?'+':''}$${chg?.toFixed(2)}</span>
+    <span class="chg-pct ${isUp?'up':'dn'}">${isUp?'+':''}${pct?.toFixed(2)}%</span>`;
+
+  const h = document.getElementById(`sh-${s}`); if(h) h.textContent = fmtPrice(q.fiftyTwoWeekHigh);
+  const l = document.getElementById(`sl-${s}`); if(l) l.textContent = fmtPrice(q.fiftyTwoWeekLow);
+  const m = document.getElementById(`sm-${s}`); if(m) m.textContent = fmtBig(q.marketCap);
+  const v = document.getElementById(`sv-${s}`); if(v) v.textContent = fmtVol(q.regularMarketVolume);
+}
+
+function renderChart(sym, data) {
+  const canvas = document.getElementById(`ch-${sym}`);
+  if (!canvas || !data || data.length < 2) return;
+  if (_charts[sym]) _charts[sym].destroy();
+  const prices = data.map(d => d.p);
+  const isUp = prices.at(-1) >= prices[0];
+  const color = isUp ? '#10b981' : '#ef4444';
+  _charts[sym] = new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels: data.map(d=>d.lbl), datasets:[{
+      data: prices, borderColor: color, borderWidth:2.5, fill:true,
+      backgroundColor: ctx => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,56);
+        g.addColorStop(0, isUp?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)');
+        g.addColorStop(1,'rgba(0,0,0,0)');
+        return g;
+      },
+      tension:.4, pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:color
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{
+        mode:'index', intersect:false,
+        callbacks:{ label: c=>`$${c.raw.toFixed(2)}` }
+      }},
+      scales:{ x:{display:false}, y:{display:false} },
+      animation:{duration:400}
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER — NEWS
+// ══════════════════════════════════════════════
+function renderNews() {
+  const tagMap = { bull:'bull', bear:'bear', neu:'neu', watch:'watch' };
+  const labelMap = { bull:'Bullish', bear:'Bearish', neu:'Neutral', watch:'Watchlist' };
+  document.getElementById('newsList').innerHTML = NEWS.map(n => `
+    <a href="${n.url}" target="_blank" rel="noopener" class="ncard">
+      <div class="ncard-hl">${n.hl}</div>
+      <div class="ncard-meta">
+        <span class="nsrc">${n.src}</span>
+        <span class="ntime">${n.time}</span>
+        <span class="ntag ntag-${tagMap[n.tag]||'neu'}">${labelMap[n.tag]||n.tag}</span>
+      </div>
+    </a>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// COMMENTS
+// ══════════════════════════════════════════════
+const AVCOLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+function avColor(name) {
+  let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))%AVCOLORS.length;
+  return AVCOLORS[h];
+}
+function loadCmts() {
+  try { return JSON.parse(localStorage.getItem('td_cmts')||'[]'); } catch { return []; }
+}
+function saveCmts(a) { localStorage.setItem('td_cmts', JSON.stringify(a)); }
+function renderCmts() {
+  let list = loadCmts();
+  if (!list.length) {
+    list = [{
+      id:1, author:'Daniel', op:'buy', ticker:'NVDA',
+      text:'NVDA Blackwell 출하 모멘텀 + GB300 수요 강함. $850 지지 확인 시 추가 매수 고려. 목표 $1,100.',
+      time:'2026-04-10 09:30', color:'#3b82f6'
+    }];
+    saveCmts(list);
+  }
+  const el = document.getElementById('cmtsList');
+  el.innerHTML = [...list].reverse().map(c => `
+    <div class="citem">
+      <div class="citem-hd">
+        <div class="cav" style="background:${c.color}">${c.author.charAt(0).toUpperCase()}</div>
+        <span class="cauth">${c.author}</span>
+        ${c.ticker ? `<span class="cticker">${c.ticker}</span>` : ''}
+        <span class="cop cop-${c.op}">${c.op.toUpperCase()}</span>
+        <span class="ctime">${c.time}</span>
+      </div>
+      <div class="cbody">${c.text}</div>
+    </div>`).join('');
+}
+function postComment() {
+  const txt = document.getElementById('cTxt').value.trim();
+  const name = document.getElementById('cName').value.trim() || 'Anonymous';
+  const op = document.getElementById('cOp').value;
+  const ticker = document.getElementById('cTicker').value;
+  if (!txt) { alert('의견을 입력해주세요!'); return; }
+  const list = loadCmts();
+  list.push({
+    id: Date.now(), author:name, op, ticker, text:txt, color:avColor(name),
+    time: new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+  });
+  saveCmts(list);
+  renderCmts();
+  document.getElementById('cTxt').value = '';
+}
+
+// ══════════════════════════════════════════════
+// MAIN LOAD
+// ══════════════════════════════════════════════
+async function loadAll() {
+  const btn = document.getElementById('btnRefresh');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> Loading…';
+
+  try {
+    const allSyms = [...STOCKS.map(s=>s.sym), ...MKT_SYMS];
+    const quotes = await getQuotes(allSyms);
+
+    renderStrip(quotes.filter(q => MKT_SYMS.includes(q.symbol)));
+    STOCKS.forEach(s => {
+      const q = quotes.find(x=>x.symbol===s.sym);
+      if (q) updateCard(q);
+    });
+
+    // Charts — parallel
+    await Promise.allSettled(STOCKS.map(async s => {
+      const cd = await getChart(s.sym);
+      if (cd) renderChart(s.sym, cd);
+    }));
+
+    document.getElementById('updTime').textContent =
+      `Updated: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
+
+    const ib = document.getElementById('infoBox');
+    ib.className = 'infobox';
+    ib.innerHTML = '✅ <strong>Live Data Loaded</strong> · Yahoo Finance (15–20min delay) · 5분마다 자동 새로고침';
+
+  } catch(e) {
+    console.warn('Load error:', e);
+    const ib = document.getElementById('infoBox');
+    ib.className = 'infobox warn';
+    ib.innerHTML = `⚠️ <strong>API 연결 실패</strong> — 시장 마감 시간이거나 네트워크 문제일 수 있습니다. Refresh 버튼을 눌러 재시도하세요. (${e.message})`;
+    document.getElementById('updTime').textContent = `Error at ${new Date().toLocaleTimeString()}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔄 Refresh';
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+initCards();
+renderNews();
+renderCmts();
+loadAll();
+setInterval(loadAll, 5 * 60 * 1000); // auto-refresh every 5 min
+</script>
+</body>
+</html>
