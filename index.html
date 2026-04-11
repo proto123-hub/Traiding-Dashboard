@@ -378,6 +378,12 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
         {"description":"SNOW","proName":"NYSE:SNOW"},
         {"description":"RKLB","proName":"NASDAQ:RKLB"},
         {"description":"CRWD","proName":"NASDAQ:CRWD"},
+        {"description":"AMD","proName":"NASDAQ:AMD"},
+        {"description":"AVGO","proName":"NASDAQ:AVGO"},
+        {"description":"MU","proName":"NASDAQ:MU"},
+        {"description":"MRVL","proName":"NASDAQ:MRVL"},
+        {"description":"LITE","proName":"NASDAQ:LITE"},
+        {"description":"SNDK","proName":"NASDAQ:SNDK"},
         {"description":"S&P 500","proName":"FOREXCOM:SPXUSD"},
         {"description":"NASDAQ","proName":"NASDAQ:QQQ"},
         {"description":"VIX","proName":"CBOE:VIX"},
@@ -567,6 +573,12 @@ const STOCKS = [
   { sym:'SNOW',  name:'Snowflake Inc.',           tag:'data',   emoji:'❄️', accent:'#7dd3fc', exchange:'NYSE' },
   { sym:'RKLB',  name:'Rocket Lab USA',           tag:'space',  emoji:'🚀', accent:'#fb923c', exchange:'NASDAQ' },
   { sym:'CRWD',  name:'CrowdStrike Holdings',     tag:'cyber',  emoji:'🛡️', accent:'#a3e635', exchange:'NASDAQ' },
+  { sym:'AMD',   name:'Advanced Micro Devices',   tag:'semi',   emoji:'🔴', accent:'#ed1c24', exchange:'NASDAQ' },
+  { sym:'AVGO',  name:'Broadcom Inc.',            tag:'semi',   emoji:'🔷', accent:'#cc092f', exchange:'NASDAQ' },
+  { sym:'MU',    name:'Micron Technology',         tag:'semi',   emoji:'💾', accent:'#00549f', exchange:'NASDAQ' },
+  { sym:'MRVL',  name:'Marvell Technology',        tag:'data',   emoji:'🟢', accent:'#8dc63f', exchange:'NASDAQ' },
+  { sym:'LITE',  name:'Lumentum Holdings',         tag:'data',   emoji:'💡', accent:'#ff6f00', exchange:'NASDAQ' },
+  { sym:'SNDK',  name:'SanDisk Corporation',       tag:'semi',   emoji:'💿', accent:'#e4002b', exchange:'NASDAQ' },
 ];
 
 const MKT_SYMS = ['^GSPC','^IXIC','^VIX','^SOX','QQQ','USDKRW=X','^TNX'];
@@ -591,6 +603,12 @@ const MOCK_QUOTES = {
   'SNOW' :{ symbol:'SNOW', regularMarketPrice:132.24, regularMarketChange:-0.70, regularMarketChangePercent:-0.53, fiftyTwoWeekHigh:237.72, fiftyTwoWeekLow:107.13,marketCap:44e9,   regularMarketVolume:5e6   },
   'RKLB' :{ symbol:'RKLB', regularMarketPrice:66.74,  regularMarketChange:0.88,  regularMarketChangePercent:1.34,  fiftyTwoWeekHigh:73.70,  fiftyTwoWeekLow:4.99,  marketCap:30.8e9, regularMarketVolume:18e6  },
   'CRWD' :{ symbol:'CRWD', regularMarketPrice:437.83, regularMarketChange:-3.15, regularMarketChangePercent:-0.71, fiftyTwoWeekHigh:562.83, fiftyTwoWeekLow:194.50,marketCap:107e9,  regularMarketVolume:4e6   },
+  'AMD'  :{ symbol:'AMD',  regularMarketPrice:245.04, regularMarketChange:3.55,  regularMarketChangePercent:1.47,  fiftyTwoWeekHigh:267.08, fiftyTwoWeekLow:83.75, marketCap:397e9,  regularMarketVolume:42e6  },
+  'AVGO' :{ symbol:'AVGO', regularMarketPrice:371.55, regularMarketChange:4.69,  regularMarketChangePercent:1.28,  fiftyTwoWeekHigh:414.61, fiftyTwoWeekLow:161.62,marketCap:1.72e12,regularMarketVolume:18e6  },
+  'MU'   :{ symbol:'MU',   regularMarketPrice:420.59, regularMarketChange:-0.22, regularMarketChangePercent:-0.05, fiftyTwoWeekHigh:471.34, fiftyTwoWeekLow:65.65, marketCap:467e9,  regularMarketVolume:12e6  },
+  'MRVL' :{ symbol:'MRVL', regularMarketPrice:128.49, regularMarketChange:7.21,  regularMarketChangePercent:5.95,  fiftyTwoWeekHigh:129.84, fiftyTwoWeekLow:48.09, marketCap:111e9,  regularMarketVolume:25e6  },
+  'LITE' :{ symbol:'LITE', regularMarketPrice:897.30, regularMarketChange:0.35,  regularMarketChangePercent:0.04,  fiftyTwoWeekHigh:960.00, fiftyTwoWeekLow:49.13, marketCap:57e9,   regularMarketVolume:3e6   },
+  'SNDK' :{ symbol:'SNDK', regularMarketPrice:851.77, regularMarketChange:0.45,  regularMarketChangePercent:0.05,  fiftyTwoWeekHigh:883.14, fiftyTwoWeekLow:418.62,marketCap:68e9,   regularMarketVolume:2e6   },
   '^GSPC':{ symbol:'^GSPC',regularMarketPrice:5204.34,regularMarketChange:-42.1, regularMarketChangePercent:-0.80 },
   '^IXIC':{ symbol:'^IXIC',regularMarketPrice:16141.0,regularMarketChange:-91.2, regularMarketChangePercent:-0.56 },
   '^VIX' :{ symbol:'^VIX', regularMarketPrice:19.33,  regularMarketChange:-0.82, regularMarketChangePercent:-4.07 },
@@ -612,6 +630,12 @@ const MOCK_CHART = {
   'SNOW' :[135.4,134.2,133.1,132.8,132.24],
   'RKLB' :[69.8, 68.5, 67.4, 67.1, 66.74 ],
   'CRWD' :[444.2,442.5,440.1,439.0,437.83],
+  'AMD'  :[238.5,240.2,242.8,244.1,245.04],
+  'AVGO' :[364.2,366.8,368.5,370.1,371.55],
+  'MU'   :[425.1,423.8,422.1,421.0,420.59],
+  'MRVL' :[118.5,121.2,124.8,126.5,128.49],
+  'LITE' :[892.4,894.1,895.8,896.5,897.30],
+  'SNDK' :[848.2,849.5,850.3,851.1,851.77],
 };
 
 let _charts = {}, _usingMock = false, _currentFilter = 'all', _lastRefreshTime = null;
