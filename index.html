@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI/Semi Trading Dashboard — Daniel's Watchlist</title>
+<title>AI/Semi Trading Dashboard V2 — Daniel's Watchlist</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -43,6 +43,7 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
 .upd-time { font-size:.72rem; color:var(--txt3); }
+.countdown { font-size:.65rem; color:var(--txt3); margin-left:8px; }
 .btn-refresh {
   background: linear-gradient(135deg,#1d4ed8,#2563eb);
   color:#fff; border:none; padding:8px 18px; border-radius:8px;
@@ -53,6 +54,7 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .btn-refresh:disabled { opacity:.6; cursor:not-allowed; transform:none; }
 .spin { animation:spin .8s linear infinite; display:inline-block; }
 @keyframes spin { to{transform:rotate(360deg)} }
+.v2-label { font-size:.6rem; color:var(--purple); font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-left:8px; }
 
 /* ─── MARKET STRIP ─── */
 .mstrip {
@@ -65,6 +67,37 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .mitem-price { font-size:.85rem; font-weight:700; color:var(--txt); }
 .mitem-chg { font-size:.72rem; font-weight:600; }
 .up { color:var(--green); } .dn { color:var(--red); } .neu { color:var(--txt3); }
+
+/* ─── TRADINGVIEW TICKER TAPE ─── */
+.tv-tape-container {
+  background:#0a1220; border-bottom:1px solid var(--border);
+  padding:8px 28px;
+}
+.tradingview-widget-container {
+  width:100%;
+}
+
+/* ─── SECTOR FILTER TABS ─── */
+.sector-tabs {
+  background:#0a1220; border-bottom:1px solid var(--border);
+  padding:14px 28px; display:flex; gap:8px; flex-wrap:wrap;
+}
+.tab-btn {
+  padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+  background:var(--bg-card); color:var(--txt2); font-size:.78rem; font-weight:600;
+  cursor:pointer; transition:all .2s; text-transform:uppercase; letter-spacing:.4px;
+}
+.tab-btn:hover { border-color:var(--blue); background:var(--bg-card2); }
+.tab-btn.active {
+  background:var(--blue); color:#fff; border-color:var(--blue);
+}
+.tab-btn.ai { color:#a78bfa; }
+.tab-btn.semi { color:#60a5fa; }
+.tab-btn.ev { color:#34d399; }
+.tab-btn.data { color:#fbbf24; }
+.tab-btn.cyber { color:#a3e635; }
+.tab-btn.space { color:#fb923c; }
+.tab-btn.all { color:var(--txt); }
 
 /* ─── MAIN ─── */
 .main { max-width:1380px; margin:0 auto; padding:24px 28px; }
@@ -97,6 +130,7 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
   background:var(--c-accent,var(--blue)); border-radius:16px 16px 0 0;
 }
 .scard:hover { border-color:rgba(59,130,246,.4); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,.4); }
+.scard.hidden { display:none; }
 
 .scard-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
 .scard-sym { font-size:1.1rem; font-weight:800; color:var(--txt); }
@@ -118,6 +152,19 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .chg-pct.dn { background:rgba(239,68,68,.12); }
 
 .minich { height:56px; margin:12px 0; position:relative; }
+
+/* ─── ENTRY ZONE BAR ─── */
+.entry-zone-container { margin:10px 0; }
+.entry-zone-label { font-size:.62rem; color:var(--txt3); margin-bottom:4px; font-weight:600; }
+.entry-zone-bar {
+  height:22px; background:#2a3d5a; border-radius:4px; position:relative;
+  overflow:hidden; border:1px solid var(--border);
+}
+.entry-zone-bg { height:100%; background:linear-gradient(90deg,rgba(42,61,90,.5),rgba(42,61,90,.3)); }
+.entry-zone-entry { position:absolute; height:100%; background:rgba(16,185,129,.3); left:0; }
+.entry-zone-cur { position:absolute; width:2px; height:100%; background:var(--blue); top:0; }
+.entry-zone-tgt { position:absolute; width:2px; height:100%; background:var(--yellow); top:0; }
+.entry-zone-stop { position:absolute; width:2px; height:100%; background:var(--red); top:0; }
 
 .scard-metrics {
   display:grid; grid-template-columns:1fr 1fr; gap:8px;
@@ -149,6 +196,35 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .gs-action-wrap.gs-scale { background:rgba(139,92,246,.12); color:#a78bfa; }
 .gs-source { font-size:.58rem; color:var(--txt3); text-align:right; margin-top:3px; }
 
+/* ─── DETAIL PANEL ─── */
+.detail-panel {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:300;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+}
+.detail-panel.open { display:flex; align-items:center; justify-content:center; }
+.detail-content {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:16px;
+  width:90%; max-width:1200px; max-height:90vh; overflow-y:auto;
+  position:relative;
+}
+.detail-close {
+  position:absolute; top:16px; right:16px; width:32px; height:32px;
+  background:var(--border); border:none; border-radius:50%; cursor:pointer;
+  font-size:18px; color:var(--txt); z-index:10; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.detail-close:hover { background:var(--red); }
+.detail-header {
+  padding:24px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:16px;
+}
+.detail-header .scard-sym { font-size:1.5rem; }
+.detail-body {
+  padding:24px; display:grid; grid-template-columns:60% 40%; gap:24px;
+}
+#tv-chart-container { height:500px; }
+#tv-ta-container { height:500px; }
+
 /* ─── SKEL ─── */
 .sk {
   background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-card2) 50%,var(--bg-card) 75%);
@@ -170,23 +246,11 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .mcard-val { font-size:1.4rem; font-weight:800; color:var(--txt); }
 .mcard-desc { font-size:.72rem; color:var(--txt2); margin-top:4px; }
 
-/* ─── NEWS ─── */
-.news-list { display:flex; flex-direction:column; gap:10px; }
-.ncard {
+/* ─── NEWS / TIMELINE ─── */
+.news-container {
   background:var(--bg-card); border:1px solid var(--border);
-  border-radius:12px; padding:14px; text-decoration:none;
-  display:block; transition:all .2s; color:inherit;
+  border-radius:16px; padding:16px; min-height:400px;
 }
-.ncard:hover { border-color:rgba(59,130,246,.35); background:var(--bg-card2); }
-.ncard-hl { font-size:.83rem; font-weight:500; color:var(--txt); line-height:1.45; margin-bottom:7px; }
-.ncard-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.nsrc { font-size:.68rem; color:var(--blue); font-weight:700; }
-.ntime { font-size:.68rem; color:var(--txt3); }
-.ntag { font-size:.62rem; padding:2px 7px; border-radius:4px; font-weight:700; }
-.ntag-bull { background:rgba(16,185,129,.12); color:#34d399; }
-.ntag-bear { background:rgba(239,68,68,.12); color:#f87171; }
-.ntag-neu  { background:rgba(107,114,128,.12); color:#9ca3af; }
-.ntag-watch{ background:rgba(59,130,246,.12); color:#60a5fa; }
 
 /* ─── DIVIDER ─── */
 hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
@@ -254,43 +318,18 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 .cbody { font-size:.83rem; color:var(--txt2); line-height:1.55; }
 .no-cmts { text-align:center; padding:28px; color:var(--txt3); font-size:.85rem; }
 
-/* ─── SETUP GUIDE ─── */
-.guide-wrap {
-  background:var(--bg-card); border:1px solid var(--border);
-  border-radius:16px; padding:24px; margin-bottom:28px;
-}
-.guide-wrap summary {
-  cursor:pointer; font-size:.95rem; font-weight:700;
-  color:var(--txt); list-style:none; display:flex; align-items:center; gap:8px;
-  user-select:none;
-}
-.guide-wrap summary::-webkit-details-marker { display:none; }
-.guide-wrap[open] summary::after { transform:rotate(180deg); }
-.guide-wrap summary::after {
-  content:'▼'; font-size:.7rem; color:var(--txt3); margin-left:auto;
-  transition:transform .2s; display:inline-block;
-}
-.guide-body { margin-top:18px; }
-.step { display:flex; gap:14px; margin-bottom:16px; }
-.step-num {
-  width:28px; height:28px; border-radius:50%; flex-shrink:0;
-  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
-  display:flex; align-items:center; justify-content:center;
-  font-size:.75rem; font-weight:800; color:#fff;
-}
-.step-body { flex:1; }
-.step-title { font-size:.88rem; font-weight:700; color:var(--txt); margin-bottom:4px; }
-.step-desc { font-size:.78rem; color:var(--txt2); line-height:1.5; }
-.code-block {
-  background:var(--bg); border:1px solid var(--border); border-radius:8px;
-  padding:10px 14px; margin-top:8px; font-family:'Courier New',monospace;
-  font-size:.78rem; color:#34d399; overflow-x:auto; white-space:nowrap;
-}
-
 /* ─── FOOTER ─── */
 .footer {
   border-top:1px solid var(--border); padding:20px 28px;
   text-align:center; color:var(--txt3); font-size:.72rem;
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px) {
+  .sector-tabs { flex-direction:column; }
+  .tab-btn { width:100%; }
+  .detail-body { grid-template-columns:1fr; }
+  #tv-chart-container, #tv-ta-container { height:300px; }
 }
 </style>
 </head>
@@ -299,12 +338,13 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 <!-- ═══ HEADER ═══ -->
 <header class="header">
   <div>
-    <div class="header-title">⚡ AI / Semiconductor Trading Dashboard</div>
+    <div class="header-title">⚡ AI / Semiconductor Trading Dashboard <span class="v2-label">V2</span></div>
     <div class="header-sub">PLTR · GOOGL · NVDA · TSLA — Daniel's Watchlist · For Reference Only</div>
   </div>
   <div class="header-right">
     <div class="live-dot"></div>
     <span class="upd-time" id="updTime">Connecting...</span>
+    <span class="countdown" id="countdown"></span>
     <button class="btn-refresh" id="btnRefresh" onclick="loadAll()">🔄 Refresh</button>
   </div>
 </header>
@@ -320,61 +360,52 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
   <div class="mitem"><span class="mitem-name">US 10Y</span><span class="mitem-price" id="ms-tnx">—</span><span class="mitem-chg neu" id="mc-tnx">—</span></div>
 </div>
 
+<!-- ═══ TRADINGVIEW TICKER TAPE ═══ -->
+<div class="tv-tape-container">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {
+      "symbols": [
+        {"description":"PLTR","proName":"NASDAQ:PLTR"},
+        {"description":"GOOGL","proName":"NASDAQ:GOOGL"},
+        {"description":"NVDA","proName":"NASDAQ:NVDA"},
+        {"description":"TSLA","proName":"NASDAQ:TSLA"},
+        {"description":"META","proName":"NASDAQ:META"},
+        {"description":"INTC","proName":"NASDAQ:INTC"},
+        {"description":"ORCL","proName":"NYSE:ORCL"},
+        {"description":"TSM","proName":"NYSE:TSM"},
+        {"description":"SNOW","proName":"NYSE:SNOW"},
+        {"description":"RKLB","proName":"NASDAQ:RKLB"},
+        {"description":"CRWD","proName":"NASDAQ:CRWD"},
+        {"description":"S&P 500","proName":"FOREXCOM:SPXUSD"},
+        {"description":"NASDAQ","proName":"NASDAQ:QQQ"},
+        {"description":"VIX","proName":"CBOE:VIX"},
+        {"description":"SOX","proName":"NASDAQ:SOXX"}
+      ],
+      "showSymbolLogo": true,
+      "isTransparent": true,
+      "displayMode": "adaptive",
+      "colorTheme": "dark",
+      "locale": "en"
+    }
+    </script>
+  </div>
+</div>
+
+<!-- ═══ SECTOR FILTER TABS ═══ -->
+<div class="sector-tabs">
+  <button class="tab-btn all active" onclick="filterStocks('all')">All</button>
+  <button class="tab-btn ai" onclick="filterStocks('ai')">AI</button>
+  <button class="tab-btn semi" onclick="filterStocks('semi')">Semi</button>
+  <button class="tab-btn ev" onclick="filterStocks('ev')">EV</button>
+  <button class="tab-btn data" onclick="filterStocks('data')">Data</button>
+  <button class="tab-btn cyber" onclick="filterStocks('cyber')">Cyber</button>
+  <button class="tab-btn space" onclick="filterStocks('space')">Space</button>
+</div>
+
 <!-- ═══ MAIN ═══ -->
 <main class="main">
-
-  <!-- GitHub Pages Setup Guide (collapsible) -->
-  <details class="guide-wrap" style="margin-bottom:24px;">
-    <summary>🚀 GitHub Pages 배포 가이드 — 처음 설정하는 방법 (클릭해서 펼치기)</summary>
-    <div class="guide-body">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <div class="step-title">GitHub 계정 만들기 / 로그인</div>
-          <div class="step-desc"><a href="https://github.com" target="_blank" style="color:var(--blue)">github.com</a>에서 무료 계정을 만드세요. 친구들도 계정이 있으면 댓글 기능 이용 가능합니다.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <div class="step-title">New Repository 생성</div>
-          <div class="step-desc">우측 상단 "+" → "New repository" 클릭. 이름을 <strong style="color:var(--txt)">trading-dashboard</strong>로 설정하고 <strong style="color:var(--txt)">Public</strong>으로 만드세요.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <div class="step-title">이 HTML 파일 업로드</div>
-          <div class="step-desc">Repository 메인 페이지에서 "Add file" → "Upload files" 클릭. 이 HTML 파일을 <strong style="color:var(--txt)">index.html</strong>로 이름 바꿔서 업로드하세요.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
-          <div class="step-title">GitHub Pages 활성화</div>
-          <div class="step-desc">Repository → <strong style="color:var(--txt)">Settings</strong> → 왼쪽 메뉴 <strong style="color:var(--txt)">Pages</strong> → Source: <strong style="color:var(--txt)">Deploy from a branch</strong> → Branch: <strong style="color:var(--txt)">main</strong> → Save</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-body">
-          <div class="step-title">링크 공유!</div>
-          <div class="step-desc">1~2분 후 아래 주소로 접근 가능합니다. 친구들에게 이 링크를 공유하세요!</div>
-          <div class="code-block">https://YOUR_GITHUB_USERNAME.github.io/trading-dashboard/</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">6</div>
-        <div class="step-body">
-          <div class="step-title">뉴스 업데이트 방법</div>
-          <div class="step-desc">GitHub에서 직접 index.html 파일의 <code style="color:var(--yellow)">NEWS_DATA</code> 배열을 수정하면 즉시 업데이트됩니다. 주가는 자동으로 실시간 로드됩니다.</div>
-        </div>
-      </div>
-      <div style="background:rgba(16,185,129,.06); border:1px solid rgba(16,185,129,.2); border-radius:10px; padding:14px; margin-top:8px; font-size:.78rem; color:#86efac; line-height:1.6;">
-        💡 <strong>팁:</strong> 친구들이 "Trading Opinions" 섹션에서 의견을 남기면 각자 브라우저에 저장됩니다. 서로 같은 화면을 보면서 화상통화나 카톡으로 의견을 나누는 방식도 좋습니다!
-      </div>
-    </div>
-  </details>
 
   <!-- ─── WATCHLIST ─── -->
   <section class="section">
@@ -387,6 +418,20 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
     </div>
     <div class="wl-grid" id="wlGrid"></div>
   </section>
+
+  <!-- ─── STOCK DETAIL PANEL ─── -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-content">
+      <button class="detail-close" onclick="closeDetailPanel()">✕</button>
+      <div class="detail-header">
+        <div id="detailHeader"></div>
+      </div>
+      <div class="detail-body">
+        <div id="tv-chart-container"></div>
+        <div id="tv-ta-container"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── MACRO + NEWS ─── -->
   <div class="two-col">
@@ -429,9 +474,24 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
     <section class="section">
       <div class="sec-hd">
         <h2>📰 AI / Semiconductor News</h2>
-        <span class="badge badge-purple">Updated</span>
+        <span class="badge badge-purple">Live</span>
       </div>
-      <div class="news-list" id="newsList"></div>
+      <div class="news-container">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+          {
+            "feedMode": "all_symbols",
+            "isTransparent": true,
+            "displayMode": "regular",
+            "width": "100%",
+            "height": 400,
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -444,7 +504,6 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
       <span class="badge badge-blue" id="cmtBadge">💾 내 기기 전용</span>
     </div>
 
-    <!-- Firebase 설정 안내 (FB_DB 비어있을 때) -->
     <div id="fbGuide" style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:.78rem;color:#c4b5fd;line-height:1.7;">
       🔥 <strong>공유 댓글 설정 방법</strong> — 지금은 이 기기에만 저장됩니다. 친구들과 공유하려면:<br>
       1. <a href="https://console.firebase.google.com" target="_blank" style="color:#a78bfa">firebase.google.com</a> → 무료 프로젝트 생성 → <strong>Realtime Database</strong> 생성 (미국 서버 선택)<br>
@@ -489,7 +548,7 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 </main>
 
 <footer class="footer">
-  📊 Daniel's AI/Semiconductor Trading Dashboard · Live Data: Yahoo Finance · Analysis: Google Sheets (Daniel_AI_Stock_Tracker_V3) · All content is for reference only and does not constitute investment advice · Built on GitHub Pages
+  📊 Daniel's AI/Semiconductor Trading Dashboard V2 · Live Data: Yahoo Finance · TradingView Widgets · Analysis: Google Sheets · All content is for reference only and does not constitute investment advice · Built on GitHub Pages
 </footer>
 
 <script>
@@ -497,43 +556,30 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
 // CONFIG
 // ══════════════════════════════════════════════
 const STOCKS = [
-  { sym:'PLTR',  name:'Palantir Technologies',    tag:'ai',     emoji:'🔮', accent:'#8b5cf6' },
-  { sym:'GOOGL', name:'Alphabet Inc.',            tag:'ai',     emoji:'🔍', accent:'#f59e0b' },
-  { sym:'NVDA',  name:'NVIDIA Corporation',       tag:'semi',   emoji:'⚡', accent:'#3b82f6' },
-  { sym:'TSLA',  name:'Tesla Inc.',               tag:'ev',     emoji:'🚗', accent:'#10b981' },
-  { sym:'META',  name:'Meta Platforms',           tag:'social', emoji:'👁️', accent:'#6366f1' },
-  { sym:'INTC',  name:'Intel Corporation',        tag:'semi',   emoji:'🔵', accent:'#22d3ee' },
-  { sym:'ORCL',  name:'Oracle Corporation',       tag:'data',   emoji:'🏛️', accent:'#f97316' },
-  { sym:'TSM',   name:'Taiwan Semiconductor',     tag:'semi',   emoji:'🌐', accent:'#14b8a6' },
-  { sym:'SNOW',  name:'Snowflake Inc.',           tag:'data',   emoji:'❄️', accent:'#7dd3fc' },
-  { sym:'RKLB',  name:'Rocket Lab USA',           tag:'space',  emoji:'🚀', accent:'#fb923c' },
-  { sym:'CRWD',  name:'CrowdStrike Holdings',     tag:'cyber',  emoji:'🛡️', accent:'#a3e635' },
+  { sym:'PLTR',  name:'Palantir Technologies',    tag:'ai',     emoji:'🔮', accent:'#8b5cf6', exchange:'NASDAQ' },
+  { sym:'GOOGL', name:'Alphabet Inc.',            tag:'ai',     emoji:'🔍', accent:'#f59e0b', exchange:'NASDAQ' },
+  { sym:'NVDA',  name:'NVIDIA Corporation',       tag:'semi',   emoji:'⚡', accent:'#3b82f6', exchange:'NASDAQ' },
+  { sym:'TSLA',  name:'Tesla Inc.',               tag:'ev',     emoji:'🚗', accent:'#10b981', exchange:'NASDAQ' },
+  { sym:'META',  name:'Meta Platforms',           tag:'social', emoji:'👁️', accent:'#6366f1', exchange:'NASDAQ' },
+  { sym:'INTC',  name:'Intel Corporation',        tag:'semi',   emoji:'🔵', accent:'#22d3ee', exchange:'NASDAQ' },
+  { sym:'ORCL',  name:'Oracle Corporation',       tag:'data',   emoji:'🏛️', accent:'#f97316', exchange:'NYSE' },
+  { sym:'TSM',   name:'Taiwan Semiconductor',     tag:'semi',   emoji:'🌐', accent:'#14b8a6', exchange:'NYSE' },
+  { sym:'SNOW',  name:'Snowflake Inc.',           tag:'data',   emoji:'❄️', accent:'#7dd3fc', exchange:'NYSE' },
+  { sym:'RKLB',  name:'Rocket Lab USA',           tag:'space',  emoji:'🚀', accent:'#fb923c', exchange:'NASDAQ' },
+  { sym:'CRWD',  name:'CrowdStrike Holdings',     tag:'cyber',  emoji:'🛡️', accent:'#a3e635', exchange:'NASDAQ' },
 ];
 
 const MKT_SYMS = ['^GSPC','^IXIC','^VIX','^SOX','QQQ','USDKRW=X','^TNX'];
 
-// ─── NEWS DATA — GitHub에서 이 배열을 수정해서 업데이트하세요 ───
-const NEWS = [
-  { hl:'NVIDIA Reports Record Q1 2026 Earnings — Blackwell GPU Demand Surges Past Estimates', src:'CNBC', time:'2h ago', tag:'bull', url:'https://www.cnbc.com/technology/' },
-  { hl:'Palantir Wins $480M Expanded US Army AI Data Platform Contract', src:'Reuters', time:'4h ago', tag:'bull', url:'https://www.reuters.com/technology/' },
-  { hl:'Alphabet Google DeepMind Unveils Gemini 2.5 Pro — SOTA on Coding & Math Benchmarks', src:'The Verge', time:'5h ago', tag:'bull', url:'https://www.theverge.com' },
-  { hl:'Semiconductor Equipment Orders Up 28% YoY: AMAT, ASML, LRCX See Strong Bookings', src:'Bloomberg', time:'7h ago', tag:'watch', url:'https://www.bloomberg.com/technology' },
-  { hl:'Tesla FSD Unsupervised Miles Hit 10M Milestone — Robotaxi Austin Launch Q3 2026', src:'Electrek', time:'10h ago', tag:'bull', url:'https://electrek.co' },
-  { hl:'Fed Minutes: "Higher for Longer" Stance Intact — Rate Cut Not Expected Until H2 2026', src:'WSJ', time:'14h ago', tag:'bear', url:'https://www.wsj.com/economy' },
-];
-
-// ── 프록시 우선순위 체인 (순서대로 시도) ──
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
   u => `https://thingproxy.freeboard.io/fetch/${u}`,
-  u => u,   // 직접 시도 (마지막 수단)
+  u => u,
 ];
 
-// ── 시장 마감 시 사용할 모의 데이터 (2026-04-10 실제 종가 기준) ──
 const MOCK_QUOTES = {
-  // ─ Watchlist stocks ─
   'PLTR' :{ symbol:'PLTR', regularMarketPrice:130.54, regularMarketChange:1.85,  regularMarketChangePercent:1.44,  fiftyTwoWeekHigh:149.23, fiftyTwoWeekLow:17.46, marketCap:289e9,  regularMarketVolume:58e6  },
   'GOOGL':{ symbol:'GOOGL',regularMarketPrice:318.48, regularMarketChange:-2.14, regularMarketChangePercent:-0.67, fiftyTwoWeekHigh:382.55, fiftyTwoWeekLow:140.53,marketCap:3.82e12,regularMarketVolume:23e6  },
   'NVDA' :{ symbol:'NVDA', regularMarketPrice:183.91, regularMarketChange:4.02,  regularMarketChangePercent:2.23,  fiftyTwoWeekHigh:212.19, fiftyTwoWeekLow:95.04, marketCap:4.48e12,regularMarketVolume:116e6 },
@@ -545,7 +591,6 @@ const MOCK_QUOTES = {
   'SNOW' :{ symbol:'SNOW', regularMarketPrice:132.24, regularMarketChange:-0.70, regularMarketChangePercent:-0.53, fiftyTwoWeekHigh:237.72, fiftyTwoWeekLow:107.13,marketCap:44e9,   regularMarketVolume:5e6   },
   'RKLB' :{ symbol:'RKLB', regularMarketPrice:66.74,  regularMarketChange:0.88,  regularMarketChangePercent:1.34,  fiftyTwoWeekHigh:73.70,  fiftyTwoWeekLow:4.99,  marketCap:30.8e9, regularMarketVolume:18e6  },
   'CRWD' :{ symbol:'CRWD', regularMarketPrice:437.83, regularMarketChange:-3.15, regularMarketChangePercent:-0.71, fiftyTwoWeekHigh:562.83, fiftyTwoWeekLow:194.50,marketCap:107e9,  regularMarketVolume:4e6   },
-  // ─ Market indicators ─
   '^GSPC':{ symbol:'^GSPC',regularMarketPrice:5204.34,regularMarketChange:-42.1, regularMarketChangePercent:-0.80 },
   '^IXIC':{ symbol:'^IXIC',regularMarketPrice:16141.0,regularMarketChange:-91.2, regularMarketChangePercent:-0.56 },
   '^VIX' :{ symbol:'^VIX', regularMarketPrice:19.33,  regularMarketChange:-0.82, regularMarketChangePercent:-4.07 },
@@ -554,6 +599,7 @@ const MOCK_QUOTES = {
   'USDKRW=X':{ symbol:'USDKRW=X', regularMarketPrice:1479, regularMarketChange:0.72, regularMarketChangePercent:0.05 },
   '^TNX' :{ symbol:'^TNX', regularMarketPrice:4.38,   regularMarketChange:0.02,  regularMarketChangePercent:0.46  },
 };
+
 const MOCK_CHART = {
   'PLTR' :[124.8,126.3,128.5,129.8,130.54],
   'GOOGL':[322.4,320.1,318.9,319.5,318.48],
@@ -568,7 +614,7 @@ const MOCK_CHART = {
   'CRWD' :[444.2,442.5,440.1,439.0,437.83],
 };
 
-let _charts = {}, _usingMock = false;
+let _charts = {}, _usingMock = false, _currentFilter = 'all', _lastRefreshTime = null;
 
 // ══════════════════════════════════════════════
 // GOOGLE SHEETS CONFIG
@@ -576,8 +622,8 @@ let _charts = {}, _usingMock = false;
 const GS_ID          = '16tR0hz5ge0uI72OQrlXJvYZEkBpqltEbAFDhL3hz5zk';
 const GS_SHEET       = 'DASHBOARD';
 const GS_MACRO_SHEET = 'MACRO';
-let   GS_DATA   = {};   // keyed by ticker
-let   GS_MACRO  = {};   // keyed by KEY column (FED_RATE, AI_TREND, …)
+let   GS_DATA   = {};
+let   GS_MACRO  = {};
 let   _gsLoaded = false;
 
 async function fetchGsSheet() {
@@ -589,7 +635,6 @@ async function fetchGsSheet() {
     clearTimeout(timer);
     if (!r.ok) throw new Error('GS HTTP ' + r.status);
     const txt = await r.text();
-    // Strip JS wrapper: /*O_o*/\ngoogle.visualization.Query.setResponse({...})
     const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
     if (!match) throw new Error('GS parse fail');
     const json = JSON.parse(match[1]);
@@ -614,6 +659,9 @@ async function fetchGsSheet() {
       const rawW52hi  = get('52W HIGH');
       const rawPrice  = get('PRICE');
       const rawChg    = get('CHG%');
+      const rawEntryLo = get('ENTRY_LOW');
+      const rawEntryHi = get('ENTRY_HIGH');
+      const rawStopLo  = get('STOP_LOSS');
       result[ticker] = {
         price:     rawPrice  != null ? +rawPrice  : null,
         chgPct:    rawChg    != null ? +rawChg    : null,
@@ -622,13 +670,16 @@ async function fetchGsSheet() {
         upside:    rawUpside != null ? rawUpside.toString() : null,
         action:    rawAction != null ? rawAction.toString().trim() : null,
         entryZone: rawEntry  != null ? rawEntry.toString() : null,
+        entryLow:  rawEntryLo != null ? +rawEntryLo : null,
+        entryHigh: rawEntryHi != null ? +rawEntryHi : null,
+        stopLoss:  rawStopLo  != null ? +rawStopLo  : null,
         w52lo:     rawW52lo  != null ? +rawW52lo  : null,
         w52hi:     rawW52hi  != null ? +rawW52hi  : null,
       };
     });
     GS_DATA = result;
     _gsLoaded = true;
-    console.log('[GS] Loaded', Object.keys(result).length, 'tickers from Google Sheets');
+    console.log('[GS] Loaded', Object.keys(result).length, 'tickers');
     return result;
   } catch(e) {
     console.warn('[GS] Fetch failed:', e.message);
@@ -636,9 +687,6 @@ async function fetchGsSheet() {
   }
 }
 
-// ══════════════════════════════════════════════
-// GOOGLE SHEETS — MACRO SHEET
-// ══════════════════════════════════════════════
 async function fetchGsMacro() {
   const url = `https://docs.google.com/spreadsheets/d/${GS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GS_MACRO_SHEET)}`;
   try {
@@ -673,7 +721,6 @@ function applyMacroFromGS() {
   const m = GS_MACRO;
   if (!m || !Object.keys(m).length) return;
 
-  // ── Fed Funds Rate ──
   if (m['FED_RATE']) {
     const el = document.getElementById('m-fed-rate');
     if (el) el.textContent = m['FED_RATE'];
@@ -683,7 +730,6 @@ function applyMacroFromGS() {
     if (el) el.textContent = m['FED_NOTE'];
   }
 
-  // ── AI Sector Trend ──
   if (m['AI_TREND']) {
     const el = document.getElementById('m-ai-trend');
     if (el) {
@@ -699,7 +745,6 @@ function applyMacroFromGS() {
     if (el) el.textContent = m['AI_NOTE'];
   }
 
-  // ── Manual fallback overrides (used if Yahoo Finance also failed) ──
   if (_usingMock) {
     if (m['VIX'] && document.getElementById('m-vix')?.textContent === '—') {
       const el = document.getElementById('m-vix');
@@ -737,11 +782,9 @@ function updateCardGs(ticker) {
   if (!d) { strip.style.display = 'none'; return; }
   strip.style.display = 'block';
 
-  // RSI
   const rsiEl = document.getElementById(`gr-${ticker}`);
   if (rsiEl) rsiEl.textContent = d.rsi || '—';
 
-  // Target + Upside
   const tgtEl = document.getElementById(`gt-${ticker}`);
   if (tgtEl) {
     if (d.target) {
@@ -752,14 +795,12 @@ function updateCardGs(ticker) {
     }
   }
 
-  // Action
   const actEl = document.getElementById(`ga-${ticker}`);
   if (actEl) {
     actEl.textContent = d.action ? `📌 ${d.action}` : '—';
     actEl.className = `gs-action-wrap ${gsActionClass(d.action)}`;
   }
 
-  // GS price overlay (if live API failed = mock mode, use GS price instead)
   if (_usingMock && d.price) {
     const pe = document.getElementById(`sp-${ticker}`);
     if (pe) pe.textContent = `$${d.price.toFixed(2)}`;
@@ -770,6 +811,48 @@ function updateCardGs(ticker) {
     }
     if (d.w52hi) { const el = document.getElementById(`sh-${ticker}`); if(el) el.textContent = `$${d.w52hi.toFixed(2)}`; }
     if (d.w52lo) { const el = document.getElementById(`sl-${ticker}`); if(el) el.textContent = `$${d.w52lo.toFixed(2)}`; }
+  }
+
+  updateEntryZoneBar(ticker, d);
+}
+
+function updateEntryZoneBar(ticker, data) {
+  const barEl = document.getElementById(`ez-${ticker}`);
+  if (!barEl || !data) return;
+  if (!data.w52lo || !data.w52hi) { barEl.style.display = 'none'; return; }
+
+  barEl.style.display = 'block';
+  const range = data.w52hi - data.w52lo;
+  if (range <= 0) { barEl.style.display = 'none'; return; }
+
+  const currentPrice = data.price || MOCK_QUOTES[ticker]?.regularMarketPrice;
+  if (!currentPrice) { barEl.style.display = 'none'; return; }
+
+  const entryBar = barEl.querySelector('.entry-zone-entry');
+  const curLine = barEl.querySelector('.entry-zone-cur');
+  const tgtLine = barEl.querySelector('.entry-zone-tgt');
+  const stopLine = barEl.querySelector('.entry-zone-stop');
+
+  if (data.entryLow && data.entryHigh && entryBar) {
+    const entryLeftPct = Math.max(0, Math.min(100, ((data.entryLow - data.w52lo) / range) * 100));
+    const entryWidthPct = Math.max(0, Math.min(100 - entryLeftPct, ((data.entryHigh - data.entryLow) / range) * 100));
+    entryBar.style.left = entryLeftPct + '%';
+    entryBar.style.width = entryWidthPct + '%';
+  }
+
+  if (curLine) {
+    const curPct = Math.max(0, Math.min(100, ((currentPrice - data.w52lo) / range) * 100));
+    curLine.style.left = curPct + '%';
+  }
+
+  if (data.target && tgtLine) {
+    const tgtPct = Math.max(0, Math.min(100, ((data.target - data.w52lo) / range) * 100));
+    tgtLine.style.left = tgtPct + '%';
+  }
+
+  if (data.stopLoss && stopLine) {
+    const stopPct = Math.max(0, Math.min(100, ((data.stopLoss - data.w52lo) / range) * 100));
+    stopLine.style.left = stopPct + '%';
   }
 }
 
@@ -788,11 +871,11 @@ async function yFetch(url) {
       clearTimeout(timer);
       if (!r.ok) continue;
       const txt = await r.text();
-      if (!txt || txt.trim().startsWith('<')) continue;  // HTML 응답 무시
+      if (!txt || txt.trim().startsWith('<')) continue;
       return JSON.parse(txt);
     } catch {}
   }
-  return null;  // null 반환 → 모의 데이터 사용
+  return null;
 }
 
 async function getQuotes(syms) {
@@ -802,7 +885,6 @@ async function getQuotes(syms) {
     _usingMock = false;
     return d.quoteResponse.result;
   }
-  // 프록시 모두 실패 → 모의 데이터 사용
   _usingMock = true;
   return syms.map(s => MOCK_QUOTES[s]).filter(Boolean);
 }
@@ -820,7 +902,6 @@ async function getChart(sym) {
     })).filter(x => x.p !== null);
     if (result.length) return result;
   }
-  // 모의 차트 데이터 사용
   const prices = MOCK_CHART[sym];
   if (!prices) return null;
   const days = ['Apr 7','Apr 8','Apr 9','Apr 10','Apr 11'];
@@ -854,7 +935,6 @@ function renderStrip(qs) {
     if (pe) pe.textContent = isKRW ? p?.toFixed(0) : isTNX ? `${p?.toFixed(2)}%` : p?.toFixed(2);
     if (ce) { ce.textContent = fmtChg(c); ce.className = `mitem-chg ${cls(c)}`; }
 
-    // Macro cards
     if (q.symbol === '^VIX') {
       const el = document.getElementById('m-vix');
       const dl = document.getElementById('m-vix-d');
@@ -904,6 +984,7 @@ function initCards() {
     const d = document.createElement('div');
     d.className = 'scard'; d.id = `sc-${s.sym}`;
     d.style.setProperty('--c-accent', s.accent);
+    d.onclick = () => openDetailPanel(s);
     d.innerHTML = `
       <div class="scard-top">
         <div>
@@ -915,6 +996,16 @@ function initCards() {
       <div class="scard-price" id="sp-${s.sym}"><span class="sk" style="display:inline-block;width:110px;height:30px">&nbsp;</span></div>
       <div class="scard-chg" id="sc2-${s.sym}"><span class="sk" style="display:inline-block;width:90px;height:18px">&nbsp;</span></div>
       <div class="minich"><canvas id="ch-${s.sym}"></canvas></div>
+      <div id="ez-${s.sym}" class="entry-zone-container" style="display:none">
+        <div class="entry-zone-label">Entry Zone · Target · Stop Loss</div>
+        <div class="entry-zone-bar">
+          <div class="entry-zone-bg"></div>
+          <div class="entry-zone-entry"></div>
+          <div class="entry-zone-cur"></div>
+          <div class="entry-zone-tgt"></div>
+          <div class="entry-zone-stop"></div>
+        </div>
+      </div>
       <div class="scard-metrics">
         <div class="met"><span class="met-lbl">52W High</span><span class="met-val" id="sh-${s.sym}">—</span></div>
         <div class="met"><span class="met-lbl">52W Low</span><span class="met-val" id="sl-${s.sym}">—</span></div>
@@ -984,34 +1075,124 @@ function renderChart(sym, data) {
 }
 
 // ══════════════════════════════════════════════
-// RENDER — NEWS
+// DETAIL PANEL
 // ══════════════════════════════════════════════
-function renderNews() {
-  const tagMap = { bull:'bull', bear:'bear', neu:'neu', watch:'watch' };
-  const labelMap = { bull:'Bullish', bear:'Bearish', neu:'Neutral', watch:'Watchlist' };
-  document.getElementById('newsList').innerHTML = NEWS.map(n => `
-    <a href="${n.url}" target="_blank" rel="noopener" class="ncard">
-      <div class="ncard-hl">${n.hl}</div>
-      <div class="ncard-meta">
-        <span class="nsrc">${n.src}</span>
-        <span class="ntime">${n.time}</span>
-        <span class="ntag ntag-${tagMap[n.tag]||'neu'}">${labelMap[n.tag]||n.tag}</span>
-      </div>
-    </a>`).join('');
+function openDetailPanel(stock) {
+  const hdr = document.getElementById('detailHeader');
+  hdr.innerHTML = `
+    <div class="scard-sym">${stock.emoji} ${stock.sym}</div>
+    <div>
+      <div style="font-size:1rem;font-weight:700">${stock.name}</div>
+      <div style="font-size:.8rem;color:var(--txt2)">${stock.tag.toUpperCase()} · ${stock.exchange}</div>
+    </div>
+  `;
+  document.getElementById('detailPanel').classList.add('open');
+  setTimeout(() => updateTAWidget(stock.exchange, stock.sym), 200);
+  setTimeout(() => initTVChart(stock.exchange, stock.sym), 200);
+}
+
+function closeDetailPanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+function initTVChart(exchange, symbol) {
+  const container = document.getElementById('tv-chart-container');
+  if (!container) return;
+  container.innerHTML = '<div style="height:500px;"></div>';
+  if (typeof TradingView === 'undefined') {
+    console.warn('TradingView not loaded yet');
+    return;
+  }
+  try {
+    if (window.tvWidget) window.tvWidget.remove();
+    window.tvWidget = new TradingView.widget({
+      autosize: true,
+      symbol: `${exchange}:${symbol}`,
+      interval: "D",
+      timezone: "America/New_York",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      container_id: "tv-chart-container",
+      studies: ["RSI@tv-basicstudies"],
+      hide_side_toolbar: false,
+      allow_symbol_change: true,
+      backgroundColor: "rgba(8, 16, 31, 1)",
+      gridColor: "rgba(30, 45, 74, 0.5)",
+    });
+  } catch(e) {
+    console.warn('Chart init error:', e);
+  }
+}
+
+function updateTAWidget(exchange, symbol) {
+  const container = document.getElementById('tv-ta-container');
+  if (!container) return;
+  container.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'tradingview-widget-container';
+  div.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+  script.async = true;
+  script.textContent = JSON.stringify({
+    interval: "1D",
+    width: "100%",
+    isTransparent: true,
+    height: 450,
+    symbol: `${exchange}:${symbol}`,
+    showIntervalTabs: true,
+    displayMode: "single",
+    colorTheme: "dark",
+    locale: "en"
+  });
+  div.appendChild(script);
+  container.appendChild(div);
 }
 
 // ══════════════════════════════════════════════
-// ★ FIREBASE CONFIG — 아래 값을 입력하면 공유 댓글 활성화
-//   firebase.google.com → 무료 프로젝트 생성 후
-//   Project Settings → General → databaseURL 복사
-//   Realtime Database → Rules → ".read":true, ".write":true 설정
+// SECTOR FILTER
 // ══════════════════════════════════════════════
-const FB_DB = '';  // 예: 'https://my-project-default-rtdb.firebaseio.com'
-                   // 비워두면 → localStorage 모드 (이 기기에만 저장)
+function filterStocks(tag) {
+  _currentFilter = tag;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.tab-btn.${tag}`).classList.add('active');
+
+  STOCKS.forEach(s => {
+    const card = document.getElementById(`sc-${s.sym}`);
+    if (!card) return;
+    if (tag === 'all' || s.tag === tag) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+}
 
 // ══════════════════════════════════════════════
-// COMMENTS — Firebase REST API or localStorage
+// COUNTDOWN TIMER
 // ══════════════════════════════════════════════
+function startCountdown() {
+  const updateCountdown = () => {
+    if (!_lastRefreshTime) return;
+    const now = Date.now();
+    const elapsed = now - _lastRefreshTime;
+    const remaining = Math.max(0, 5 * 60 * 1000 - elapsed);
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const el = document.getElementById('countdown');
+    if (el) el.textContent = `Next: ${mins}:${secs.toString().padStart(2,'0')}`;
+  };
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+}
+
+// ══════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const FB_DB = '';
+
 const AVCOLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
 function avColor(name) {
   let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))%AVCOLORS.length;
@@ -1020,7 +1201,6 @@ function avColor(name) {
 
 const useFirebase = () => FB_DB.trim().length > 0;
 
-// ─ Firebase REST helpers ─
 async function fbGet() {
   try {
     const ctrl = new AbortController();
@@ -1034,6 +1214,7 @@ async function fbGet() {
       .sort((a,b) => (a.id||0) - (b.id||0));
   } catch { return null; }
 }
+
 async function fbPost(comment) {
   try {
     const ctrl = new AbortController();
@@ -1048,13 +1229,11 @@ async function fbPost(comment) {
   } catch { return false; }
 }
 
-// ─ localStorage fallback ─
 function lsGet() {
   try { return JSON.parse(localStorage.getItem('td_cmts')||'[]'); } catch { return []; }
 }
 function lsSet(a) { localStorage.setItem('td_cmts', JSON.stringify(a)); }
 
-// ─ Render ─
 function renderCmts(list) {
   const el = document.getElementById('cmtsList');
   const badge = document.getElementById('cmtBadge');
@@ -1081,7 +1260,6 @@ async function loadCmts() {
   if (useFirebase()) {
     const list = await fbGet();
     if (list !== null) { renderCmts(list); return; }
-    // Firebase 실패 시 localStorage로 폴백
   }
   let list = lsGet();
   if (!list.length) {
@@ -1128,7 +1306,6 @@ async function postComment() {
   btn.disabled = false; btn.textContent = '📝 Post';
 }
 
-// Firebase 실시간 polling (30초마다 새 댓글 확인)
 function startCmtPolling() {
   if (!useFirebase()) return;
   setInterval(loadCmts, 30 * 1000);
@@ -1143,7 +1320,6 @@ async function loadAll() {
   btn.innerHTML = '<span class="spin">⏳</span> Loading…';
 
   try {
-    // Fetch Yahoo Finance + Google Sheets (DASHBOARD + MACRO) in parallel
     const allSyms = [...STOCKS.map(s=>s.sym), ...MKT_SYMS];
     const [quotes] = await Promise.all([
       getQuotes(allSyms),
@@ -1155,15 +1331,15 @@ async function loadAll() {
     STOCKS.forEach(s => {
       const q = quotes.find(x=>x.symbol===s.sym);
       if (q) updateCard(q);
-      updateCardGs(s.sym);   // apply GS layer (RSI / Target / Action)
+      updateCardGs(s.sym);
     });
 
-    // Charts — parallel
     await Promise.allSettled(STOCKS.map(async s => {
       const cd = await getChart(s.sym);
       if (cd) renderChart(s.sym, cd);
     }));
 
+    _lastRefreshTime = Date.now();
     document.getElementById('updTime').textContent =
       `Updated: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
 
@@ -1171,21 +1347,19 @@ async function loadAll() {
     const gsNote = _gsLoaded ? ' · 📊 Google Sheets 연동됨' : '';
     if (_usingMock) {
       ib.className = 'infobox warn';
-      ib.innerHTML = `📊 <strong>Demo Mode</strong> — Yahoo Finance API 연결 불가 (시장 마감 후 / 프록시 제한). Google Sheets 기준 가격 표시 중${gsNote}. 장중에 Refresh 해보세요.`;
+      ib.innerHTML = `📊 <strong>Demo Mode</strong> — Yahoo Finance API 연결 불가. Google Sheets 기준 가격 표시 중${gsNote}. 장중에 Refresh 해보세요.`;
     } else {
       ib.className = 'infobox';
       ib.innerHTML = `✅ <strong>Live Data</strong> · Yahoo Finance (15–20min delay) · 5분마다 자동 새로고침${gsNote}`;
     }
-
   } catch(e) {
     console.warn('Load error:', e);
-    // GS fallback: even if Yahoo fails, show GS data
     if (!_gsLoaded) await Promise.all([fetchGsSheet(), fetchGsMacro()]);
     STOCKS.forEach(s => updateCardGs(s.sym));
     applyMacroFromGS();
     const ib = document.getElementById('infoBox');
     ib.className = 'infobox warn';
-    ib.innerHTML = '📊 <strong>Demo Mode</strong> — Yahoo Finance 연결 불가. Google Sheets 기준 데이터 표시 중. 미국 장중(오후 10:30 ~ 오전 5:00 KST)에 Refresh 해보세요.';
+    ib.innerHTML = '📊 <strong>Demo Mode</strong> — Yahoo Finance 연결 불가. Google Sheets 기준 데이터 표시 중.';
     document.getElementById('updTime').textContent = `GS Fallback ${new Date().toLocaleTimeString()}`;
   } finally {
     btn.disabled = false;
@@ -1196,17 +1370,20 @@ async function loadAll() {
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-// Firebase 설정됐으면 안내 박스 숨기기
 if (useFirebase()) {
   const g = document.getElementById('fbGuide');
   if (g) g.style.display = 'none';
 }
 initCards();
-renderNews();
 loadCmts();
 startCmtPolling();
+startCountdown();
 loadAll();
 setInterval(loadAll, 5 * 60 * 1000);
+
+document.getElementById('detailPanel').onclick = (e) => {
+  if (e.target.id === 'detailPanel') closeDetailPanel();
+};
 </script>
 </body>
 </html>
