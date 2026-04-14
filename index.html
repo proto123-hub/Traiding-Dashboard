@@ -97,6 +97,7 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .tab-btn.data { color:#fbbf24; }
 .tab-btn.cyber { color:#a3e635; }
 .tab-btn.space { color:#fb923c; }
+.tab-btn.equip { color:#f472b6; }
 .tab-btn.all { color:var(--txt); }
 
 /* ─── MAIN ─── */
@@ -143,6 +144,7 @@ body { background:var(--bg); color:var(--txt); font-family:'Segoe UI',-apple-sys
 .tag-social { background:rgba(99,102,241,.15); color:#a5b4fc; }
 .tag-cyber  { background:rgba(163,230,53,.12); color:#a3e635; }
 .tag-space  { background:rgba(251,146,60,.15); color:#fb923c; }
+.tag-equip  { background:rgba(244,114,182,.15); color:#f472b6; }
 
 .scard-price { font-size:1.85rem; font-weight:800; line-height:1.1; margin-bottom:4px; }
 .scard-chg { display:flex; gap:8px; align-items:center; }
@@ -408,6 +410,7 @@ hr.div { border:none; border-top:1px solid var(--border); margin:28px 0; }
   <button class="tab-btn data" onclick="filterStocks('data')">Data</button>
   <button class="tab-btn cyber" onclick="filterStocks('cyber')">Cyber</button>
   <button class="tab-btn space" onclick="filterStocks('space')">Space</button>
+  <button class="tab-btn equip" onclick="filterStocks('equip')">Equip</button>
 </div>
 
 <!-- ═══ MAIN ═══ -->
@@ -579,6 +582,12 @@ const STOCKS = [
   { sym:'MRVL',  name:'Marvell Technology',        tag:'data',   emoji:'🟢', accent:'#8dc63f', exchange:'NASDAQ' },
   { sym:'LITE',  name:'Lumentum Holdings',         tag:'data',   emoji:'💡', accent:'#ff6f00', exchange:'NASDAQ' },
   { sym:'SNDK',  name:'SanDisk Corporation',       tag:'semi',   emoji:'💿', accent:'#e4002b', exchange:'NASDAQ' },
+  { sym:'MSFT',  name:'Microsoft Corporation',       tag:'ai',     emoji:'☁️', accent:'#00a4ef', exchange:'NASDAQ' },
+  { sym:'CLS',   name:'Celestica Inc.',              tag:'equip',  emoji:'🏭', accent:'#6d28d9', exchange:'NYSE'   },
+  { sym:'AMAT',  name:'Applied Materials',           tag:'equip',  emoji:'⚙️', accent:'#f472b6', exchange:'NASDAQ' },
+  { sym:'LRCX',  name:'Lam Research Corp.',          tag:'equip',  emoji:'🔧', accent:'#e879f9', exchange:'NASDAQ' },
+  { sym:'KLAC',  name:'KLA Corporation',             tag:'equip',  emoji:'🔬', accent:'#c084fc', exchange:'NASDAQ' },
+  { sym:'ARM',   name:'Arm Holdings plc',            tag:'semi',   emoji:'💡', accent:'#34d399', exchange:'NASDAQ' },
 ];
 
 const MKT_SYMS = ['^GSPC','^IXIC','^VIX','^SOX','QQQ','USDKRW=X','^TNX'];
@@ -609,6 +618,12 @@ const MOCK_QUOTES = {
   'MRVL' :{ symbol:'MRVL', regularMarketPrice:131.30, regularMarketChange:2.81,  regularMarketChangePercent:2.19,  fiftyTwoWeekHigh:133.20, fiftyTwoWeekLow:48.09,  marketCap:115e9,  regularMarketVolume:39e6  },
   'LITE' :{ symbol:'LITE', regularMarketPrice:871.18, regularMarketChange:-26.12,regularMarketChangePercent:-2.91, fiftyTwoWeekHigh:960.00, fiftyTwoWeekLow:49.13,  marketCap:62e9,   regularMarketVolume:9e6   },
   'SNDK' :{ symbol:'SNDK', regularMarketPrice:952.50, regularMarketChange:100.73,regularMarketChangePercent:11.83, fiftyTwoWeekHigh:953.41, fiftyTwoWeekLow:28.94,  marketCap:141e9,  regularMarketVolume:29e6  },
+  'MSFT' :{ symbol:'MSFT', regularMarketPrice:374.00, regularMarketChange:4.10,  regularMarketChangePercent:1.11,  fiftyTwoWeekHigh:430.00, fiftyTwoWeekLow:280.00, marketCap:2.78e12,regularMarketVolume:22e6  },
+  'CLS'  :{ symbol:'CLS',  regularMarketPrice:362.21, regularMarketChange:12.21, regularMarketChangePercent:3.49,  fiftyTwoWeekHigh:370.00, fiftyTwoWeekLow:65.75,  marketCap:20.5e9, regularMarketVolume:1.2e6 },
+  'AMAT' :{ symbol:'AMAT', regularMarketPrice:228.50, regularMarketChange:3.20,  regularMarketChangePercent:1.42,  fiftyTwoWeekHigh:265.00, fiftyTwoWeekLow:140.00, marketCap:191e9,  regularMarketVolume:7e6   },
+  'LRCX' :{ symbol:'LRCX', regularMarketPrice:192.80, regularMarketChange:2.80,  regularMarketChangePercent:1.47,  fiftyTwoWeekHigh:235.00, fiftyTwoWeekLow:112.00, marketCap:256e9,  regularMarketVolume:4e6   },
+  'KLAC' :{ symbol:'KLAC', regularMarketPrice:778.40, regularMarketChange:11.40, regularMarketChangePercent:1.49,  fiftyTwoWeekHigh:920.00, fiftyTwoWeekLow:430.00, marketCap:108e9,  regularMarketVolume:1.1e6 },
+  'ARM'  :{ symbol:'ARM',  regularMarketPrice:132.50, regularMarketChange:1.80,  regularMarketChangePercent:1.38,  fiftyTwoWeekHigh:175.00, fiftyTwoWeekLow:68.00,  marketCap:139e9,  regularMarketVolume:6e6   },
   '^GSPC':{ symbol:'^GSPC',regularMarketPrice:6861.4, regularMarketChange:48.2,  regularMarketChangePercent:0.71  },
   '^IXIC':{ symbol:'^IXIC',regularMarketPrice:21840.0,regularMarketChange:112.4, regularMarketChangePercent:0.52  },
   '^VIX' :{ symbol:'^VIX', regularMarketPrice:19.33,  regularMarketChange:-0.55, regularMarketChangePercent:-2.77 },
