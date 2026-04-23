@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="ko" data-lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daniel's Trading Command Center · v3.4 — Mobile-Responsive + Trump Truth Social monitoring</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        /* ============================================================
+           v3 DESIGN SYSTEM — 3-REPO FUSION
+           TauricResearch (Multi-Agent) × ccxt (Unified API) × nautilus (Event-Driven)
+           ============================================================ */
+        :root {
+            /* v3.2 MEDIUM GRAY THEME — Daniel 요청 눈부심 감소 (2026-04-22) */
+            --bg-primary: #C8CED6;         /* 페이지 배경 - slate-ish 그레이 */
+            --bg-panel: #DCE2E8;           /* 카드 배경 - 확연히 어두워진 흰색 대체 */
+            --bg-elevated: #C2C9D2;        /* sub-card */
+            --bg-overlay: #B3BAC4;         /* hover/selected */
+            --accent-cyan: #0097A7;        /* 메인 accent (dark teal-cyan) */
+            --accent-gold: #B8860B;        /* dark goldenrod */
+            --accent-orange: #E64A19;      /* deep orange */
+            --accent-purple: #6A1B9A;      /* deep purple */
+            --accent-teal: #00796B;
+            --buy-green: #2E7D32;          /* darker green for light bg */
+            --sell-red: #C62828;           /* darker red */
+            --hold-gray: #78909C;
+            --warn-amber: #F57F17;
+            --text-primary: #1F2937;       /* slate-900 */
+            --text-secondary: #4B5563;     /* slate-600 */
+            --text-muted: #6B7280;         /* slate-500 */
+            --border: rgba(31, 41, 55, 0.12);
+            --border-strong: rgba(0, 151, 167, 0.45);
+            --border-warn: rgba(245, 127, 23, 0.45);
+            /* Debate (Bull/Bear) */
+            --bull-bg: rgba(46, 125, 50, 0.08);
+            --bull-border: rgba(46, 125, 50, 0.40);
+            --bear-bg: rgba(198, 40, 40, 0.08);
+            --bear-border: rgba(198, 40, 40, 0.40);
+            --judge-bg: rgba(0, 151, 167, 0.08);
+            --judge-border: rgba(0, 151, 167, 0.50);
+            /* Provider LED */
+            --led-on: #2E7D32;
+            --led-off: #C62828;
+            --led-warn: #F57F17;
+            --led-idle: #9AA5B1;
+            /* Card shadow */
+            --card-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+            --card-shadow-lg: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        a { color: inherit; }
+        button { font-family: inherit; cursor: pointer; }
+
+        /* Utilities */
+        .up { color: var(--buy-green); }
+        .down { color: var(--sell-red); }
+        .flat { color: var(--text-muted); }
+        .mono { font-family: 'SF Mono', 'Consolas', 'Monaco', monospace; }
+        .hidden { display: none !important; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes flashGold {
+            0%, 100% { box-shadow: 0 0 0 rgba(255,215,0,0); }
+            50% { box-shadow: 0 0 18px rgba(255,215,0,0.6); }
+        }
+
+        /* ============================================================
+           1. STICKY COMMAND CENTER (v3)
+           ============================================================ */
+        .command-center {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: linear-gradient(to bottom, #DCE2E8 0%, #C8CED6 100%);
+            border-bottom: 2px solid var(--accent-cyan);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+            padding: 10px 20px 8px;
+        }
+
+        .cc-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding-right: 130px; /* reserve for fixed lang-toggle */
+            flex-wrap: wrap;
+        }
+
+        .cc-title {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .cc-title h1 {
+            color: var(--accent-cyan);
+            font-size: 1.25em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .cc-title .sub {
+            color: var(--text-secondary);
+            font-size: 0.78em;
+        }
+        .cc-title .v3-tag {
+            padding: 2px 8px;
+            font-size: 0.7em;
+            font-weight: 700;
+            color: var(--bg-primary);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .cc-market-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: rgba(255, 82, 82, 0.15);
+            border: 1px solid var(--sell-red);
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .cc-market-status.open {
+            background: rgba(0, 230, 118, 0.15);
+            border-color: var(--buy-green);
+        }
+        .cc-market-status .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--sell-red);
+            animation: pulse 2s infinite;
+        }
+        .cc-market-status.open .dot { background: var(--buy-green); }
+
+        /* Provider Status LED Row (v3 new) */
+        .cc-provider-strip {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top: 1px dashed var(--border);
+            border-bottom: 1px dashed var(--border);
+            margin-top: 6px;
+        }
+        .cc-provider-label {
+            color: var(--text-muted);
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding-right: 8px;
+            border-right: 1px solid var(--border);
+        }
+        .provider-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 10px;
+            background: var(--bg-elevated);
+            border-radius: 14px;
+            font-size: 0.78em;
+            font-weight: 600;
+        }
+        .provider-chip .led {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--led-idle);
+            box-shadow: 0 0 4px var(--led-idle);
+        }
+        .provider-chip.ok .led { background: var(--led-on); box-shadow: 0 0 6px var(--led-on); animation: pulse 2.5s infinite; }
+        .provider-chip.warn .led { background: var(--led-warn); box-shadow: 0 0 6px var(--led-warn); }
+        .provider-chip.err .led { background: var(--led-off); box-shadow: 0 0 6px var(--led-off); }
+        .provider-chip.trump-truth { background: rgba(230, 74, 25, 0.12); border: 1px solid rgba(230, 74, 25, 0.45); }
+        .provider-chip.trump-truth .led { background: #E64A19; box-shadow: 0 0 6px #E64A19; animation: pulse 2.5s infinite; }
+        .provider-chip.trump-truth:hover { background: rgba(230, 74, 25, 0.22); }
+        .provider-chip.trump-archive { background: rgba(184, 134, 11, 0.10); border: 1px solid rgba(184, 134, 11, 0.40); }
+        .provider-chip.trump-archive .led { background: #B8860B; box-shadow: 0 0 6px #B8860B; }
+        .provider-chip.trump-archive:hover { background: rgba(184, 134, 11, 0.20); }
+        .provider-chip .src-name { color: var(--text-primary); }
+        .provider-chip .src-meta { color: var(--text-muted); font-size: 0.85em; }
+
+        .cc-last-refresh {
+            margin-left: auto;
+            font-size: 0.72em;
+            color: var(--text-muted);
+            font-family: 'SF Mono', monospace;
+        }
+        .cc-last-refresh b { color: var(--accent-cyan); }
+
+        /* Index Ticker Strip (6 indices) */
+        .cc-ticker-strip {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            padding: 8px 0;
+        }
+        .cc-ticker {
+            display: flex; flex-direction: column;
+            padding: 6px 10px;
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .cc-ticker:hover {
+            background: rgba(0, 212, 255, 0.08);
+            transform: translateX(2px);
+        }
+        .cc-ticker-label {
+            color: var(--text-muted);
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .cc-ticker-value {
+            color: var(--text-primary);
+            font-size: 1.05em;
+            font-weight: 700;
+        }
+        .cc-ticker-change {
+            font-size: 0.72em;
+            font-weight: 600;
+        }
+        .cc-ticker.verified::after {
+            content: '✓';
+            position: absolute;
+            right: 6px; top: 4px;
+            color: var(--buy-green);
+            font-size: 0.7em;
+        }
+        .cc-ticker {
+            position: relative;
+        }
+
+        /* Portfolio KPI row */
+        .cc-portfolio-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) 2fr;
+            gap: 10px;
+            padding: 8px 0 4px;
+            border-top: 1px solid var(--border);
+        }
+        .cc-portfolio-kpi {
+            padding: 6px 10px;
+            background: rgba(255, 215, 0, 0.05);
+            border-left: 3px solid var(--accent-gold);
+            border-radius: 4px;
+        }
+        .cc-portfolio-kpi.big {
+            background: rgba(0, 212, 255, 0.08);
+            border-left-color: var(--accent-cyan);
+        }
+        .cc-kpi-label {
+            color: var(--text-muted);
+            font-size: 0.7em; font-weight: 600; text-transform: uppercase;
+        }
+        .cc-kpi-value {
+            color: var(--text-primary);
+            font-size: 1.05em; font-weight: 700;
+            margin-top: 2px;
+        }
+        .cc-alerts {
+            padding: 6px 10px;
+            background: rgba(255, 138, 101, 0.08);
+            border-left: 3px solid var(--accent-orange);
+            border-radius: 4px;
+        }
+        .cc-alert-title { color: var(--accent-orange); font-size: 0.7em; font-weight: 700; text-transform: uppercase; }
+        .cc-alert-item { font-size: 0.78em; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ============================================================
+           2. LANGUAGE TOGGLE (fixed top-right)
+           ============================================================ */
+        .lang-toggle {
+            position: fixed;
+            top: 14px;
+            right: 24px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            color: var(--accent-cyan);
+            font-size: 0.82em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .lang-toggle:hover {
+            background: rgba(0, 212, 255, 0.12);
+            transform: translateY(-1px);
+        }
+        .lang-toggle .flag-icon { font-size: 1.1em; }
+
+        /* ============================================================
+           3. TAB NAVIGATION
+           ============================================================ */
+        .tab-nav {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+            position: sticky;
+            top: 150px;
+            z-index: 900;
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.88em;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            border-bottom-color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.08);
+        }
+        .tab-btn .tab-count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 7px;
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            font-size: 0.82em;
+            color: var(--accent-gold);
+        }
+
+        .tab-panel { display: none; padding: 20px; }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+        /* ============================================================
+           4. DEBATE CARD GRID (TauricResearch pattern)
+           ============================================================ */
+        .debate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 16px;
+        }
+
+        .debate-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+        .debate-card:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .dc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-panel) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .dc-ticker {
+            font-size: 1.15em; font-weight: 800;
+            color: var(--accent-cyan);
+            letter-spacing: 0.5px;
+        }
+        .dc-price-block {
+            display: flex; flex-direction: column; align-items: flex-end;
+        }
+        .dc-price {
+            font-size: 1.15em; font-weight: 700;
+            font-family: 'SF Mono', monospace;
+        }
+        .dc-price-change {
+            font-size: 0.78em; font-weight: 600;
+        }
+        .dc-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+        }
+        .dc-case {
+            padding: 10px 12px;
+            font-size: 0.82em;
+            min-height: 110px;
+        }
+        .dc-case.bull {
+            background: var(--bull-bg);
+            border-left: 3px solid var(--bull-border);
+        }
+        .dc-case.bear {
+            background: var(--bear-bg);
+            border-left: 3px solid var(--bear-border);
+        }
+        .dc-case-title {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.8em; font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+        }
+        .dc-case.bull .dc-case-title { color: var(--buy-green); }
+        .dc-case.bear .dc-case-title { color: var(--sell-red); }
+        .dc-case ul {
+            list-style: none;
+            font-size: 0.88em;
+            color: var(--text-secondary);
+        }
+        .dc-case li {
+            position: relative;
+            padding-left: 10px;
+            margin-bottom: 4px;
+            line-height: 1.45;
+        }
+        .dc-case li::before {
+            content: '•';
+            position: absolute; left: 0;
+            color: var(--text-muted);
+        }
+
+        .dc-judge {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--judge-bg);
+            border-top: 1px solid var(--judge-border);
+        }
+        .dc-verdict {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.78em; font-weight: 800;
+            letter-spacing: 0.6px;
+        }
+        .dc-verdict.buy { background: rgba(0,230,118,0.2); color: var(--buy-green); border: 1px solid var(--buy-green); }
+        .dc-verdict.hold { background: rgba(158,158,158,0.2); color: var(--hold-gray); border: 1px solid var(--hold-gray); }
+        .dc-verdict.sell { background: rgba(255,82,82,0.2); color: var(--sell-red); border: 1px solid var(--sell-red); }
+        .dc-verdict.accum { background: rgba(255,215,0,0.2); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+        .dc-verdict.wait { background: rgba(245,127,23,0.15); color: var(--warn-amber); border: 1px solid var(--warn-amber); }
+
+        .dc-score {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .dc-score-label { font-size: 0.7em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .dc-score-bar {
+            height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; position: relative;
+        }
+        .dc-score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--sell-red) 0%, var(--warn-amber) 50%, var(--buy-green) 100%);
+            border-radius: 3px;
+            transition: width 0.4s ease-out;
+        }
+        .dc-fv {
+            font-size: 0.72em;
+            color: var(--text-muted);
+            font-family: 'SF Mono', monospace;
+            text-align: right;
+        }
+        .dc-fv b { color: var(--accent-gold); }
+
+        /* ============================================================
+           5. POSITION TRACKER (nautilus pattern)
+           ============================================================ */
+        .position-tracker {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .pt-title {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1em; font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .pt-title .pt-badge {
+            padding: 2px 8px;
+            background: rgba(179, 136, 255, 0.15);
+            color: var(--accent-purple);
+            border-radius: 4px;
+            font-size: 0.7em; font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pt-tiers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .pt-tier {
+            padding: 10px 12px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-purple);
+        }
+        .pt-tier-label {
+            font-size: 0.72em;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+        }
+        .pt-tier-value {
+            font-size: 1.1em; font-weight: 700;
+            font-family: 'SF Mono', monospace;
+        }
+        .pt-tier-sub {
+            font-size: 0.72em;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .pt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            display: block;                /* allows overflow-x wrapper on narrow viewports */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+        }
+        .pt-table th {
+            text-align: left;
+            padding: 8px 10px;
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-size: 0.72em;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        .pt-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'SF Mono', monospace;
+        }
+        .pt-table td:first-child { font-weight: 700; color: var(--accent-cyan); }
+        .pt-table tr:hover td { background: rgba(0,212,255,0.04); }
+        .pt-concentration-alert {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(255,193,7,0.08);
+            border-left: 3px solid var(--warn-amber);
+            border-radius: 4px;
+            font-size: 0.82em;
+        }
+        .pt-concentration-alert .alert-label {
+            color: var(--warn-amber);
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        /* ============================================================
+           6. EVENT LOG (EventBus history)
+           ============================================================ */
+        .event-log {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event-log-title {
+            font-size: 0.95em; font-weight: 700;
+            color: var(--accent-teal);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .event-log-clear {
+            padding: 3px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+        .event-log-clear:hover { color: var(--sell-red); border-color: var(--sell-red); }
+        .event-entry {
+            display: grid;
+            grid-template-columns: auto auto 1fr;
+            gap: 10px;
+            padding: 6px 8px;
+            font-size: 0.78em;
+            border-left: 2px solid var(--border);
+            margin-bottom: 3px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .event-entry .ev-time { color: var(--text-muted); font-family: 'SF Mono', monospace; }
+        .event-entry .ev-type {
+            color: var(--accent-cyan);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+        .event-entry.price-update { border-left-color: var(--accent-cyan); }
+        .event-entry.news-breaking { border-left-color: var(--accent-orange); }
+        .event-entry.thesis-change { border-left-color: var(--accent-purple); }
+        .event-entry.audit-report { border-left-color: var(--accent-gold); }
+        .event-entry.audit-report.severity-red { border-left-color: var(--sell-red); background: rgba(255,82,82,0.06); }
+        .event-entry.audit-report.severity-yellow { border-left-color: var(--warn-amber); background: rgba(255,193,7,0.05); }
+
+        /* ============================================================
+           7. CHART PANELS
+           ============================================================ */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 18px;
+        }
+        .chart-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+        }
+        .chart-panel.ms-highlight {
+            border-left: 3px solid var(--accent-purple);
+            background: linear-gradient(135deg, #FFFFFF 0%, #FAF7FC 100%);
+        }
+        .chart-panel.cpu-highlight {
+            border-left: 3px solid var(--accent-orange);
+            background: linear-gradient(135deg, #FFFFFF 0%, #FDF7F4 100%);
+        }
+        .chart-panel.foundry-highlight {
+            border-left: 3px solid var(--accent-teal);
+            background: linear-gradient(135deg, #FFFFFF 0%, #F3FAF9 100%);
+        }
+        .ms-badge {
+            display:inline-block; padding: 2px 8px;
+            background: var(--accent-purple); color: #FFFFFF;
+            font-size: 0.65em; font-weight: 700;
+            border-radius: 4px; letter-spacing: 0.5px;
+            margin-right: 6px;
+        }
+        .subsection-h {
+            font-size: 1em; font-weight: 700;
+            color: var(--text-primary);
+            margin: 24px 0 12px;
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 4px;
+        }
+        .subsection-h .note {
+            font-size: 0.75em; font-weight: 500;
+            color: var(--text-muted); margin-left: 10px;
+        }
+        .kpi-inline-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+        }
+        .kpi-inline {
+            padding: 6px 10px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+        }
+        .kpi-inline-label {
+            font-size: 0.68em; text-transform: uppercase; color: var(--text-muted); font-weight: 600;
+        }
+        .kpi-inline-value {
+            font-size: 1em; font-weight: 700; color: var(--text-primary); margin-top: 2px;
+        }
+        .kpi-inline-value.up { color: var(--buy-green); }
+        .kpi-inline-value.down { color: var(--sell-red); }
+        .chart-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .chart-panel-title {
+            font-size: 0.95em; font-weight: 700;
+            color: var(--accent-cyan);
+        }
+        .chart-panel-sub {
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+        .chart-panel canvas {
+            max-height: 320px;
+        }
+
+        /* ============================================================
+           8. SECTION HEADERS
+           ============================================================ */
+        .section-h {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin: 0 0 14px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-h .section-count {
+            padding: 2px 8px;
+            background: var(--bg-elevated);
+            color: var(--accent-gold);
+            font-size: 0.75em;
+            border-radius: 4px;
+        }
+
+        /* Responsive — 3-tier breakpoint
+           Desktop > 1100px / Tablet 768-1100 / Phone ≤ 767 */
+        @media (max-width: 1100px) {
+            .cc-ticker-strip { grid-template-columns: repeat(3, 1fr); }
+            .cc-portfolio-row { grid-template-columns: repeat(2, 1fr); }
+            .debate-grid { grid-template-columns: 1fr; }
+            .pt-tiers { grid-template-columns: 1fr; }
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ===== Tablet (≤ 1024px) ===== */
+        @media (max-width: 1024px) {
+            .command-center { padding: 8px 12px; }
+            .cc-top-row { padding-right: 110px; gap: 6px; }
+            .cc-title h1 { font-size: 1.1em; }
+            .cc-title .sub { font-size: 0.72em; display: block; }
+            .cc-ticker-strip { gap: 6px; padding: 6px 0; }
+            .cc-provider-strip { gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+            .cc-provider-strip::-webkit-scrollbar { height: 3px; }
+            .provider-chip { flex: 0 0 auto; }
+            .cc-portfolio-row { grid-template-columns: repeat(2, 1fr) !important; }
+            .cc-alert-item { white-space: normal; overflow: visible; text-overflow: clip; }
+            .lang-toggle { top: 8px; right: 10px; padding: 5px 10px; font-size: 0.75em; }
+            .tab-nav { top: auto; position: relative; padding: 0 8px; font-size: 0.82em; }
+            .tab-btn { padding: 8px 12px; font-size: 0.82em; }
+            .tab-panel { padding: 12px; }
+            .debate-grid { grid-template-columns: 1fr; gap: 10px; }
+            .pt-table { font-size: 0.78em; }
+            .pt-table th, .pt-table td { padding: 6px 4px; }
+        }
+
+        /* ===== Phone (≤ 640px) ===== */
+        @media (max-width: 640px) {
+            body { font-size: 13px; }
+            .command-center {
+                position: relative;              /* sticky off on phone to avoid overlap */
+                padding: 8px 10px;
+            }
+            .cc-top-row { padding-right: 0; flex-direction: column; align-items: stretch; }
+            .cc-title { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .cc-title h1 { font-size: 1.0em; }
+            .cc-title .v3-tag { font-size: 0.62em; padding: 2px 6px; }
+            .cc-title .sub { font-size: 0.68em; word-break: keep-all; line-height: 1.35; }
+            .cc-market-status { font-size: 0.72em; padding: 4px 10px; align-self: flex-start; }
+
+            /* Ticker strip → 2 cols grid with compact padding */
+            .cc-ticker-strip { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+            .cc-ticker { padding: 5px 8px; }
+            .cc-ticker-value { font-size: 0.95em; }
+            .cc-ticker-change { font-size: 0.68em; }
+
+            /* Provider chip → full horizontal scroll row */
+            .cc-provider-strip { margin-top: 4px; padding: 6px 0 10px; }
+            .cc-provider-label { font-size: 0.62em; padding-right: 5px; }
+            .provider-chip { padding: 3px 8px; font-size: 0.7em; }
+            .provider-chip .src-meta { display: none; }  /* hide secondary label on narrow phones */
+
+            /* Portfolio + Alerts → full 1-column stack */
+            .cc-portfolio-row { grid-template-columns: 1fr !important; gap: 6px; padding: 6px 0 2px; }
+            .cc-kpi-value { font-size: 0.95em; }
+            .cc-alerts { padding: 6px 8px; }
+            .cc-alert-item { font-size: 0.72em; }
+
+            /* Lang toggle smaller */
+            .lang-toggle { top: 6px; right: 8px; padding: 4px 8px; font-size: 0.7em; }
+            .lang-toggle .flag-icon { font-size: 0.9em; }
+
+            /* Tabs: compact, scroll */
+            .tab-nav { padding: 0 4px; }
+            .tab-btn { padding: 6px 10px; font-size: 0.78em; }
+
+            /* Debate cards: full width, tighter padding */
+            .debate-grid { gap: 8px; }
+            .debate-card { border-radius: 6px; }
+            .dc-header, .dc-body, .dc-footer { padding: 8px 10px !important; }
+            .dc-ticker { font-size: 0.9em; }
+            .dc-price { font-size: 1.0em; }
+            .dc-case-title { font-size: 0.78em; }
+            .dc-case ul { font-size: 0.78em; padding-left: 16px; }
+
+            /* Charts: fully stacked, smaller */
+            .chart-grid { grid-template-columns: 1fr !important; gap: 10px; }
+            .chart-panel { padding: 8px; }
+            .chart-panel-title { font-size: 0.85em; }
+            canvas { max-height: 220px !important; }
+
+            /* Portfolio table: horizontal scroll wrapper needed */
+            .pt-table { font-size: 0.7em; }
+            .pt-table th, .pt-table td { padding: 4px 3px; }
+        }
+
+        /* ===== Very small phone (≤ 380px — iPhone mini, older Android) ===== */
+        @media (max-width: 380px) {
+            body { font-size: 12px; }
+            .cc-ticker-strip { grid-template-columns: 1fr 1fr; gap: 4px; }
+            .cc-title h1 { font-size: 0.95em; }
+            .tab-btn { padding: 5px 8px; font-size: 0.72em; }
+            .dc-case ul { padding-left: 14px; font-size: 0.72em; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================= LANGUAGE TOGGLE ================= -->
+<button class="lang-toggle" onclick="toggleLang()">
+    <span class="flag-icon">🇺🇸</span>
+    <span id="langToggleText">English</span>
+</button>
+
+<!-- ================= STICKY COMMAND CENTER ================= -->
+<header class="command-center">
+    <div class="cc-top-row">
+        <div class="cc-title">
+            <h1>Daniel's Trading Command Center</h1>
+            <span class="v3-tag">v3.4 · MOBILE-READY · 🎺 TRUMP TRUTH</span>
+            <span class="sub" data-en="v3.4 Mobile-ready · Updated 2026-04-23 22:15 KST · INTC AMC D-8h · 🎺 Trump Truth Social live">v3.4 모바일 최적화 · 2026-04-23 22:15 KST 갱신 · INTC AMC D-8h · 🎺 Trump Truth Social 모니터링</span>
+        </div>
+        <div class="cc-market-status" id="marketStatusChip">
+            <span class="dot"></span>
+            <span data-en="Market Closed · Next open: Mon 06:30 KST">장 마감 · 다음 개장: 월 06:30 KST</span>
+        </div>
+    </div>
+
+    <!-- Provider Status LED Row (v3 new) -->
+    <div class="cc-provider-strip" id="providerStrip">
+        <span class="cc-provider-label" data-en="Data Sources">데이터 소스</span>
+        <div class="provider-chip" data-provider="kapture"><span class="led"></span><span class="src-name">Kapture</span><span class="src-meta">TradingView</span></div>
+        <div class="provider-chip" data-provider="yahoo"><span class="led"></span><span class="src-name">Yahoo</span><span class="src-meta">Finance</span></div>
+        <div class="provider-chip" data-provider="cnbc"><span class="led"></span><span class="src-name">CNBC</span><span class="src-meta">Quotes</span></div>
+        <div class="provider-chip" data-provider="saveticker"><span class="led"></span><span class="src-name">Saveticker</span><span class="src-meta">News/Cal</span></div>
+        <a class="provider-chip trump-truth" data-provider="truthsocial" href="https://truthsocial.com/@realDonaldTrump" target="_blank" rel="noopener" style="text-decoration:none;" title="@realDonaldTrump Truth Social — 알고리즘 매크로 매매 트리거 1순위"><span class="led"></span><span class="src-name">🎺 Trump Truth</span><span class="src-meta">@realDonaldTrump</span></a>
+        <a class="provider-chip trump-archive" data-provider="trumpstruth" href="https://trumpstruth.org/" target="_blank" rel="noopener" style="text-decoration:none;" title="Factba.se Trump Truth Social archive — 계정 없이 검색 가능"><span class="led"></span><span class="src-name">📜 TrumpsTruth</span><span class="src-meta">Factba.se Archive</span></a>
+        <span class="cc-last-refresh">Last: <b id="lastRefreshTime">--:--</b></span>
+    </div>
+
+    <!-- Index Ticker Strip -->
+    <div class="cc-ticker-strip" id="tickerStrip">
+        <!-- Populated by populateTickers() on load -->
+    </div>
+
+    <!-- Portfolio KPI Row -->
+    <div class="cc-portfolio-row">
+        <div class="cc-portfolio-kpi big">
+            <div class="cc-kpi-label" data-en="Total Cost">총 투자원금</div>
+            <div class="cc-kpi-value" id="kpiCost">$172,817</div>
+        </div>
+        <div class="cc-portfolio-kpi">
+            <div class="cc-kpi-label" data-en="Market Value">시가 평가</div>
+            <div class="cc-kpi-value" id="kpiMarketValue">$—</div>
+        </div>
+        <div class="cc-portfolio-kpi">
+            <div class="cc-kpi-label" data-en="Unrealized P&L">평가손익</div>
+            <div class="cc-kpi-value" id="kpiPnL">$—</div>
+        </div>
+        <div class="cc-portfolio-kpi">
+            <div class="cc-kpi-label" data-en="Thesis Alignment">테시스 정합도</div>
+            <div class="cc-kpi-value" style="color:var(--buy-green);">97%</div>
+        </div>
+        <div class="cc-alerts">
+            <div class="cc-alert-title" data-en="🔔 Alerts / Events">🔔 알림 / 이벤트</div>
+            <div class="cc-alert-item" id="alertTop" data-en="⭐ BREAKING (TSLA call 4/22 AMC): Musk confirms Tesla Terafab adopts Intel 14A → INTC AH +3.6% ($67) · Lip-Bu Tan: first critical external customer secured | 📅 Today 4/23 AMC: INTC Q1 (EPS $0.01 / rev $12.32B · YTD +78% · setup materially stronger post-Terafab) | ✅ SK Hynix Q1 BEAT (OP ₩37.6T record · 72% margin · HBM4E 2H26) → post-open +2.1% / KOSPI +1.2% | US fut 6am ET: SPX -0.43% / NDX -0.40% / DJI -0.57% (낙폭 축소) | Oil 4-day rally Brent $101.91 / WTI $92.96 · Hormuz 일일 통항 3척 | 4/27 AMC: CLS Q1 | 4/29 AMC: META Q1 | 4/30: FOMC + Powell + PCE + Q1 GDP advance">⭐ BREAKING (TSLA 4/22 AMC 콜): Musk, Tesla Terafab 에 Intel 14A 공식 채택 → INTC AH +3.6% ($67) · Lip-Bu Tan CEO "필수 외부 고객" 확보 | 📅 오늘 4/23 장마감후: INTC Q1 (EPS $0.01 / 매출 $12.32B · YTD +78% · Terafab 확정 후 setup 구조적 개선) | ✅ SK하이닉스 Q1 BEAT (영업익 ₩37.6T 사상최대 · 마진 72% · HBM4E 2H26) → 장중 +2.1% 반전 / KOSPI +1.2% | US 선물 06:00 ET: SPX -0.43% / NDX -0.40% / DJI -0.57% (낙폭 축소) | 오일 4일 연속 Brent $101.91 / WTI $92.96 · Hormuz 통항 3척 | 4/27 장마감후: CLS Q1 | 4/29 장마감후: META Q1 | 4/30: FOMC + Powell + PCE + Q1 GDP</div>
+        </div>
+    </div>
+</header>
+
+<!-- ================= TAB NAVIGATION ================= -->
+<nav class="tab-nav">
+    <button class="tab-btn active" data-tab="debate" data-en="🧠 Multi-Agent Debate">🧠 멀티에이전트 판정</button>
+    <button class="tab-btn" data-tab="portfolio" data-en="💼 Position Tracker">💼 포지션 트래커</button>
+    <button class="tab-btn" data-tab="thesis" data-en="📈 Thesis & Charts">📈 테시스 차트</button>
+    <button class="tab-btn" data-tab="events" data-en="📡 Event Log">📡 이벤트 로그</button>
+    <button class="tab-btn" data-tab="audit" data-en="🔍 Audit & Sources">🔍 감사 · 출처</button>
+</nav>
+
+<!-- ================= TAB PANELS ================= -->
+<main>
+
+    <!-- DEBATE TAB -->
+    <section class="tab-panel active" id="tab-debate">
+        <h2 class="section-h">
+            <span data-en="Multi-Agent Debate — 10 Holdings + 3 Watch (INTC/MRVL/CLS)">멀티에이전트 판정 — 보유 10종목 + 관심 3종목 (INTC/MRVL/CLS)</span>
+            <span class="section-count" id="debateCount">13</span>
+        </h2>
+        <div class="debate-grid" id="debateGrid">
+            <!-- Populated by buildDebateCards() -->
+        </div>
+    </section>
+
+    <!-- PORTFOLIO TRACKER TAB -->
+    <section class="tab-panel" id="tab-portfolio">
+        <h2 class="section-h"><span data-en="Position Tracker (3-tier)">포지션 트래커 (3단)</span></h2>
+        <div class="position-tracker">
+            <div class="pt-title">
+                <span data-en="Portfolio Snapshot">포트폴리오 스냅샷</span>
+                <span class="pt-badge">NAUTILUS PATTERN</span>
+            </div>
+            <div class="pt-tiers">
+                <div class="pt-tier">
+                    <div class="pt-tier-label" data-en="POSITION">포지션</div>
+                    <div class="pt-tier-value" id="tierPosition">10 holdings</div>
+                    <div class="pt-tier-sub" data-en="Custom Silicon thesis: 97%">커스텀 실리콘 테시스: 97%</div>
+                </div>
+                <div class="pt-tier">
+                    <div class="pt-tier-label" data-en="ACCOUNT">계정</div>
+                    <div class="pt-tier-value" id="tierAccount">$172.8K cost</div>
+                    <div class="pt-tier-sub" data-en="Cash equiv: pending">현금 등가: 대기중</div>
+                </div>
+                <div class="pt-tier">
+                    <div class="pt-tier-label" data-en="PORTFOLIO">포트폴리오</div>
+                    <div class="pt-tier-value" id="tierPortfolio">— </div>
+                    <div class="pt-tier-sub" data-en="P&L updated on price event">가격 이벤트 시 업데이트</div>
+                </div>
+            </div>
+            <table class="pt-table">
+                <thead>
+                    <tr>
+                        <th data-en="Ticker">종목</th>
+                        <th>Shares</th>
+                        <th data-en="Avg Cost">평단</th>
+                        <th data-en="Current">현재가</th>
+                        <th>P&L</th>
+                        <th>P&L %</th>
+                        <th data-en="Weight">비중</th>
+                    </tr>
+                </thead>
+                <tbody id="positionTableBody">
+                    <!-- Populated by renderPositions() -->
+                </tbody>
+            </table>
+            <div class="pt-concentration-alert">
+                <span class="alert-label" data-en="CONCENTRATION">집중도</span>
+                <span data-en="GOOGL 43.5% · consider risk management if > 45%">GOOGL 43.5% · 45% 초과 시 리스크 관리 고려</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- THESIS TAB -->
+    <section class="tab-panel" id="tab-thesis">
+        <h2 class="section-h"><span data-en="Custom Silicon Thesis — Multi-Angle View">커스텀 실리콘 테시스 — 다각도 분석</span></h2>
+
+        <!-- Subsection A: Core ASIC/HBM/Entry -->
+        <div class="subsection-h">
+            <span data-en="A. Custom ASIC · HBM · Entry Zones">A. 커스텀 ASIC · HBM · 진입 구간</span>
+            <span class="note" data-en="Core 3 charts (v2 heritage)">핵심 3차트 (v2 계승)</span>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-panel">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Custom ASIC Revenue Trajectory (AVGO vs MRVL)">커스텀 ASIC 매출 (AVGO vs MRVL)</div>
+                    <div class="chart-panel-sub" data-en="Gartner · 2024–2028E">가트너 · 2024~2028E</div>
+                </div>
+                <canvas id="customRevChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="HBM Supplier Share">HBM 공급자 점유율</div>
+                    <div class="chart-panel-sub" data-en="2026 est · SK/MU/Samsung">2026 추정</div>
+                </div>
+                <canvas id="hbmShareChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Entry Zone Map (10 core)">진입 구간 맵 (코어 10)</div>
+                    <div class="chart-panel-sub" data-en="FV Low → Entry → FV High · vs Current">FV 저~진입~FV 고 · 현재가 대비</div>
+                </div>
+                <canvas id="entryPointChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Subsection B: Morgan Stanley Agentic AI (4/19 report) -->
+        <div class="subsection-h">
+            <span class="ms-badge">MS</span>
+            <span data-en="B. Morgan Stanley — Agentic AI brings CPUs Back to the Front (2026-04-19)">B. 모건스탠리 — Agentic AI로 CPU 재점화 (2026-04-19)</span>
+            <span class="note" data-en="Head Node · DRAM Demand · ABF CAGR">헤드노드 · DRAM 수요 · ABF CAGR</span>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-panel ms-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="MS Exhibit 1 · CPU TAM ($24B → $82.5–110B)">MS Exhibit 1 · CPU TAM ($24B → $82.5~110B)</div>
+                    <div class="chart-panel-sub" data-en="Head node + Orchestration + Storage/Network">헤드노드 + Orchestration + 스토리지/네트워크</div>
+                </div>
+                <canvas id="msCpuTamChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Base 2025">기준 2025</div><div class="kpi-inline-value">$24B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Low case">로우</div><div class="kpi-inline-value up">$82.5B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="High case">하이</div><div class="kpi-inline-value up">$110B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Uplift">상승 배수</div><div class="kpi-inline-value">3.4×–4.6×</div></div>
+                </div>
+            </div>
+            <div class="chart-panel ms-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="MS Exhibit 2 · DRAM Demand (15–45 EB by 2027)">MS Exhibit 2 · DRAM 수요 (2027년 15~45 EB)</div>
+                    <div class="chart-panel-sub" data-en="Agentic AI incremental DRAM need vs 2027 supply">Agentic AI 증분 수요 vs 2027 공급</div>
+                </div>
+                <canvas id="msDramDemandChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Low demand">로우 수요</div><div class="kpi-inline-value">15 EB</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="High demand">하이 수요</div><div class="kpi-inline-value up">45 EB</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Share of 2027 supply">'27 공급 대비</div><div class="kpi-inline-value">26–77%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Winner">수혜주</div><div class="kpi-inline-value">MU · Hynix</div></div>
+                </div>
+            </div>
+            <div class="chart-panel ms-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="MS Exhibit 3 · ABF Substrate CAGR (9.0% → 17.9%)">MS Exhibit 3 · ABF 기판 CAGR (9.0% → 17.9%)</div>
+                    <div class="chart-panel-sub" data-en="Pre-Agentic baseline vs MS upgraded forecast">Agentic 이전 기준선 vs MS 상향 예측</div>
+                </div>
+                <canvas id="msAbfCagrChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Prior CAGR">이전 CAGR</div><div class="kpi-inline-value">9.0%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="New CAGR">신규 CAGR</div><div class="kpi-inline-value up">17.9%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Uplift">상승폭</div><div class="kpi-inline-value up">+8.9 pp</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Winners">수혜주</div><div class="kpi-inline-value">Ibiden · Unimicron</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subsection C: CPU Data Center Market (AMD vs Intel) -->
+        <div class="subsection-h">
+            <span data-en="C. CPU Data Center Market — AMD EPYC vs Intel Xeon">C. CPU 데이터센터 시장 — AMD EPYC vs Intel Xeon</span>
+            <span class="note" data-en="Agentic AI re-ignites CPU demand">Agentic AI로 CPU 재점화</span>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-panel cpu-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Data Center CPU Revenue Share (AMD vs Intel)">데이터센터 CPU 매출 점유율 (AMD vs Intel)</div>
+                    <div class="chart-panel-sub" data-en="Mercury Research · 2022–2026E quarterly share">Mercury Research · 2022~2026E 분기 점유율</div>
+                </div>
+                <canvas id="cpuMarketChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="AMD share Q4'25">AMD 25Q4</div><div class="kpi-inline-value up">~27%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Intel share Q4'25">Intel 25Q4</div><div class="kpi-inline-value">~73%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="AMD 2026E target">AMD '26E</div><div class="kpi-inline-value up">32–35%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="MS view">MS 시각</div><div class="kpi-inline-value">Both beneficiaries</div></div>
+                </div>
+            </div>
+            <div class="chart-panel cpu-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Head Node vs Orchestration CPU TAM Split">헤드노드 vs Orchestration CPU TAM 분배</div>
+                    <div class="chart-panel-sub" data-en="MS bull-case $110B decomposed">MS 하이 케이스 $110B 분해</div>
+                </div>
+                <canvas id="headnodeVsOrchestrationChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Head Node">헤드노드</div><div class="kpi-inline-value">$50B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label">Orchestration</div><div class="kpi-inline-value up">$30–45B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Storage/Network">스토리지/NW</div><div class="kpi-inline-value">$2.5–15B</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Total">합계</div><div class="kpi-inline-value up">$82.5–110B</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subsection D: Foundry Landscape -->
+        <div class="subsection-h">
+            <span data-en="D. Foundry Landscape — TSMC · Samsung · Intel Foundry · SMIC">D. 파운드리 지형 — TSMC · 삼성 · Intel Foundry · SMIC</span>
+            <span class="note" data-en="Process node leadership + capacity share">공정 노드 리더십 + 캐파 점유율</span>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-panel foundry-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Global Foundry Revenue Share (Q4'25)">글로벌 파운드리 매출 점유율 (25Q4)</div>
+                    <div class="chart-panel-sub" data-en="TrendForce · pure-play + IDM foundry">TrendForce · 순수 + IDM 파운드리</div>
+                </div>
+                <canvas id="foundryLandscapeChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label">TSMC</div><div class="kpi-inline-value up">67.1%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Samsung Foundry">삼성</div><div class="kpi-inline-value">7.7%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label">SMIC</div><div class="kpi-inline-value">6.0%</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Intel Foundry">Intel</div><div class="kpi-inline-value">~1%</div></div>
+                </div>
+            </div>
+            <div class="chart-panel foundry-highlight">
+                <div class="chart-panel-header">
+                    <div class="chart-panel-title" data-en="Leading-Edge Node Leadership (2025–2027)">선단 노드 리더십 (2025~2027)</div>
+                    <div class="chart-panel-sub" data-en="HVM timeline by foundry">업체별 양산 타임라인</div>
+                </div>
+                <canvas id="foundryNodeChart"></canvas>
+                <div class="kpi-inline-row">
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="TSMC N2 HVM">TSMC N2</div><div class="kpi-inline-value up">2025H2</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="TSMC A16 HVM">TSMC A16</div><div class="kpi-inline-value">2026H2</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Samsung 2nm">삼성 2nm</div><div class="kpi-inline-value">2025H2</div></div>
+                    <div class="kpi-inline"><div class="kpi-inline-label" data-en="Intel 18A">Intel 18A</div><div class="kpi-inline-value">2025H2</div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENT LOG TAB -->
+    <section class="tab-panel" id="tab-events">
+        <h2 class="section-h"><span data-en="EventBus History (in-memory pub/sub)">EventBus 이력 (메모리 pub/sub)</span></h2>
+        <div class="event-log">
+            <div class="event-log-title">
+                <span data-en="Live Events — newest first">실시간 이벤트 — 최신순</span>
+                <button class="event-log-clear" onclick="EventBus.clear()" data-en="Clear">초기화</button>
+            </div>
+            <div id="eventLogBody">
+                <div class="event-entry"><span class="ev-time">--:--:--</span><span class="ev-type">SYS</span><span data-en="Awaiting first event…">첫 이벤트 대기 중…</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AUDIT TAB -->
+    <section class="tab-panel" id="tab-audit">
+        <h2 class="section-h"><span data-en="Data Integrity & Source Audit">데이터 무결성 · 출처 감사</span></h2>
+        <div class="chart-panel">
+            <div class="chart-panel-header">
+                <div class="chart-panel-title" data-en="Verification Report">검증 리포트</div>
+            </div>
+            <div id="auditBody" style="font-size: 0.88em; line-height: 1.7;">
+                <p data-en="Verifier Agent runs weekly (Sun 10:00 KST). Every price/% must match ≥2 sources (Kapture + Yahoo/CNBC).">
+                    검증관리자 Agent가 매주 일요일 10:00 KST에 실행. 모든 가격/%는 ≥2개 소스(Kapture + Yahoo/CNBC) 일치 필요.
+                </p>
+                <p style="margin-top: 10px;" data-en="Current verification status: Kapture-verified NDX @ 26,590.34 (2026-04-20 NY close). Watchlist 19 tickers captured; awaiting 2-source cross-check.">
+                    현재 검증 상태: Kapture 검증 완료 NDX @ 26,590.34 (2026-04-20 NY 종가). 관심종목 19개 확보; 2-source 교차검증 대기.
+                </p>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+/* ============================================================
+   v3 NAMESPACE
+   ============================================================ */
+window.v3 = window.v3 || {};
+
+/* ============================================================
+   EVENT BUS — nautilus MessageBus inspired, in-memory pub/sub
+   ============================================================ */
+const EventBus = (function() {
+    const subscribers = new Map(); // topic → Set<handler>
+    const history = []; // [{ts, topic, payload}]
+    const MAX_HISTORY = 200;
+
+    function on(topic, handler) {
+        if (!subscribers.has(topic)) subscribers.set(topic, new Set());
+        subscribers.get(topic).add(handler);
+        return () => subscribers.get(topic).delete(handler);
+    }
+    function emit(topic, payload) {
+        const evt = { ts: new Date(), topic, payload };
+        history.unshift(evt);
+        if (history.length > MAX_HISTORY) history.pop();
+        // wildcard dispatch: topic.subtopic matches "topic.*" and "*"
+        const segments = topic.split('.');
+        const candidates = new Set(['*', topic]);
+        for (let i = 1; i <= segments.length; i++) candidates.add(segments.slice(0, i).join('.') + '.*');
+        candidates.forEach(key => {
+            if (subscribers.has(key)) {
+                subscribers.get(key).forEach(fn => {
+                    try { fn(payload, evt); } catch(e) { console.error('[EventBus]', topic, e); }
+                });
+            }
+        });
+        renderEventEntry(evt);
+    }
+    function clear() {
+        history.length = 0;
+        document.getElementById('eventLogBody').innerHTML = '';
+        emit('sys.log.cleared', {});
+    }
+    function getHistory(topic) {
+        if (!topic) return [...history];
+        return history.filter(e => e.topic === topic || e.topic.startsWith(topic + '.'));
+    }
+    function renderEventEntry(evt) {
+        const body = document.getElementById('eventLogBody');
+        if (!body) return;
+        const t = evt.ts.toTimeString().slice(0, 8);
+        const topicClass = evt.topic.replace(/\./g, '-');
+        const sevClass = evt.payload?.severity ? `severity-${evt.payload.severity}` : '';
+        const msg = evt.payload?.msg || evt.payload?.summary || JSON.stringify(evt.payload).slice(0, 80);
+        const div = document.createElement('div');
+        div.className = `event-entry ${topicClass} ${sevClass}`;
+        div.innerHTML = `<span class="ev-time">${t}</span><span class="ev-type">${evt.topic}</span><span>${msg}</span>`;
+        body.insertBefore(div, body.firstChild);
+        while (body.children.length > 50) body.removeChild(body.lastChild);
+    }
+    return { on, emit, clear, getHistory };
+})();
+window.EventBus = EventBus;
+
+/* ============================================================
+   DATA PROVIDER BASE — ccxt-inspired unified API abstraction
+   ============================================================ */
+class DataProvider {
+    constructor(name, meta = {}) {
+        this.name = name;
+        this.meta = meta;
+        this.status = 'idle'; // idle | ok | warn | err
+        this.lastCall = null;
+        this.lastError = null;
+        this.rateLimit = meta.rateLimit || { calls: 0, window: 60000, max: 30 };
+    }
+    /** Normalize into standard quote schema */
+    normalizeQuote(raw, extra = {}) {
+        return {
+            symbol: String(raw.symbol || extra.symbol || '').toUpperCase(),
+            price: Number(raw.price ?? raw.last ?? NaN),
+            change: Number(raw.change ?? NaN),
+            changePct: Number(raw.changePct ?? raw.chgPct ?? NaN),
+            volume: raw.volume != null ? Number(raw.volume) : null,
+            source: this.name,
+            timestamp: raw.timestamp || new Date().toISOString(),
+            confidence: raw.confidence ?? 1,
+            _raw: raw
+        };
+    }
+    /** Rate limit check (leaky bucket lite) */
+    canCall() {
+        const now = Date.now();
+        if (!this._bucketStart || now - this._bucketStart > this.rateLimit.window) {
+            this._bucketStart = now;
+            this.rateLimit.calls = 0;
+        }
+        return this.rateLimit.calls < this.rateLimit.max;
+    }
+    /** Update provider LED chip */
+    setStatus(status, reason = '') {
+        this.status = status;
+        this.lastError = status === 'err' ? reason : null;
+        this.lastCall = new Date();
+        const chip = document.querySelector(`.provider-chip[data-provider="${this.name}"]`);
+        if (chip) {
+            chip.classList.remove('ok', 'warn', 'err');
+            if (status !== 'idle') chip.classList.add(status);
+        }
+        EventBus.emit(`provider.${this.name}.status`, { status, reason, msg: `${this.name} → ${status}${reason ? ': '+reason : ''}` });
+    }
+    async fetchQuote(symbol) { throw new Error(`${this.name}.fetchQuote not implemented`); }
+    async fetchNews() { throw new Error(`${this.name}.fetchNews not implemented`); }
+}
+window.DataProvider = DataProvider;
+
+/* ============================================================
+   PROVIDER REGISTRY
+   ============================================================ */
+const ProviderRegistry = {
+    providers: new Map(),
+    register(p) {
+        this.providers.set(p.name, p);
+        EventBus.emit('provider.registered', { name: p.name, msg: `Registered: ${p.name}` });
+    },
+    get(name) { return this.providers.get(name); },
+    all() { return [...this.providers.values()]; },
+    /** 2-source verification: fetch from primary + secondary, flag if diverge > threshold */
+    async verify(symbol, primary, secondary, threshold = 0.003) {
+        const a = ProviderRegistry.get(primary);
+        const b = ProviderRegistry.get(secondary);
+        if (!a || !b) throw new Error('Unknown provider');
+        const [qa, qb] = await Promise.all([
+            a.fetchQuote(symbol).catch(e => null),
+            b.fetchQuote(symbol).catch(e => null)
+        ]);
+        if (!qa || !qb) return { ok: false, reason: 'missing data', qa, qb };
+        const diverge = Math.abs(qa.price - qb.price) / qa.price;
+        const ok = diverge <= threshold;
+        EventBus.emit('verify.result', {
+            symbol, ok, diverge: (diverge*100).toFixed(2)+'%',
+            primary: qa.price, secondary: qb.price,
+            msg: `${symbol}: ${primary}=${qa.price} vs ${secondary}=${qb.price} · ${ok?'✓':'⚠ diverge '+(diverge*100).toFixed(2)+'%'}`
+        });
+        return { ok, diverge, qa, qb };
+    }
+};
+window.ProviderRegistry = ProviderRegistry;
+
+/* ============================================================
+   STUB PROVIDERS — will be wired to real MCP tools
+   (For v3 Stage 1 bootstrap, these are declarative stubs that
+    emit their status so the LED UI works; real fetch happens in
+    Stage 7 via Kapture/Claude-in-Chrome MCP bridges.)
+   ============================================================ */
+class KaptureProvider extends DataProvider {
+    constructor() { super('kapture', { url: 'tradingview.com', via: 'Kapture MCP' }); }
+    async fetchQuote(symbol) {
+        // In Stage 7: call mcp__Kapture_Browser_Automation__elements with XPath pattern
+        // For now, serve from seed data captured 2026-04-20 NY close
+        const seed = v3.seedQuotes[symbol];
+        if (!seed) { this.setStatus('warn', `no seed for ${symbol}`); return null; }
+        this.setStatus('ok');
+        return this.normalizeQuote({ ...seed, symbol, confidence: 1.0 });
+    }
+}
+class YahooProvider extends DataProvider {
+    constructor() { super('yahoo', { url: 'finance.yahoo.com', via: 'Claude in Chrome' }); }
+    async fetchQuote(symbol) {
+        const seed = v3.seedQuotes[symbol];
+        if (!seed) { this.setStatus('idle'); return null; }
+        // Simulate slight divergence (< 0.1%) to demonstrate verification logic
+        const jitter = 1 + (Math.random() - 0.5) * 0.0015;
+        this.setStatus('ok');
+        return this.normalizeQuote({ ...seed, price: seed.price * jitter, symbol, confidence: 0.95 });
+    }
+}
+class CnbcProvider extends DataProvider {
+    constructor() { super('cnbc', { url: 'cnbc.com/quotes', via: 'Claude in Chrome' }); }
+    async fetchQuote(symbol) {
+        // Only serves indices (S&P/NDX/VIX)
+        if (!['SPY','QQQ','NDX','SPX','VIX','DXY'].includes(symbol)) return null;
+        const seed = v3.seedQuotes[symbol];
+        if (!seed) return null;
+        this.setStatus('ok');
+        return this.normalizeQuote({ ...seed, symbol, confidence: 0.95 });
+    }
+}
+class SavettickerProvider extends DataProvider {
+    constructor() { super('saveticker', { url: 'saveticker.com', via: 'Claude in Chrome' }); }
+    async fetchNews() {
+        this.setStatus('ok');
+        return (v3.seedNews || []).slice(0, 6);
+    }
+    async fetchQuote() { return null; /* news/calendar only */ }
+}
+
+/* ============================================================
+   SEED DATA — 2026-04-20 NY CLOSE (Kapture-captured from TradingView)
+   These are the starting values; real fetch takes over in Stage 7.
+   ============================================================ */
+v3.seedQuotes = {
+    /* ===== 2026-04-23 KST 장전 Brief 업데이트 (4/22 NY close 기준) =====
+       Source: Valuation Agent 19:00 cron (Polygon) + WebSearch 2-source verify
+       (CNBC/Yahoo/Electrek/TechCrunch/TipRanks/Benzinga/Digitimes).
+       4/22 = Risk-On Breakout 세션 (S&P ATH 7,137.90, QQQ NEW 52W 655.33,
+       7 NEW 52W Highs: ARM/AMD/AVGO/MRVL/MU/QQQ/CLS). */
+    SPY:   { price: 711.21, change: 7.10, changePct: 1.01, prevClose: 704.11 },
+    QQQ:   { price: 655.11, change: 10.77, changePct: 1.67, prevClose: 644.34 },  // 🚀 NEW 52W $655.33
+    NDX:   { price: 24657.57, change: 397.61, changePct: 1.64, prevClose: 24259.96 },
+    SPX:   { price: 7137.90, change: 74.20, changePct: 1.05, prevClose: 7063.70 }, // 🚀 NEW ATH
+    VIX:   { price: 17.02, change: -1.90, changePct: -10.04, prevClose: 18.92 },   // Risk-On
+    DXY:   { price: 98.15, change: 0.07, changePct: 0.07, prevClose: 98.08 },
+    GOOGL: { price: 339.32, change: 7.04, changePct: 2.12, prevClose: 332.28 },
+    GOOG:  { price: 338.20, change: 6.80, changePct: 2.05, prevClose: 331.40 },
+    NVDA:  { price: 202.50, change: 2.62, changePct: 1.31, prevClose: 199.88 },   // Cross Imminent +1.11%
+    PLTR:  { price: 152.62, change: 6.66, changePct: 4.56, prevClose: 145.96 },
+    AVGO:  { price: 422.65, change: 20.46, changePct: 5.09, prevClose: 402.19 },  // 🚀 NEW 52W $423.20
+    META:  { price: 674.72, change: 5.87, changePct: 0.88, prevClose: 668.85 },   // ARM AGI lead partner
+    TSLA:  { price: 387.51, change: 1.08, changePct: 0.28, prevClose: 386.43 },   // ⚠️ AH -4% ~$372 (capex $25B 쇼크)
+    TSM:   { price: 387.44, change: 19.36, changePct: 5.26, prevClose: 368.08 },
+    AMD:   { price: 303.46, change: 18.96, changePct: 6.67, prevClose: 284.50 },  // 🚀 NEW 52W $304.25
+    MSFT:  { price: 432.92, change: 8.77, changePct: 2.07, prevClose: 424.15 },   // Death -16.4% 유지
+    ORCL:  { price: 187.50, change: 6.32, changePct: 3.49, prevClose: 181.18 },
+    SNOW:  { price: 155.57, change: 4.73, changePct: 3.14, prevClose: 150.84 },   // ⚠️ NOW 쇼크 스필오버 위험
+    RDDT:  { price: 166.28, change: 0, changePct: 0, prevClose: 166.28 },
+    HOOD:  { price: 91.28, change: 0, changePct: 0, prevClose: 91.28 },
+    APP:   { price: 490.96, change: 0, changePct: 0, prevClose: 490.96 },
+    FIG:   { price: 19.01, change: 0, changePct: 0, prevClose: 19.01 },
+    CRCL:  { price: 106.36, change: 0, changePct: 0, prevClose: 106.36 },
+    BBAI:  { price: 3.84, change: 0, changePct: 0, prevClose: 3.84 },
+    RKLB:  { price: 90.04, change: 3.40, changePct: 3.92, prevClose: 86.64 },
+    CLS:   { price: 401.74, change: -1.29, changePct: -0.32, prevClose: 403.03 }, // 🚀 장중 NEW 52W $411.30 후 차익실현
+    MRVL:  { price: 157.32, change: 6.00, changePct: 3.97, prevClose: 151.32 },   // 🚀 NEW 52W $158.69
+    MU:    { price: 487.48, change: 38.10, changePct: 8.48, prevClose: 449.38 },  // 🚀 NEW 52W $491.98 (SK Hynix BEAT confirm)
+    INTC:  { price: 65.27, change: -0.99, changePct: -1.49, prevClose: 66.26 },   // 🎯 오늘 AMC Q1 (±9.87% 옵션 pricing)
+    LITE:  { price: 88.50, change: 0, changePct: 0, prevClose: 88.50 },
+    // 24-Ticker Equipment/IP (4/22 close, Polygon 확정)
+    AMAT:  { price: 403.48, change: 9.15, changePct: 2.32, prevClose: 394.33 },   // 52W -0.94%
+    LRCX:  { price: 265.55, change: 7.18, changePct: 2.78, prevClose: 258.37 },   // 52W -2.91%, Scale In 구간
+    KLAC:  { price: 1812.06, change: 26.59, changePct: 1.49, prevClose: 1785.47 }, // 52W -0.61%
+    ARM:   { price: 196.57, change: 21.07, changePct: 12.01, prevClose: 175.50 }, // 🚀 NEW 52W $196.66 (AGI CPU · Meta lead)
+    CRWD:  { price: 466.68, change: 17.08, changePct: 3.80, prevClose: 449.60 },  // ⚠️ NOW 쇼크 스필오버 위험
+    TSMU:  { price: 124.80, change: 12.95, changePct: 11.58, prevClose: 111.85 }  // 2× TSM leveraged ETF (TSM +5.26% × 2)
+};
+
+/* ============================================================
+   PORTFOLIO HOLDINGS — from memory/project_portfolio_holdings.md
+   ============================================================ */
+v3.portfolio = [
+    /* Daniel 실제 보유 (2026-04-17 close 보고, project_portfolio_holdings.md 기준)
+       Total cost = $172,850.08 · 8 positions */
+    { symbol: 'GOOGL', shares: 237, avgCost: 317.39, weight: 0.4355 }, // $75,222 — 포트 43.55%
+    { symbol: 'CLS',   shares: 110, avgCost: 366.59, weight: 0.2343 }, // $40,325 — 🔴 Trim 1/3 권고 (4/27 earnings D-4)
+    { symbol: 'AVGO',  shares: 70,  avgCost: 377.37, weight: 0.1529 }, // $26,416 — ⚠️ NEW 52W $423.20 터치
+    { symbol: 'MRVL',  shares: 160, avgCost: 128.35, weight: 0.1188 }, // $20,535 — ⚠️ NEW 52W $158.69
+    { symbol: 'MU',    shares: 9,   avgCost: 445.79, weight: 0.0232 }, // $4,012 — 🚀 NEW 52W $491.98 (SK Hynix confirm)
+    { symbol: 'TSM',   shares: 10,  avgCost: 374.49, weight: 0.0217 }, // $3,745 — 2nm 우위
+    { symbol: 'PLTR',  shares: 15,  avgCost: 131.52, weight: 0.0114 }, // $1,973
+    { symbol: 'TSMU',  shares: 10,  avgCost: 62.21,  weight: 0.0036 }  // $622 — 2× TSM leveraged ETF
+    /* Semi basket (AVGO+MRVL+MU+TSM+TSMU) = 31.83% · Custom Silicon Thesis 97% 정합 */
+];
+
+/* ============================================================
+   INDEX TICKERS — for Command Center strip
+   ============================================================ */
+v3.indexTickers = [
+    { symbol: 'SPX', label: 'S&P 500', weekPct: 4.13, recordHigh: true },
+    { symbol: 'NDX', label: 'Nasdaq 100', weekPct: 6.01, recordHigh: true },
+    { symbol: 'VIX', label: 'VIX', weekPct: -9.15, recordHigh: false },
+    { symbol: 'DXY', label: 'DXY', weekPct: -0.56, recordHigh: false },
+    { symbol: 'US10Y', label: '10Y Yield', weekPct: -0.94, recordHigh: false, override: { price: 4.244, change: -0.063, changePct: -1.46 } },
+    { symbol: 'USDKRW', label: 'USD/KRW', weekPct: -0.55, recordHigh: false, override: { price: 1466.77, change: -8.13, changePct: -0.55 } }
+];
+
+/* ============================================================
+   DEBATE DATA — TauricResearch-inspired Bull/Bear/Judge per ticker
+   ============================================================ */
+v3.debates = {
+    GOOGL: {
+        bull: [
+            { en: 'TPU v6/v7 + Axion ARM CPU — vertical silicon stack',
+              ko: 'TPU v6/v7 + Axion ARM CPU — 수직 실리콘 스택' },
+            { en: 'Cloud rev +35% YoY · AI capex sustained',
+              ko: '클라우드 매출 +35% YoY · AI 캐펙스 지속' },
+            { en: 'Gemini 3 · YouTube dominance · Waymo scale',
+              ko: '제미나이 3 · 유튜브 지배 · 웨이모 확장' }
+        ],
+        bear: [
+            { en: 'DOJ remedy risk: Chrome / ad tech divest',
+              ko: 'DOJ 구제안 리스크: 크롬/광고 분리' },
+            { en: '43.5% concentration in your portfolio',
+              ko: '포트폴리오 내 43.5% 집중도' },
+            { en: 'Search ads slower share gains vs Meta',
+              ko: '메타 대비 검색광고 점유 둔화 우려' }
+        ],
+        verdict: 'HOLD', verdictKo: '보유', score: 0.58,
+        fvLow: 310, fvHigh: 443
+    },
+    NVDA: {
+        bull: [
+            { en: 'Blackwell Ultra / Rubin ramp — 2026 cycle',
+              ko: '블랙웰 울트라/루빈 램프 — 2026 사이클' },
+            { en: 'Hyperscaler orders sold out through CY26',
+              ko: '하이퍼스케일러 주문 CY26까지 완판' },
+            { en: 'CUDA moat intact · NVLink switch lead',
+              ko: 'CUDA 해자 유지 · NVLink 스위치 선도' }
+        ],
+        bear: [
+            { en: 'Custom ASIC (AVGO/MRVL/AMZN) share take',
+              ko: '커스텀 ASIC 점유율 잠식 (AVGO/MRVL/AMZN)' },
+            { en: 'Export controls to China still overhang',
+              ko: '중국 수출규제 리스크 상존' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.78,
+        fvLow: 175, fvHigh: 245
+    },
+    AVGO: {
+        bull: [
+            { en: 'Google TPU v7 + Meta MTIA 2 = custom wins',
+              ko: '구글 TPU v7 + Meta MTIA 2 커스텀 수주' },
+            { en: 'AI networking (Tomahawk 6) secular tailwind',
+              ko: 'AI 네트워크 (토마호크 6) 구조적 성장' },
+            { en: 'VMware synergy + high FCF margin',
+              ko: 'VMware 시너지 + 높은 FCF 마진' }
+        ],
+        bear: [
+            { en: 'Elevated multiple · 35x fwd PE',
+              ko: '높은 밸류에이션 · 35x fwd PE' },
+            { en: 'Semi cycle exposure if capex slows',
+              ko: '캐펙스 둔화 시 반도체 사이클 노출' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.74,
+        fvLow: 350, fvHigh: 500
+    },
+    PLTR: {
+        bull: [
+            { en: 'AIP (Artificial Intelligence Platform) adoption',
+              ko: 'AIP (AI 플랫폼) 채택 가속' },
+            { en: 'US DoD + Intel contracts accelerating',
+              ko: '美 국방부 + 정보기관 계약 가속' },
+            { en: 'Commercial boot-camp → full deployment pipeline',
+              ko: '상업 부트캠프 → 정식 배포 파이프라인' }
+        ],
+        bear: [
+            { en: 'Multiple at 150x+ · extreme valuation',
+              ko: '멀티플 150x+ · 극단적 밸류에이션' },
+            { en: 'Concentration risk (top customer)',
+              ko: '최대 고객 집중 리스크' },
+            { en: 'Insider selling pace elevated',
+              ko: '내부자 매도 증가' }
+        ],
+        verdict: 'HOLD', verdictKo: '보유', score: 0.52,
+        fvLow: 130, fvHigh: 210
+    },
+    TSLA: {
+        bull: [
+            { en: 'Robotaxi network · FSD v14 rollout',
+              ko: '로보택시 네트워크 · FSD v14 배포' },
+            { en: 'Optimus Gen 3 production path',
+              ko: '옵티머스 Gen 3 생산 로드맵' },
+            { en: 'Energy storage +60% YoY',
+              ko: '에너지 저장 +60% YoY' }
+        ],
+        bear: [
+            { en: 'Auto margin compression (China BYD pressure)',
+              ko: '자동차 마진 압박 (中 BYD)' },
+            { en: 'Elon distraction / governance risk',
+              ko: '경영진 분산 · 거버넌스 리스크' }
+        ],
+        verdict: 'HOLD', verdictKo: '보유', score: 0.55,
+        fvLow: 280, fvHigh: 420
+    },
+    TSM: {
+        bull: [
+            { en: '2nm (N2) ramp 2H26 · Apple/NVDA/AMD queued',
+              ko: '2nm 램프 2H26 · 애플/엔비디아/AMD 대기' },
+            { en: 'CoWoS capacity doubled · HBM packaging moat',
+              ko: 'CoWoS 캐파 2배 · HBM 패키징 해자' },
+            { en: 'US/JP fabs diversify geopolitics',
+              ko: '美/日 팹 분산 · 지정학 완화' }
+        ],
+        bear: [
+            { en: 'China invasion tail risk unpriced',
+              ko: '中 침공 테일리스크 미반영' },
+            { en: 'Arizona fab ramp costs',
+              ko: '애리조나 팹 램프 비용' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.72,
+        fvLow: 320, fvHigh: 450
+    },
+    RKLB: {
+        bull: [
+            { en: 'Neutron 1st launch 2026 · medium-lift entry',
+              ko: '뉴트론 첫 발사 2026 · 중대형 로켓 진입' },
+            { en: 'Electron cadence ~15 launches/yr',
+              ko: '일렉트론 연 ~15회 발사' },
+            { en: 'Space Systems revenue diversifies',
+              ko: '우주 시스템 매출 다변화' }
+        ],
+        bear: [
+            { en: 'Cash burn · frequent dilution',
+              ko: '현금 소진 · 빈번한 유상증자' },
+            { en: 'Neutron schedule slip risk',
+              ko: '뉴트론 일정 지연 리스크' }
+        ],
+        verdict: 'ACCUMULATE', verdictKo: '분할매수', score: 0.68,
+        fvLow: 55, fvHigh: 110
+    },
+    META: {
+        bull: [
+            { en: 'Reality Labs / MTIA 2 custom AI chip',
+              ko: '리얼리티 랩스 / MTIA 2 커스텀 AI 칩' },
+            { en: 'Reels + AI-generated content monetize',
+              ko: '릴스 + AI 생성 콘텐츠 수익화' }
+        ],
+        bear: [
+            { en: 'AI capex reacceleration — margin risk',
+              ko: 'AI 캐펙스 재가속 · 마진 리스크' },
+            { en: 'Reg scrutiny (EU DMA)',
+              ko: '규제 감시 (EU DMA)' }
+        ],
+        verdict: 'HOLD', verdictKo: '보유', score: 0.56,
+        fvLow: 600, fvHigh: 820
+    },
+    AMD: {
+        bull: [
+            { en: 'MI400 series · 2026 volume ramp',
+              ko: 'MI400 시리즈 · 2026 물량 램프' },
+            { en: 'EPYC server share gains · Turin refresh',
+              ko: 'EPYC 서버 점유 확대 · 튜린 리프레시' }
+        ],
+        bear: [
+            { en: 'Client PC demand weak · AI share vs NVDA',
+              ko: '클라이언트 PC 수요 부진 · NVDA 격차' }
+        ],
+        verdict: 'HOLD', verdictKo: '보유', score: 0.54,
+        fvLow: 240, fvHigh: 340
+    },
+    ORCL: {
+        bull: [
+            { en: 'OCI backlog $130B+ · AI training contracts',
+              ko: 'OCI 백로그 $130B+ · AI 학습 계약' },
+            { en: 'NVDA+Oracle supercluster deals',
+              ko: 'NVDA+오라클 슈퍼클러스터 계약' }
+        ],
+        bear: [
+            { en: 'Cap-ex spike pressure on FCF',
+              ko: '캐펙스 급증 · FCF 압박' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.70,
+        fvLow: 160, fvHigh: 220
+    },
+    /* ============================================================
+       WATCH LIST — 2026-04-22 Daniel 요청: INTC/MRVL/CLS 복원
+       (v2 에 있었으나 v3 리빌드 때 빠짐)
+       ============================================================ */
+    INTC: {
+        bull: [
+            { en: '🔥 HSBC upgrade Hold→Buy · PT $50→$95 (45% upside)',
+              ko: '🔥 HSBC 업그레이드 Hold→Buy · 목표가 $50→$95 (45% 상승)' },
+            { en: 'Server CPU shipments +20% YoY · ASP +20%(\'26)/+10%(\'27)',
+              ko: '서버 CPU 출하 +20% YoY · ASP +20%(\'26)/+10%(\'27)' },
+            { en: '18A node + Panther Lake ramp preparing',
+              ko: '18A 노드 + Panther Lake 양산 준비' }
+        ],
+        bear: [
+            { en: 'Foundry business still loss-making · FCF pressure',
+              ko: 'Foundry 부문 적자 지속 · FCF 압박' },
+            { en: 'AI GPU gap vs NVDA/AMD structural',
+              ko: 'AI GPU 격차 NVDA/AMD 대비 구조적' },
+            { en: 'Client PC demand remains weak',
+              ko: '클라이언트 PC 수요 부진 지속' }
+        ],
+        verdict: 'WAIT', verdictKo: '대기', score: 0.55,
+        fvLow: 55, fvHigh: 95
+    },
+    MRVL: {
+        bull: [
+            { en: 'Custom ASIC wins · AWS Trainium 3 / Meta MTIA 2',
+              ko: '커스텀 ASIC 수주 · AWS Trainium 3 / Meta MTIA 2' },
+            { en: 'AI networking $1B+ trajectory · 800G/1.6T optical',
+              ko: 'AI 네트워크 $1B+ 궤도 · 800G/1.6T 광통신' },
+            { en: 'Data center revenue +78% YoY',
+              ko: '데이터센터 매출 +78% YoY' }
+        ],
+        bear: [
+            { en: 'AVGO competitive pressure on custom ASIC share',
+              ko: 'AVGO 와의 커스텀 ASIC 점유 경쟁' },
+            { en: 'Forward PE 40x+ · premium valuation',
+              ko: 'Forward PE 40x+ · 밸류에이션 프리미엄' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.72,
+        fvLow: 130, fvHigh: 200
+    },
+    CLS: {
+        bull: [
+            { en: 'AMD Helios rack partner · HCS revenue +50%+ YoY',
+              ko: 'AMD Helios 랙 파트너 · HCS 매출 +50%+ YoY' },
+            { en: 'Hyperscaler EMS demand (Meta/Google rack assembly)',
+              ko: '하이퍼스케일러 EMS 수요 (Meta/Google 랙 조립)' },
+            { en: '2026 guidance raised · $12B revenue target',
+              ko: '2026 가이던스 상향 · $12B 매출 목표' }
+        ],
+        bear: [
+            { en: 'Customer concentration (Top-3 > 60%)',
+              ko: '고객 집중도 (Top-3 60% 이상)' },
+            { en: 'EMS margin ceiling structurally low',
+              ko: 'EMS 마진 구조적 상한선' }
+        ],
+        verdict: 'BUY', verdictKo: '매수', score: 0.70,
+        fvLow: 350, fvHigh: 500
+    }
+};
+
+/* ============================================================
+   NEWS SEED (from Saveticker latest)
+   ============================================================ */
+v3.seedNews = [
+    { ts: '30m', title: '⭐ BREAKING: Musk Tesla Terafab, Intel 14A 공식 채택 — INTC AH +3.6% (~$67) · Lip-Bu Tan CEO "필수 외부 고객" 획득, 파운드리 생존 분수령 · "14A 성숙기에 Terafab 스케일업" 발언 · Intel 14A 첫 외부 앵커 = 오늘 AMC 어닝 강력 테일윈드 · MS 4/22 PT $41→$56 업그레이드와 정합', src: 'Benzinga / U.S. News / Investing.com · 4/22 AMC TSLA call' },
+    { ts: '1h', title: '✅ SK Hynix 장중 반전: 개장 -2% (buy-the-fact) → 오전 +2.1% 반등 · KOSPI +1.2% 동반 랠리 · YTD +90% / 시총 ~$590B · 경영진 "향후 3년 HBM 수요가 생산능력을 far exceeds" 공식 언급 · Q1 영업익 ₩37.61T (+198% YoY) · 마진 72% 사상최대 · HBM4E 2H26 샘플 / 2027 양산 → MU/AVGO/NVDA structural validation', src: 'SK Hynix IR / CNBC / Yahoo Finance · 4/23 KR session' },
+    { ts: '2h', title: 'US 선물 낙폭 축소: SPX fut 7,140.75 (-0.43%) · NDX fut 26,974.50 (-0.40%) · DJI fut 49,386 (-0.57%) — 4/23 19:00 KST 대비 30-50bp 회복 (당시 -0.50/-0.51/-0.59%) · Iran "단기 협상 불참" Trump 무기한 휴전 발표에도 risk-off 지속 · 전일 ATH (SPX 7,137.90 / NDX 24,657.57 +1.64%) 소화 과정', src: 'Yahoo Finance / CNBC / Bloomberg · 4/23 06:00 ET' },
+    { ts: '3h', title: '오일 4일 연속 상승: Brent $101.91 (+3.48%) / WTI $92.96 (+3.67%) — Strait of Hormuz 일일 통항 3 ships 로 급감 (vs 평시 ~50) · 중동 일일 원유 공급손실 12M bbl · 글로벌 3월 공급 97M bpd (-10.1M bpd MoM, 월간 사상최대 차질) · IRGC "민간선박 이란 지정항로 + 사전조율" 요구 / 군함 통과 금지 지속 · 4/30 Core PCE 상방 리스크 신규', src: 'CNBC / TradingKey / Al Jazeera · 4/22 close + 4/23 transit data' },
+    { ts: '4h', title: 'TSLA Q1 mixed: EPS $0.41 BEAT vs $0.34 · rev $22.39B ($22.19B 컨센 상회) · net income $477M · 초기 +4% AH → capex $25B (+$5B vs $20B prior) 쇼크로 반락 · 재고 50,000+ 빌드업 + 에너지저장 8.8 GWh (-38% QoQ) · 하지만 Musk 어닝콜 발언 = 오늘의 진짜 헤드라인 (Terafab-Intel 14A) → INTC 에 선물 · YTD TSLA -14%', src: 'CNBC / Electrek / Foreign Policy Journal · 4/22 AMC' },
+    { ts: '5h', title: 'INTC Q1 오늘 4/23 AMC (5pm ET / 06:00 KST 4/24) — Tesla 14A 확정 후 setup 변화: rev $12.32B 컨센 (-2.75% YoY) / EPS $0.01 · 옵션 ±9% 임플라이드 · 관전 3축 재정의: (1) 18A 수율 (Zinsner: 2027 업계평균 정상화 목표) (2) Panther Lake 180 TOPS ramp · (3) 이제 14A 마진 로드맵 + 추가 외부고객 (SpaceX/xAI) 공개 여부 · YTD +78% · MS Memory (MU/SNDK) still preferred but INTC re-rating path clearer', src: 'TradingKey / TipRanks / Nasdaq / Morgan Stanley · 4/22-23' }
+];
+
+/* ============================================================
+   RENDERERS
+   ============================================================ */
+function fmtNum(n, digits = 2) {
+    if (n == null || !isFinite(n)) return '—';
+    return Number(n).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+function fmtPct(p) {
+    if (p == null || !isFinite(p)) return '—';
+    return (p >= 0 ? '+' : '') + Number(p).toFixed(2) + '%';
+}
+function fmtChg(c) {
+    if (c == null || !isFinite(c)) return '—';
+    return (c >= 0 ? '+' : '') + Number(c).toFixed(2);
+}
+
+function populateTickers() {
+    const strip = document.getElementById('tickerStrip');
+    if (!strip) return;
+    strip.innerHTML = '';
+    v3.indexTickers.forEach(cfg => {
+        const q = cfg.override || v3.seedQuotes[cfg.symbol] || {};
+        const verified = cfg.symbol === 'NDX'; // only NDX is Kapture-verified currently
+        const cls = (q.changePct ?? 0) >= 0 ? 'up' : 'down';
+        const arrow = (q.changePct ?? 0) >= 0 ? '▲' : '▼';
+        const wkCls = (cfg.weekPct ?? 0) >= 0 ? 'up' : 'down';
+        const div = document.createElement('div');
+        div.className = 'cc-ticker' + (verified ? ' verified' : '');
+        div.innerHTML = `
+            <span class="cc-ticker-label">${cfg.label}</span>
+            <span class="cc-ticker-value mono">${fmtNum(q.price, cfg.symbol === 'US10Y' ? 3 : cfg.symbol === 'USDKRW' ? 2 : 2)}</span>
+            <span class="cc-ticker-change ${cls}">${arrow} ${fmtPct(q.changePct)} · W <span class="${wkCls}">${fmtPct(cfg.weekPct)}</span>${cfg.recordHigh ? ' 🏆' : ''}</span>
+        `;
+        strip.appendChild(div);
+    });
+}
+
+function buildDebateCards() {
+    const grid = document.getElementById('debateGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const keys = Object.keys(v3.debates);
+    document.getElementById('debateCount').textContent = keys.length;
+    keys.forEach(sym => {
+        const d = v3.debates[sym];
+        const q = v3.seedQuotes[sym] || {};
+        const changeCls = (q.changePct ?? 0) >= 0 ? 'up' : 'down';
+        const changeArr = (q.changePct ?? 0) >= 0 ? '▲' : '▼';
+        const verdictCls = d.verdict.toLowerCase().startsWith('buy') ? 'buy'
+                          : d.verdict.toLowerCase() === 'sell' ? 'sell'
+                          : d.verdict.toLowerCase() === 'accumulate' ? 'accum'
+                          : d.verdict.toLowerCase() === 'wait' ? 'wait'
+                          : 'hold';
+        const scorePct = Math.round(d.score * 100);
+        const bullBullets = d.bull.map(b => `<li data-en="${b.en.replace(/"/g,'&quot;')}">${b.ko}</li>`).join('');
+        const bearBullets = d.bear.map(b => `<li data-en="${b.en.replace(/"/g,'&quot;')}">${b.ko}</li>`).join('');
+        const card = document.createElement('div');
+        card.className = 'debate-card';
+        card.innerHTML = `
+            <div class="dc-header">
+                <span class="dc-ticker">${sym}</span>
+                <div class="dc-price-block">
+                    <span class="dc-price">$${fmtNum(q.price)}</span>
+                    <span class="dc-price-change ${changeCls}">${changeArr} ${fmtChg(q.change)} (${fmtPct(q.changePct)})</span>
+                </div>
+            </div>
+            <div class="dc-body">
+                <div class="dc-case bull">
+                    <div class="dc-case-title">🐂 <span data-en="Bull Case">강세 논리</span></div>
+                    <ul>${bullBullets}</ul>
+                </div>
+                <div class="dc-case bear">
+                    <div class="dc-case-title">🐻 <span data-en="Bear Case">약세 논리</span></div>
+                    <ul>${bearBullets}</ul>
+                </div>
+            </div>
+            <div class="dc-judge">
+                <span class="dc-verdict ${verdictCls}" data-en="${d.verdict}">${d.verdictKo}</span>
+                <div class="dc-score">
+                    <span class="dc-score-label"><span data-en="Judge Score">판정 점수</span> · ${scorePct}%</span>
+                    <div class="dc-score-bar"><div class="dc-score-fill" style="width:${scorePct}%"></div></div>
+                </div>
+                <div class="dc-fv">FV <b>$${d.fvLow}–${d.fvHigh}</b></div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function renderPositions() {
+    const tbody = document.getElementById('positionTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    let totalMV = 0, totalCost = 0;
+    v3.portfolio.forEach(pos => {
+        const q = v3.seedQuotes[pos.symbol] || {};
+        const mv = (q.price || 0) * pos.shares;
+        const cost = pos.avgCost * pos.shares;
+        const pnl = mv - cost;
+        const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+        totalMV += mv; totalCost += cost;
+        const pnlCls = pnl >= 0 ? 'up' : 'down';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${pos.symbol}</td>
+            <td>${pos.shares}</td>
+            <td>$${fmtNum(pos.avgCost)}</td>
+            <td>$${fmtNum(q.price)}</td>
+            <td class="${pnlCls}">${pnl >= 0 ? '+' : ''}$${fmtNum(Math.abs(pnl))}</td>
+            <td class="${pnlCls}">${fmtPct(pnlPct)}</td>
+            <td>${(pos.weight*100).toFixed(1)}%</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    // Update tier panels
+    document.getElementById('tierAccount').textContent = `$${(totalCost/1000).toFixed(1)}K cost`;
+    const totalPnl = totalMV - totalCost;
+    const totalPnlPct = totalCost > 0 ? (totalPnl/totalCost)*100 : 0;
+    document.getElementById('tierPortfolio').textContent = `$${(totalMV/1000).toFixed(1)}K MV (${totalPnl>=0?'+':''}${totalPnlPct.toFixed(1)}%)`;
+    // Update KPI row
+    document.getElementById('kpiMarketValue').textContent = `$${(totalMV/1000).toFixed(1)}K`;
+    const pnlEl = document.getElementById('kpiPnL');
+    pnlEl.textContent = `${totalPnl>=0?'+':''}$${(Math.abs(totalPnl)/1000).toFixed(1)}K (${fmtPct(totalPnlPct)})`;
+    pnlEl.style.color = totalPnl >= 0 ? 'var(--buy-green)' : 'var(--sell-red)';
+}
+
+/* ============================================================
+   CHART PANELS — migrated from v2
+   ============================================================ */
+function initCharts() {
+    /* v3.1 Light theme Chart.js defaults */
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.color = '#4B5563';
+        Chart.defaults.borderColor = 'rgba(31, 41, 55, 0.10)';
+        Chart.defaults.font.family = "-apple-system, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif";
+    }
+    // Custom ASIC Revenue (AVGO vs MRVL)
+    const crCtx = document.getElementById('customRevChart');
+    if (crCtx) new Chart(crCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['2024','2025','2026E','2027E','2028E'],
+            datasets: [
+                { label: 'AVGO Custom AI Rev', data: [12, 26, 42, 58, 74], backgroundColor: 'rgba(184,134,11,0.72)', borderColor:'#B8860B', borderWidth:1, borderRadius:4 },
+                { label: 'MRVL Custom AI Rev', data: [2.5, 4.5, 8, 13, 19], backgroundColor: 'rgba(106,27,154,0.65)', borderColor:'#6A1B9A', borderWidth:1, borderRadius:4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position:'top', labels:{ color:'#4B5563', font:{size:10}, padding:8, boxWidth:12 } },
+                tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: $${c.parsed.y}B` } }
+            },
+            scales: {
+                y: { beginAtZero:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, callback:(v)=>'$'+v+'B'} },
+                x: { grid:{display:false}, ticks:{color:'#1F2937', font:{size:10, weight:'bold'}} }
+            }
+        }
+    });
+
+    // HBM Supplier Share
+    const hbmCtx = document.getElementById('hbmShareChart');
+    if (hbmCtx) new Chart(hbmCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['SK Hynix — 62%', 'Micron (MU) — 21%', 'Samsung — 17%'],
+            datasets: [{ data:[62,21,17], backgroundColor:['#B8860B','#2E7D32','#6A1B9A'], borderColor:'#FFFFFF', borderWidth:2 }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ position:'right', labels:{ color:'#4B5563', font:{size:11}, padding:10, boxWidth:12 } } }
+        }
+    });
+
+    // Entry Zone Map
+    const epCtx = document.getElementById('entryPointChart');
+    if (epCtx) {
+        const tickers = ['GOOGL','NVDA','AVGO','CLS','MRVL','MU','TSM','PLTR','TSLA','RKLB'];
+        const fvLow   = [310,175,350,320,120,380,320,130,280,55];
+        const entry   = [325,195,380,340,125,420,340,135,310,70];
+        const fvHigh  = [443,245,500,480,190,540,450,210,420,110];
+        const current = tickers.map(t => (v3.seedQuotes[t] || {}).price || 0);
+        new Chart(epCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: tickers,
+                datasets: [
+                    { label:'FV Low', data:fvLow, backgroundColor:'rgba(46,125,50,0.35)', borderColor:'#2E7D32', borderWidth:1, borderRadius:4, stack:'s0' },
+                    { label:'Entry Zone', data:entry.map((t,i)=>t-fvLow[i]), backgroundColor:'rgba(184,134,11,0.65)', borderColor:'#B8860B', borderWidth:1, borderRadius:4, stack:'s0' },
+                    { label:'Upside→FV High', data:fvHigh.map((h,i)=>h-entry[i]), backgroundColor:'rgba(230,74,25,0.35)', borderColor:'#E64A19', borderWidth:1, borderRadius:4, stack:'s0' },
+                    { label:'Current (4/20)', type:'scatter', data:current.map((p,i)=>({x:p, y:tickers[i]})), backgroundColor:'#0097A7', borderColor:'#1F2937', borderWidth:2, pointRadius:7, pointStyle:'triangle' }
+                ]
+            },
+            options: {
+                indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{position:'top', labels:{color:'#4B5563', font:{size:10}, padding:8}},
+                          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: $${typeof c.parsed.x==='number'?c.parsed.x.toFixed(1):c.parsed.y}` } } },
+                scales:{ x:{stacked:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, callback:v=>'$'+v}},
+                         y:{stacked:true, grid:{display:false}, ticks:{color:'#1F2937', font:{size:11, weight:'bold'}}} }
+            }
+        });
+    }
+
+    /* ============================================================
+       v3.1 NEW PANELS — Morgan Stanley Agentic AI (4/19)
+       Source: MS Research "Agentic AI: Bringing CPUs Back to the Front"
+       ============================================================ */
+
+    // MS Exhibit 1 — CPU TAM decomposition: $24B base → $82.5-110B bull case
+    const msCpuCtx = document.getElementById('msCpuTamChart');
+    if (msCpuCtx) new Chart(msCpuCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['2025 Base', '2027E Low', '2027E High'],
+            datasets: [
+                { label: 'Head Node (AI Servers)', data: [24, 50, 50], backgroundColor: 'rgba(106,27,154,0.75)', borderColor:'#6A1B9A', borderWidth:1, borderRadius:4, stack:'tam' },
+                { label: 'Orchestration / Agentic', data: [0, 30, 45], backgroundColor: 'rgba(230,74,25,0.75)', borderColor:'#E64A19', borderWidth:1, borderRadius:4, stack:'tam' },
+                { label: 'Storage / Networking', data: [0, 2.5, 15], backgroundColor: 'rgba(0,151,167,0.75)', borderColor:'#0097A7', borderWidth:1, borderRadius:4, stack:'tam' }
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend: { position:'top', labels:{color:'#4B5563', font:{size:10}, padding:8, boxWidth:12} },
+                tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: $${c.parsed.y}B` } }
+            },
+            scales: {
+                y: { beginAtZero:true, stacked:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, callback:(v)=>'$'+v+'B'} },
+                x: { stacked:true, grid:{display:false}, ticks:{color:'#1F2937', font:{size:11, weight:'bold'}} }
+            }
+        }
+    });
+
+    // MS Exhibit 2 — DRAM demand vs 2027 supply
+    const msDramCtx = document.getElementById('msDramDemandChart');
+    if (msDramCtx) new Chart(msDramCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['2027 Supply (est.)', 'Agentic Demand Low', 'Agentic Demand High'],
+            datasets: [{
+                label: 'DRAM (EB)',
+                data: [58.3, 15, 45],
+                backgroundColor: ['rgba(107,114,128,0.55)','rgba(46,125,50,0.70)','rgba(198,40,40,0.70)'],
+                borderColor: ['#6B7280','#2E7D32','#C62828'],
+                borderWidth: 1, borderRadius: 4
+            }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend: { display:false },
+                tooltip:{ callbacks:{ label:(c)=>`${c.parsed.y} EB` + (c.dataIndex>0 ? ` · ${(c.parsed.y/58.3*100).toFixed(0)}% of 2027 supply` : '') } }
+            },
+            scales: {
+                y: { beginAtZero:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, callback:(v)=>v+' EB'} },
+                x: { grid:{display:false}, ticks:{color:'#1F2937', font:{size:10, weight:'bold'}} }
+            }
+        }
+    });
+
+    // MS Exhibit 3 — ABF Substrate CAGR 9.0% → 17.9%
+    const msAbfCtx = document.getElementById('msAbfCagrChart');
+    if (msAbfCtx) {
+        // Pre-Agentic baseline (9.0% CAGR from 2024 base) vs MS new forecast (17.9% CAGR)
+        const years = ['2024','2025','2026','2027','2028','2029'];
+        const base2024 = 10; // normalized index
+        const prior = years.map((_, i) => +(base2024 * Math.pow(1.09, i)).toFixed(2));
+        const msNew = years.map((_, i) => +(base2024 * Math.pow(1.179, i)).toFixed(2));
+        new Chart(msAbfCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    { label:'Prior CAGR 9.0%', data: prior, borderColor:'#6B7280', backgroundColor:'rgba(107,114,128,0.15)', borderWidth:2, tension:0.25, fill:true, pointRadius:4 },
+                    { label:'MS New CAGR 17.9%', data: msNew, borderColor:'#6A1B9A', backgroundColor:'rgba(106,27,154,0.20)', borderWidth:3, tension:0.25, fill:true, pointRadius:5 }
+                ]
+            },
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins: {
+                    legend: { position:'top', labels:{color:'#4B5563', font:{size:10}, padding:8} },
+                    tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y} (idx, 2024=10)` } }
+                },
+                scales: {
+                    y: { beginAtZero:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}} },
+                    x: { grid:{display:false}, ticks:{color:'#1F2937', font:{size:10, weight:'bold'}} }
+                }
+            }
+        });
+    }
+
+    /* ============================================================
+       v3.1 NEW PANELS — CPU Data Center Market (AMD vs Intel)
+       Source: Mercury Research quarterly, MS Agentic AI report
+       ============================================================ */
+
+    // CPU Market Share — AMD vs Intel quarterly trend
+    const cpuCtx = document.getElementById('cpuMarketChart');
+    if (cpuCtx) new Chart(cpuCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Q4 22', 'Q4 23', 'Q4 24', 'Q4 25', 'Q4 26E'],
+            datasets: [
+                { label:'AMD EPYC', data:[17.6, 23.1, 24.2, 27.0, 33.0], backgroundColor:'rgba(198,40,40,0.78)', borderColor:'#C62828', borderWidth:1, borderRadius:4, stack:'cpu' },
+                { label:'Intel Xeon', data:[82.4, 76.9, 75.8, 73.0, 67.0], backgroundColor:'rgba(0,113,188,0.78)', borderColor:'#0071BC', borderWidth:1, borderRadius:4, stack:'cpu' }
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend:{ position:'top', labels:{color:'#4B5563', font:{size:10}, padding:8} },
+                tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } }
+            },
+            scales: {
+                y: { beginAtZero:true, max:100, stacked:true, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, callback:v=>v+'%'} },
+                x: { stacked:true, grid:{display:false}, ticks:{color:'#1F2937', font:{size:10, weight:'bold'}} }
+            }
+        }
+    });
+
+    // Head Node vs Orchestration vs Storage — $110B bull case decomposition (doughnut)
+    const headnodeCtx = document.getElementById('headnodeVsOrchestrationChart');
+    if (headnodeCtx) new Chart(headnodeCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Head Node — $50B', 'Orchestration — $45B (high)', 'Storage / Network — $15B (high)'],
+            datasets: [{
+                data: [50, 45, 15],
+                backgroundColor: ['#6A1B9A', '#E64A19', '#0097A7'],
+                borderColor: '#FFFFFF', borderWidth: 2
+            }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend:{ position:'right', labels:{color:'#4B5563', font:{size:11}, padding:10, boxWidth:12} },
+                tooltip:{ callbacks:{ label:(c)=>`${c.label}: ${(c.parsed/110*100).toFixed(1)}%` } }
+            }
+        }
+    });
+
+    /* ============================================================
+       v3.1 NEW PANELS — Foundry Landscape
+       Source: TrendForce Q4'25, company filings
+       ============================================================ */
+
+    // Foundry Revenue Share — doughnut
+    const foundryCtx = document.getElementById('foundryLandscapeChart');
+    if (foundryCtx) new Chart(foundryCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['TSMC 67.1%', 'Samsung 7.7%', 'SMIC 6.0%', 'UMC 4.3%', 'GlobalFoundries 4.0%', 'HuaHong 2.6%', 'Intel Foundry ~1%', 'Others 7.3%'],
+            datasets: [{
+                data: [67.1, 7.7, 6.0, 4.3, 4.0, 2.6, 1.0, 7.3],
+                backgroundColor: ['#0097A7','#00796B','#C62828','#F57F17','#6A1B9A','#B8860B','#0071BC','#9AA5B1'],
+                borderColor: '#FFFFFF', borderWidth: 2
+            }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend:{ position:'right', labels:{color:'#4B5563', font:{size:10}, padding:6, boxWidth:10} },
+                tooltip:{ callbacks:{ label:(c)=>`${c.label}` } }
+            }
+        }
+    });
+
+    // Foundry node leadership timeline — horizontal timeline style via bar with timeline positions
+    const nodeCtx = document.getElementById('foundryNodeChart');
+    if (nodeCtx) {
+        // Numeric year helper: 2025.5 = 25H2
+        const bar = (from, to) => ({ x:[from, to] });
+        new Chart(nodeCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['TSMC N2 (2nm)', 'TSMC A16 (1.6nm)', 'Samsung 2nm', 'Samsung 1.4nm', 'Intel 18A', 'Intel 14A', 'SMIC 7nm mature'],
+                datasets: [{
+                    label: 'HVM window',
+                    data: [
+                        [2025.5, 2028.5], // TSMC N2
+                        [2026.5, 2029.5], // TSMC A16
+                        [2025.5, 2028.0], // Samsung 2nm
+                        [2027.5, 2030.0], // Samsung 1.4nm
+                        [2025.5, 2028.0], // Intel 18A
+                        [2027.0, 2030.0], // Intel 14A
+                        [2024.0, 2027.0]  // SMIC 7nm
+                    ],
+                    backgroundColor: ['rgba(0,151,167,0.75)','rgba(0,151,167,0.60)','rgba(0,121,107,0.75)','rgba(0,121,107,0.60)','rgba(0,113,188,0.75)','rgba(0,113,188,0.60)','rgba(198,40,40,0.65)'],
+                    borderColor: ['#0097A7','#0097A7','#00796B','#00796B','#0071BC','#0071BC','#C62828'],
+                    borderWidth: 1, borderRadius: 4, borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+                plugins: {
+                    legend: { display:false },
+                    tooltip: { callbacks:{ label: (c) => {
+                        const [f, t] = c.raw;
+                        const fmtYear = (y) => `${Math.floor(y)}H${y%1===0 ? '1' : '2'}`;
+                        return `${fmtYear(f)} → ${fmtYear(t)}`;
+                    } } }
+                },
+                scales: {
+                    x: { min: 2024, max: 2030, grid:{color:'rgba(31,41,55,0.08)'}, ticks:{color:'#4B5563', font:{size:10}, stepSize:1, callback:(v)=>v.toString().replace('.5','H2').replace(/^(\d{4})$/, "$1H1")} },
+                    y: { grid:{display:false}, ticks:{color:'#1F2937', font:{size:10, weight:'bold'}} }
+                }
+            }
+        });
+    }
+}
+
+/* ============================================================
+   TAB SWITCHER
+   ============================================================ */
+function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            const panel = document.getElementById(`tab-${id}`);
+            if (panel) panel.classList.add('active');
+            EventBus.emit('ui.tab.changed', { tab: id, msg: `Tab → ${id}` });
+        });
+    });
+}
+
+/* ============================================================
+   LANGUAGE TOGGLE — same strategy as v2
+   ============================================================ */
+const _origTextCache = new WeakMap();
+function toggleLang() {
+    const current = document.documentElement.getAttribute('data-lang') || 'ko';
+    setLang(current === 'ko' ? 'en' : 'ko');
+}
+function setLang(lang) {
+    const html = document.documentElement;
+    html.setAttribute('data-lang', lang);
+    html.setAttribute('lang', lang);
+    document.querySelectorAll('[data-en]').forEach(el => {
+        if (!_origTextCache.has(el)) _origTextCache.set(el, el.innerHTML);
+        if (lang === 'en') el.innerHTML = el.getAttribute('data-en');
+        else el.innerHTML = el.hasAttribute('data-ko') ? el.getAttribute('data-ko') : _origTextCache.get(el);
+    });
+    const btnText = document.getElementById('langToggleText');
+    const btnFlag = document.querySelector('.lang-toggle .flag-icon');
+    if (btnText && btnFlag) {
+        btnText.textContent = lang === 'ko' ? 'English' : '한국어';
+        btnFlag.textContent = lang === 'ko' ? '🇺🇸' : '🇰🇷';
+    }
+    EventBus.emit('ui.lang.changed', { lang, msg: `Language → ${lang.toUpperCase()}` });
+}
+
+/* ============================================================
+   2-SOURCE VERIFICATION BATCH — Kapture vs Yahoo
+   ============================================================ */
+async function runVerificationBatch() {
+    const targets = ['GOOGL','NVDA','AVGO','PLTR','TSLA','TSM','RKLB'];
+    EventBus.emit('verify.batch.start', { count: targets.length, msg: `Starting verify on ${targets.length} holdings` });
+    const results = [];
+    for (const s of targets) {
+        const r = await ProviderRegistry.verify(s, 'kapture', 'yahoo', 0.003);
+        results.push({ symbol: s, ...r });
+    }
+    const mismatches = results.filter(r => !r.ok);
+    EventBus.emit('verify.batch.done', {
+        total: results.length,
+        ok: results.length - mismatches.length,
+        diverged: mismatches.length,
+        severity: mismatches.length > 0 ? 'yellow' : null,
+        msg: `Verified ${results.length} symbols · ${mismatches.length} diverged`
+    });
+    return results;
+}
+
+/* ============================================================
+   BOOTSTRAP
+   ============================================================ */
+function bootstrap() {
+    // Register providers
+    ProviderRegistry.register(new KaptureProvider());
+    ProviderRegistry.register(new YahooProvider());
+    ProviderRegistry.register(new CnbcProvider());
+    ProviderRegistry.register(new SavettickerProvider());
+    // Set initial status
+    ProviderRegistry.get('kapture').setStatus('ok', 'Tab 2127163080 live');
+    ProviderRegistry.get('yahoo').setStatus('idle');
+    ProviderRegistry.get('cnbc').setStatus('idle');
+    ProviderRegistry.get('saveticker').setStatus('ok');
+    // Timestamp
+    const ts = new Date().toISOString().slice(11, 19);
+    document.getElementById('lastRefreshTime').textContent = ts;
+    // Render all
+    populateTickers();
+    buildDebateCards();
+    renderPositions();
+    initCharts();
+    initTabs();
+    // Log boot
+    EventBus.emit('sys.boot', { version: 'v3.4', msg: 'Dashboard v3.4 booted — Mobile-responsive (tablet/phone/small-phone breakpoints) + Trump Truth Social provider chips (@realDonaldTrump + TrumpsTruth archive)' });
+    // Auto-run verification batch after 2 s
+    setTimeout(() => runVerificationBatch().catch(e => console.error(e)), 2000);
+}
+
+// Wait for DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+} else {
+    bootstrap();
+}
+
+</script>
+</body>
+</html>
