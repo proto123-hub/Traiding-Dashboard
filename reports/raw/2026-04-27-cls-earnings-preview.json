@@ -1,0 +1,80 @@
+{
+  "note": "Synthesized from on-disk data only. Live WebSearch for 2026-04-27-specific CLS consensus produced no usable results in this fictional-2026 project timeline. Per collector spec: no fabrication. Items below are drawn from existing data/*.json and durable CLS thesis context.",
+  "context": {
+    "ticker": "CLS",
+    "company": "Celestica Inc",
+    "sector": "Electronics-Mfg",
+    "earningsDate": "2026-04-27",
+    "earningsTime": "AMC",
+    "tradingDaysToEvent": 2,
+    "asOf": "2026-04-25"
+  },
+  "positionSnapshot": {
+    "shares": 110,
+    "avgCost": 366.59,
+    "currentPrice": 401.74,
+    "weight": 0.2343,
+    "rank": 2,
+    "unrealizedPnL": 3866.50,
+    "unrealizedPnLPct": 9.59,
+    "source": "data/portfolio-current.json + index.html v3.seedQuotes (2026-04-22 close)"
+  },
+  "valuationOnDisk": {
+    "fvLow": 300,
+    "fvMid": 380,
+    "fvHigh": 450,
+    "currentPrice": 401.74,
+    "positionVsBand": "above-mid, 11% below high",
+    "method": ["EV/EBITDA-peer-hyperscaler-ODM", "PEG-growth-normalized"],
+    "rationale": "CCS segment AI-server growth strong but guidance beat bar high into 4/27 print. At FV-mid with event risk — partial trim (1/3) recommended pre-earnings.",
+    "source": "data/valuations.json"
+  },
+  "riskScoreOnDisk": {
+    "score": 68,
+    "verdict": "TRIM",
+    "entryZone": { "low": 320, "high": 345 },
+    "target": { "base": 380, "bull": 450, "bear": 280 },
+    "stopLoss": 355,
+    "rrr": 0.9,
+    "risks": [
+      { "tag": "event", "severity": "high", "note": "4/27 earnings — guidance beat bar high" },
+      { "tag": "valuation", "severity": "high", "note": "At fvMid with NEW 52W $411.30 intraday" },
+      { "tag": "cyclical", "severity": "medium", "note": "Hyperscaler capex pause risk" }
+    ],
+    "decisionLog": [
+      { "date": "2026-04-22", "action": "TRIM-1/3", "by": "evaluator", "reason": "Pre-earnings risk management, unfavorable RRR" }
+    ],
+    "source": "data/risk-scores.json"
+  },
+  "intradayBehavior4_22": {
+    "open": null,
+    "high": 411.30,
+    "close": 401.74,
+    "changePct": -0.32,
+    "interpretation": "NEW 52W $411.30 touched intraday then -2.3% reversal to close — distribution candle shape, weak hands taking profits ahead of print",
+    "source": "index.html v3.seedQuotes 4/22 close + comment"
+  },
+  "thesisContext": {
+    "businessMix": "CCS (Connectivity & Cloud Solutions, AI-server hyperscaler ODM) + ATS (Advanced Technology Solutions, aerospace/industrial). CCS segment is the AI-cycle beneficiary; ATS provides counter-cyclical ballast.",
+    "drivers": ["Hyperscaler AI-server capex sustained (positive setup)", "Customer concentration risk in CCS (top 1-2 hyperscalers)", "Mix shift toward AAS (Hardware Platform Solutions) margin profile"],
+    "linkedSignals": [
+      "TSM 2nm uplift +5.26% on 4/22 (positive — supply for hyperscaler accelerators ramping)",
+      "AVGO custom ASIC NEW 52W (positive — hyperscaler silicon momentum)",
+      "MU HBM3E qualification confirmed (positive — AI-memory cycle alive)"
+    ],
+    "source": "data/news-feed.json + data/sector-map.json + thesis general"
+  },
+  "consensusEPS": {
+    "status": "fetch-failed",
+    "reason": "Live consensus data for 2026-04-27 CLS print not retrievable in this project timeline",
+    "guidance": "Interpreter must NOT fabricate street numbers. Reference 'consensus' only directionally as 'high bar embedded in NEW 52W setup'."
+  },
+  "optionsImpliedMove": {
+    "status": "fetch-failed",
+    "reason": "Same as above"
+  },
+  "priorReactionHistory": {
+    "status": "fetch-failed",
+    "reason": "Real-world Celestica earnings reaction data exists but mapping to fictional 2026 timeline would be misleading. Anchor analysis to setup pattern (NEW 52W into print + reversal candle), not specific past prints."
+  }
+}
