@@ -36,37 +36,62 @@ function stooqSymbol(sym) {
     return `${sym.toLowerCase()}.us`;
 }
 
-function pad2(n) { return String(n).padStart(2, '0'); }
-function ymd(d) { return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}`; }
-
-async function fetchStooqOne(sym, signal) {
+// Stooq's quote endpoint (q/l/) reliably returns the latest close. We do a
+// second call to the history endpoint (q/d/l/) to get the prior trading
+// day's close so change/changePct are real numbers, not zeros. If history
+// fails we still publish the quote — the dashboard will show change=0 for
+// that symbol until the next cron run, when carry-forward kicks in.
+async function fetchStooqQuote(sym, signal) {
     const ssym = stooqSymbol(sym);
-    // Pull a 7-day window so weekends + holidays don't strand us with <2 rows.
-    const today = new Date();
-    const past = new Date(today.getTime() - 7 * 86400000);
-    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&d1=${ymd(past)}&d2=${ymd(today)}&i=d&f=sd2t2ohlcvn&h&e=csv`;
-    const res = await fetch(url, {
-        signal,
-        headers: { 'User-Agent': UA, 'Accept': 'text/csv,text/plain' }
-    });
-    if (!res.ok) throw new Error(`stooq:http_${res.status}`);
+    const url = `https://stooq.com/q/l/?s=${encodeURIComponent(ssym)}&f=sd2t2ohlcv&h&e=csv`;
+    const res = await fetch(url, { signal, headers: { 'User-Agent': UA, 'Accept': 'text/csv,text/plain' } });
+    if (!res.ok) throw new Error(`stooq-quote:http_${res.status}`);
     const text = (await res.text()).trim();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) throw new Error('stooq:no_data');
-    // Stooq history puts oldest first; pick the last two rows for prev/today.
+    if (lines.length < 2) throw new Error('stooq-quote:no_data');
     const header = lines[0].split(',').map(s => s.trim().toLowerCase());
-    const idx = (k) => header.indexOf(k);
-    const closeIdx = idx('close');
-    if (closeIdx < 0) throw new Error('stooq:no_close_column');
+    const cols = lines[1].split(',').map(s => s.trim());
+    const close = parseFloat(cols[header.indexOf('close')]);
+    if (!Number.isFinite(close)) throw new Error('stooq-quote:no_close');
+    return close;
+}
 
-    const rows = lines.slice(1).map(l => l.split(',').map(c => c.trim()));
-    const validRows = rows.filter(r => Number.isFinite(parseFloat(r[closeIdx])));
-    if (!validRows.length) throw new Error('stooq:no_close');
-    const last = validRows[validRows.length - 1];
-    const prev = validRows.length >= 2 ? validRows[validRows.length - 2] : null;
+// History endpoint format is a plain Date,Open,High,Low,Close,Volume CSV.
+// No `f=` / `h` / `e=` query params — those are only for the quote endpoint
+// and confuse the history one. The `i=d` selects daily intervals.
+async function fetchStooqHistory(sym, signal) {
+    const ssym = stooqSymbol(sym);
+    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&i=d`;
+    const res = await fetch(url, { signal, headers: { 'User-Agent': UA, 'Accept': 'text/csv,text/plain' } });
+    if (!res.ok) throw new Error(`stooq-hist:http_${res.status}`);
+    const text = (await res.text()).trim();
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 3) throw new Error('stooq-hist:no_rows'); // need at least header + 2 data rows
+    const header = lines[0].split(',').map(s => s.trim().toLowerCase());
+    const closeIdx = header.indexOf('close');
+    if (closeIdx < 0) throw new Error('stooq-hist:no_close_column');
+    const rows = lines.slice(1)
+        .map(l => l.split(',').map(c => c.trim()))
+        .filter(r => Number.isFinite(parseFloat(r[closeIdx])));
+    if (rows.length < 2) throw new Error('stooq-hist:lt_2_rows');
+    // History is oldest-first; we want the most recent two trading days.
+    return {
+        latestClose: parseFloat(rows[rows.length - 1][closeIdx]),
+        prevClose: parseFloat(rows[rows.length - 2][closeIdx])
+    };
+}
 
-    const close = parseFloat(last[closeIdx]);
-    const prevClose = prev ? parseFloat(prev[closeIdx]) : null;
+async function fetchStooqOne(sym, signal) {
+    // Quote first (canonical "now" price). History second to get prevClose.
+    // If history fails we still return the quote.
+    const close = await fetchStooqQuote(sym, signal);
+    let prevClose = null;
+    try {
+        const h = await fetchStooqHistory(sym, signal);
+        // Use history's prev (which corresponds to history's latest); this
+        // works as long as the quote and history agree on "today's close".
+        prevClose = h.prevClose;
+    } catch (_) { /* swallow — change will be 0 this run, carry-forward next */ }
     const change = (prevClose != null) ? +(close - prevClose).toFixed(4) : null;
     const changePct = (prevClose != null && prevClose !== 0)
         ? +(((close - prevClose) / prevClose) * 100).toFixed(4) : null;
