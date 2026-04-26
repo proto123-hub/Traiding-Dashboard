@@ -12,9 +12,17 @@
 import { readJson, writeJsonAtomic, nowIso, todayUtc, withTimeout, Semaphore } from './lib/io.mjs';
 
 const TIMEOUT_MS = 8000;
-const CONCURRENCY = 6;
+const STOOQ_CONCURRENCY = 6;
+const YAHOO_CONCURRENCY = 2;       // Yahoo v8 chart 429s aggressively at higher rates.
+const YAHOO_GAP_MS = 400;          // Tarpit between Yahoo requests within a worker.
 // Match a real Chrome UA to reduce bot-detection 403s on either source.
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+// Symbols Stooq's free CSV does not cover cleanly (returns N/D for close).
+// Yahoo handles these via v8 chart with the mapped Yahoo symbols.
+const STOOQ_SKIP = new Set(['VIX', 'DXY', 'US10Y']);
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Stooq symbol map. US equities are <ticker>.us (lowercased). Indices use ^.
 function stooqSymbol(sym) {
@@ -94,26 +102,42 @@ async function main() {
     ];
     if (!tickers.length) { console.error('no tickers'); process.exit(1); }
 
-    const sem = new Semaphore(CONCURRENCY);
+    const stooqSem = new Semaphore(STOOQ_CONCURRENCY);
+    const yahooSem = new Semaphore(YAHOO_CONCURRENCY);
     const stooqMap = {};
     const yahooMap = {};
     const failures = [];
 
-    await Promise.all(tickers.map(sym => sem.run(async () => {
-        const tasks = [
-            withTimeout(s => fetchStooqOne(sym, s), TIMEOUT_MS, `stooq:${sym}`)
-                .then(q => { stooqMap[sym] = q; })
-                .catch(e => { failures.push({ symbol: sym, source: 'stooq', reason: e.message }); }),
-            withTimeout(s => fetchYahooChartOne(sym, s), TIMEOUT_MS, `yahoo:${sym}`)
-                .then(q => { yahooMap[sym] = q; })
-                .catch(e => { failures.push({ symbol: sym, source: 'yahoo', reason: e.message }); })
-        ];
-        await Promise.all(tasks);
+    // Stooq fan-out (excluding macros it cannot serve)
+    await Promise.all(tickers.filter(s => !STOOQ_SKIP.has(s)).map(sym => stooqSem.run(async () => {
+        try {
+            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s), TIMEOUT_MS, `stooq:${sym}`);
+        } catch (e) {
+            failures.push({ symbol: sym, source: 'stooq', reason: e.message });
+        }
+    })));
+
+    // Yahoo throttled fan-out: 2 workers, ~400ms gap each. Yahoo v8 chart is
+    // rate-limited per IP — too many parallel hits and every symbol comes
+    // back 429.
+    await Promise.all(tickers.map(sym => yahooSem.run(async () => {
+        try {
+            yahooMap[sym] = await withTimeout(s => fetchYahooChartOne(sym, s), TIMEOUT_MS, `yahoo:${sym}`);
+        } catch (e) {
+            failures.push({ symbol: sym, source: 'yahoo', reason: e.message });
+        }
+        await sleep(YAHOO_GAP_MS);
     })));
 
     const quotes = {};
     const tolerance = 0.002;
     const ts = nowIso();
+
+    // For prevClose carry-forward: use the prior file's stored price when
+    // Yahoo (the only source that returns prevClose) is unavailable.
+    let prior = { quotes: {} };
+    try { prior = await readJson('data/price-quotes.json'); } catch { /* first run */ }
+
     for (const sym of tickers) {
         const s = stooqMap[sym];
         const y = yahooMap[sym];
@@ -121,10 +145,20 @@ async function main() {
         if (s?.price != null) perSource.stooq = s.price;
         if (y?.price != null) perSource.yahoo = y.price;
 
-        // Yahoo is preferred when present (it carries prevClose / change).
-        // Stooq is fallback. Pick the source that gives us the richest row.
+        // Yahoo wins when present (carries prevClose); else Stooq.
         const primary = (y && y.price != null) ? y : s;
         if (!primary?.price) continue;
+
+        // prevClose chain: Yahoo's value > prior file's stored price > today's price (last resort).
+        const priorPrice = prior?.quotes?.[sym]?.price;
+        const carriedPrev = (y?.prevClose != null) ? y.prevClose
+                          : (priorPrice != null && priorPrice !== primary.price) ? priorPrice
+                          : primary.price;
+
+        const change = +(primary.price - carriedPrev).toFixed(4);
+        const changePct = (carriedPrev !== 0)
+            ? +(((primary.price - carriedPrev) / carriedPrev) * 100).toFixed(4)
+            : 0;
 
         let verified = false;
         if (s?.price != null && y?.price != null) {
@@ -134,19 +168,15 @@ async function main() {
 
         quotes[sym] = {
             price: primary.price,
-            change: primary.change ?? 0,
-            changePct: primary.changePct ?? 0,
-            prevClose: primary.prevClose ?? primary.price,
+            change,
+            changePct,
+            prevClose: carriedPrev,
             verified,
             sourceCount: Object.keys(perSource).length,
             perSource,
             lastUpdated: ts
         };
     }
-
-    let prior = { quotes: {} };
-    try { prior = await readJson('data/price-quotes.json'); } catch { /* first run */ }
-
     const okCount = Object.keys(quotes).length;
     const priorCount = Object.values(prior.quotes || {}).filter(q => q.price != null).length;
 
