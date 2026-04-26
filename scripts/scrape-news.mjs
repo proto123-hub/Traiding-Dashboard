@@ -73,17 +73,21 @@ async function main() {
         }
     })));
 
-    feed.items.push(...collected);
-    await writeJsonAtomic('data/news-feed.json', feed);
+    if (collected.length > 0) {
+        feed.items.push(...collected);
+        await writeJsonAtomic('data/news-feed.json', feed);
+    }
 
-    const rawDrop = {
-        agent: 'refresher',
-        runAt: ts,
-        asOfDate: todayUtc(),
-        appendedItems: collected,
-        failures
-    };
-    await writeJsonAtomic(`reports/raw/${todayUtc()}-saveticker-news.json`, rawDrop);
+    if (collected.length > 0 || failures.length > 0) {
+        const rawDrop = {
+            agent: 'refresher',
+            runAt: ts,
+            asOfDate: todayUtc(),
+            appendedItems: collected,
+            failures
+        };
+        await writeJsonAtomic(`reports/raw/${todayUtc()}-saveticker-news.json`, rawDrop);
+    }
 
     console.log(`scrape-news: appended ${collected.length} items across ${tickers.length} tickers, ${failures.length} failures`);
 }

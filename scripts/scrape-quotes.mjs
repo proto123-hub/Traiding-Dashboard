@@ -125,6 +125,23 @@ async function main() {
     let prior = { quotes: {} };
     try { prior = await readJson('data/price-quotes.json'); } catch { /* first run */ }
 
+    const okCount = Object.keys(quotes).length;
+    const priorCount = Object.keys(prior.quotes || {}).length;
+
+    const rawDrop = {
+        agent: 'refresher',
+        runAt: ts,
+        asOfDate: todayUtc(),
+        perSourceRaw: { yahoo: yahooMap, saveticker: savetickerMap },
+        failures
+    };
+    await writeJsonAtomic(`reports/raw/${todayUtc()}-quotes.json`, rawDrop);
+
+    if (okCount === 0 && priorCount > 0) {
+        console.error(`scrape-quotes: ALL sources failed (0/${tickers.length}, ${failures.length} failures) — NOT overwriting prior price-quotes.json with ${priorCount} entries. Raw drop saved for audit.`);
+        process.exit(2);
+    }
+
     const merged = { ...(prior.quotes || {}) };
     for (const [sym, row] of Object.entries(quotes)) {
         const existing = merged[sym] || {};
@@ -149,16 +166,6 @@ async function main() {
     };
     await writeJsonAtomic('data/price-quotes.json', out);
 
-    const rawDrop = {
-        agent: 'refresher',
-        runAt: ts,
-        asOfDate: todayUtc(),
-        perSourceRaw: { yahoo: yahooMap, saveticker: savetickerMap },
-        failures
-    };
-    await writeJsonAtomic(`reports/raw/${todayUtc()}-quotes.json`, rawDrop);
-
-    const okCount = Object.keys(quotes).length;
     const verifiedCount = Object.values(quotes).filter(q => q.verified).length;
     console.log(`scrape-quotes: ${okCount}/${tickers.length} symbols, ${verifiedCount} verified, ${failures.length} failures`);
 }
