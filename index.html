@@ -203,6 +203,56 @@
             font-family: 'SF Mono', monospace;
         }
         .cc-last-refresh b { color: var(--accent-cyan); }
+        .cc-data-freshness {
+            font-size: 1.1em;
+            line-height: 1;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .cc-data-freshness.fresh { color: var(--buy-green, #4ade80); }
+        .cc-data-freshness.stale { color: var(--accent-amber, #f59e0b); }
+        .cc-data-freshness.error { color: var(--sell-red, #ef4444); }
+        .cc-refresh-btn {
+            font-size: 0.72em;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--accent-cyan);
+            background: transparent;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .cc-refresh-btn:hover:not(:disabled) { background: rgba(0, 151, 167, 0.12); }
+        .cc-refresh-btn:active:not(:disabled) { transform: scale(0.97); }
+        .cc-refresh-btn:disabled { opacity: 0.5; cursor: progress; }
+        .cc-refresh-btn.cc-kapture-btn { border-color: var(--accent-amber, #f59e0b); color: var(--accent-amber, #f59e0b); }
+        .cc-refresh-btn.cc-kapture-btn:hover:not(:disabled) { background: rgba(245, 158, 11, 0.12); }
+        .td-toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: var(--bg-elevated, #1a2530); color: var(--text-primary, #fff);
+            border-left: 3px solid var(--accent-cyan);
+            padding: 10px 16px; border-radius: 6px;
+            font-size: 0.82em; max-width: 360px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            opacity: 0; transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 9999;
+        }
+        .td-toast.show { opacity: 1; transform: translateY(0); }
+        .td-toast.success { border-left-color: var(--buy-green, #4ade80); }
+        .td-toast.error { border-left-color: var(--sell-red, #ef4444); }
+        .td-toast.warn { border-left-color: var(--accent-amber, #f59e0b); }
+        .kapture-compare-table {
+            width: 100%; border-collapse: collapse; font-size: 0.78em; margin-top: 12px;
+        }
+        .kapture-compare-table th, .kapture-compare-table td {
+            padding: 4px 8px; border-bottom: 1px solid var(--border-subtle, #2a3540); text-align: right;
+        }
+        .kapture-compare-table th:first-child, .kapture-compare-table td:first-child { text-align: left; }
+        .kapture-compare-table .row-mismatch { color: var(--sell-red, #ef4444); }
+        .kapture-compare-table .row-verified { color: var(--buy-green, #4ade80); }
+        .kapture-source-row { display: flex; gap: 12px; margin: 8px 0; align-items: center; font-size: 0.82em; }
 
         /* Index Ticker Strip (6 indices) */
         .cc-ticker-strip {
@@ -1042,8 +1092,8 @@
     <div class="cc-top-row">
         <div class="cc-title">
             <h1>Daniel's Trading Command Center</h1>
-            <span class="v3-tag">v3.4 · MOBILE-READY · 🎺 TRUMP TRUTH</span>
-            <span class="sub" data-en="v3.4 Mobile-ready · Updated 2026-04-23 22:15 KST · INTC AMC D-8h · 🎺 Trump Truth Social live">v3.4 모바일 최적화 · 2026-04-23 22:15 KST 갱신 · INTC AMC D-8h · 🎺 Trump Truth Social 모니터링</span>
+            <span class="v3-tag">v3.5 · AUTO-REFRESH · 🎺 TRUMP TRUTH</span>
+            <span class="sub" data-en="v3.5 Auto-Refresh (Yahoo+Saveticker cron) · Updated 2026-04-26 KST · 4/24 close · CLS Q1 D-1 · 🎺 Trump Truth Social live">v3.5 자동 갱신 (Yahoo+Saveticker cron) · 2026-04-26 KST 갱신 · 4/24 종가 기준 · CLS Q1 D-1 · 🎺 Trump Truth Social 모니터링</span>
         </div>
         <div class="cc-market-status" id="marketStatusChip">
             <span class="dot"></span>
@@ -1061,6 +1111,9 @@
         <a class="provider-chip trump-truth" data-provider="truthsocial" href="https://truthsocial.com/@realDonaldTrump" target="_blank" rel="noopener" style="text-decoration:none;" title="@realDonaldTrump Truth Social — 알고리즘 매크로 매매 트리거 1순위"><span class="led"></span><span class="src-name">🎺 Trump Truth</span><span class="src-meta">@realDonaldTrump</span></a>
         <a class="provider-chip trump-archive" data-provider="trumpstruth" href="https://trumpstruth.org/" target="_blank" rel="noopener" style="text-decoration:none;" title="Factba.se Trump Truth Social archive — 계정 없이 검색 가능"><span class="led"></span><span class="src-name">📜 TrumpsTruth</span><span class="src-meta">Factba.se Archive</span></a>
         <span class="cc-last-refresh">Last: <b id="lastRefreshTime">--:--</b></span>
+        <span class="cc-data-freshness" id="dataFreshness" title="데이터 검증 상태 (refresher + comparator)">●</span>
+        <button id="btnRefreshData" class="cc-refresh-btn" type="button" title="data/*.json 다시 불러오기 (cron 결과 즉시 반영)" data-en="↻ Refresh">↻ 새로고침</button>
+        <button id="btnKaptureImport" class="cc-refresh-btn cc-kapture-btn" type="button" title="Kapture 확장으로 캡처한 TradingView/Saveticker JSON·CSV 업로드" data-en="📥 Kapture Import">📥 Kapture</button>
     </div>
 
     <!-- Index Ticker Strip -->
@@ -1562,52 +1615,55 @@ class SavettickerProvider extends DataProvider {
 }
 
 /* ============================================================
-   SEED DATA — 2026-04-20 NY CLOSE (Kapture-captured from TradingView)
-   These are the starting values; real fetch takes over in Stage 7.
+   SEED DATA — 2026-04-24 NY CLOSE (Kapture-captured from TradingView)
+   These are the starting values; real fetch takes over via the
+   GitHub Actions data-refresh cron (Yahoo + Saveticker, see
+   .github/workflows/data-refresh.yml + scripts/scrape-quotes.mjs).
    ============================================================ */
 v3.seedQuotes = {
-    /* ===== 2026-04-23 KST 장전 Brief 업데이트 (4/22 NY close 기준) =====
-       Source: Valuation Agent 19:00 cron (Polygon) + WebSearch 2-source verify
-       (CNBC/Yahoo/Electrek/TechCrunch/TipRanks/Benzinga/Digitimes).
-       4/22 = Risk-On Breakout 세션 (S&P ATH 7,137.90, QQQ NEW 52W 655.33,
-       7 NEW 52W Highs: ARM/AMD/AVGO/MRVL/MU/QQQ/CLS). */
-    SPY:   { price: 711.21, change: 7.10, changePct: 1.01, prevClose: 704.11 },
-    QQQ:   { price: 655.11, change: 10.77, changePct: 1.67, prevClose: 644.34 },  // 🚀 NEW 52W $655.33
-    NDX:   { price: 24657.57, change: 397.61, changePct: 1.64, prevClose: 24259.96 },
-    SPX:   { price: 7137.90, change: 74.20, changePct: 1.05, prevClose: 7063.70 }, // 🚀 NEW ATH
-    VIX:   { price: 17.02, change: -1.90, changePct: -10.04, prevClose: 18.92 },   // Risk-On
-    DXY:   { price: 98.15, change: 0.07, changePct: 0.07, prevClose: 98.08 },
-    GOOGL: { price: 339.32, change: 7.04, changePct: 2.12, prevClose: 332.28 },
-    GOOG:  { price: 338.20, change: 6.80, changePct: 2.05, prevClose: 331.40 },
-    NVDA:  { price: 202.50, change: 2.62, changePct: 1.31, prevClose: 199.88 },   // Cross Imminent +1.11%
-    PLTR:  { price: 152.62, change: 6.66, changePct: 4.56, prevClose: 145.96 },
-    AVGO:  { price: 422.65, change: 20.46, changePct: 5.09, prevClose: 402.19 },  // 🚀 NEW 52W $423.20
-    META:  { price: 674.72, change: 5.87, changePct: 0.88, prevClose: 668.85 },   // ARM AGI lead partner
-    TSLA:  { price: 387.51, change: 1.08, changePct: 0.28, prevClose: 386.43 },   // ⚠️ AH -4% ~$372 (capex $25B 쇼크)
-    TSM:   { price: 387.44, change: 19.36, changePct: 5.26, prevClose: 368.08 },
-    AMD:   { price: 303.46, change: 18.96, changePct: 6.67, prevClose: 284.50 },  // 🚀 NEW 52W $304.25
-    MSFT:  { price: 432.92, change: 8.77, changePct: 2.07, prevClose: 424.15 },   // Death -16.4% 유지
-    ORCL:  { price: 187.50, change: 6.32, changePct: 3.49, prevClose: 181.18 },
-    SNOW:  { price: 155.57, change: 4.73, changePct: 3.14, prevClose: 150.84 },   // ⚠️ NOW 쇼크 스필오버 위험
-    RDDT:  { price: 166.28, change: 0, changePct: 0, prevClose: 166.28 },
-    HOOD:  { price: 91.28, change: 0, changePct: 0, prevClose: 91.28 },
-    APP:   { price: 490.96, change: 0, changePct: 0, prevClose: 490.96 },
-    FIG:   { price: 19.01, change: 0, changePct: 0, prevClose: 19.01 },
-    CRCL:  { price: 106.36, change: 0, changePct: 0, prevClose: 106.36 },
-    BBAI:  { price: 3.84, change: 0, changePct: 0, prevClose: 3.84 },
-    RKLB:  { price: 90.04, change: 3.40, changePct: 3.92, prevClose: 86.64 },
-    CLS:   { price: 401.74, change: -1.29, changePct: -0.32, prevClose: 403.03 }, // 🚀 장중 NEW 52W $411.30 후 차익실현
-    MRVL:  { price: 157.32, change: 6.00, changePct: 3.97, prevClose: 151.32 },   // 🚀 NEW 52W $158.69
-    MU:    { price: 487.48, change: 38.10, changePct: 8.48, prevClose: 449.38 },  // 🚀 NEW 52W $491.98 (SK Hynix BEAT confirm)
-    INTC:  { price: 65.27, change: -0.99, changePct: -1.49, prevClose: 66.26 },   // 🎯 오늘 AMC Q1 (±9.87% 옵션 pricing)
-    LITE:  { price: 88.50, change: 0, changePct: 0, prevClose: 88.50 },
+    /* ===== 2026-04-26 KST Brief 업데이트 (4/24 NY close 기준) =====
+       Source: WebSearch 2-source verify (Yahoo/CNBC/MarketBeat/Motley Fool/
+       Trefis/MarketWatch/Advisor Perspectives/24-7 Wall St/FXEmpire).
+       4/24 = SPX 7,165.08 NEW ATH · NDX 27,314 intraday 52W ·
+       INTC +23.61% (Q1 BEAT · record close), ARM +15.09% (AGI CPU),
+       NVDA +4.32%, TSM +5.17% (ATH close 402.46), MU 52W high 506.99 intraday. */
+    SPY:   { price: 713.94, change: 5.49, changePct: 0.77, prevClose: 708.45 },   // 52W intraday 714.47
+    QQQ:   { price: 663.88, change: 8.77, changePct: 1.34, prevClose: 655.11 },   // 🚀 NEW 52W
+    NDX:   { price: 27200.00, change: 417.38, changePct: 1.56, prevClose: 26782.62 }, // 🚀 intraday 27,314
+    SPX:   { price: 7165.08, change: 56.87, changePct: 0.80, prevClose: 7108.21 }, // 🚀 NEW ATH (record close)
+    VIX:   { price: 18.71, change: -0.60, changePct: -3.11, prevClose: 19.31 },
+    DXY:   { price: 98.52, change: -0.25, changePct: -0.25, prevClose: 98.77 },
+    GOOGL: { price: 344.40, change: 5.08, changePct: 1.50, prevClose: 339.32 },
+    GOOG:  { price: 342.32, change: 4.57, changePct: 1.35, prevClose: 337.75 },
+    NVDA:  { price: 208.27, change: 8.62, changePct: 4.32, prevClose: 199.65 },   // 🚀 AI chip demand surge
+    PLTR:  { price: 143.09, change: -2.04, changePct: -1.41, prevClose: 145.13 },
+    AVGO:  { price: 419.94, change: 0, changePct: 0, prevClose: 419.94 },         // ⚠️ 4/24 close not confirmed — 4/23 carry-forward (refresh cron will overwrite)
+    META:  { price: 675.03, change: 15.82, changePct: 2.40, prevClose: 659.21 },
+    TSLA:  { price: 375.27, change: -1.03, changePct: -0.27, prevClose: 376.30 },
+    TSM:   { price: 402.46, change: 19.78, changePct: 5.17, prevClose: 382.68 },  // 🚀 ATH close
+    AMD:   { price: 347.81, change: 37.27, changePct: 12.00, prevClose: 310.54 }, // 🚀 +12% intraday (no-news rip)
+    MSFT:  { price: 424.62, change: -8.30, changePct: -1.92, prevClose: 432.92 },
+    ORCL:  { price: 175.50, change: -3.00, changePct: -1.68, prevClose: 178.50 }, // ⚠️ SMCI 캔슬 리스크 (정확한 종가 미확인)
+    SNOW:  { price: 140.32, change: -6.08, changePct: -4.15, prevClose: 146.40 },
+    RDDT:  { price: 152.96, change: 0, changePct: 0, prevClose: 152.96 },
+    HOOD:  { price: 84.71, change: 1.17, changePct: 1.40, prevClose: 83.54 },
+    APP:   { price: 447.20, change: 0, changePct: 0, prevClose: 447.20 },
+    FIG:   { price: 17.49, change: 0.17, changePct: 0.95, prevClose: 17.32 },
+    CRCL:  { price: 99.63, change: 0, changePct: 0, prevClose: 99.63 },
+    BBAI:  { price: 3.77, change: 0, changePct: 0, prevClose: 3.77 },
+    RKLB:  { price: 86.64, change: -5.53, changePct: -6.00, prevClose: 92.17 },   // ⚠️ profit-taking
+    CLS:   { price: 410.21, change: 18.79, changePct: 4.80, prevClose: 391.42 }, // 🚀 4/27 earnings D-1
+    MRVL:  { price: 164.31, change: -1.25, changePct: -0.76, prevClose: 165.56 },
+    MU:    { price: 498.40, change: 10.92, changePct: 2.24, prevClose: 487.48 }, // 🚀 NEW 52W intraday $506.99
+    INTC:  { price: 82.55, change: 15.76, changePct: 23.61, prevClose: 66.79 },  // 🚀 Q1 BEAT — record close
+    LITE:  { price: 836.92, change: 0, changePct: 0, prevClose: 836.92 },        // ⚠️ 4/24 close 미확인 — 4/21 carry-forward
     // 24-Ticker Equipment/IP (4/22 close, Polygon 확정)
-    AMAT:  { price: 403.48, change: 9.15, changePct: 2.32, prevClose: 394.33 },   // 52W -0.94%
-    LRCX:  { price: 265.55, change: 7.18, changePct: 2.78, prevClose: 258.37 },   // 52W -2.91%, Scale In 구간
-    KLAC:  { price: 1812.06, change: 26.59, changePct: 1.49, prevClose: 1785.47 }, // 52W -0.61%
-    ARM:   { price: 196.57, change: 21.07, changePct: 12.01, prevClose: 175.50 }, // 🚀 NEW 52W $196.66 (AGI CPU · Meta lead)
-    CRWD:  { price: 466.68, change: 17.08, changePct: 3.80, prevClose: 449.60 },  // ⚠️ NOW 쇼크 스필오버 위험
-    TSMU:  { price: 124.80, change: 12.95, changePct: 11.58, prevClose: 111.85 }  // 2× TSM leveraged ETF (TSM +5.26% × 2)
+    AMAT:  { price: 417.04, change: 13.13, changePct: 3.25, prevClose: 403.91 },
+    LRCX:  { price: 267.78, change: 9.23, changePct: 3.57, prevClose: 258.55 },
+    KLAC:  { price: 1791.44, change: 56.55, changePct: 3.26, prevClose: 1734.89 },
+    ARM:   { price: 234.81, change: 30.79, changePct: 15.09, prevClose: 204.02 }, // 🚀 AGI CPU 가이던스
+    CRWD:  { price: 445.39, change: -21.27, changePct: -4.56, prevClose: 466.66 },// ⚠️ AI 보안 경쟁 우려
+    TSMU:  { price: 137.65, change: 12.85, changePct: 10.30, prevClose: 124.80 }  // 2× TSM (TSM +5.17% × 2 추정 — refresh cron 재계산)
 };
 
 /* ============================================================
@@ -2457,6 +2513,33 @@ if (document.readyState === 'loading') {
   </div>
 </div>
 
+<div id="kaptureModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-body">
+    <div class="modal-title">Kapture Import — TradingView / Saveticker 캡처 업로드</div>
+    <p style="font-size:0.78em;color:var(--text-muted);margin-bottom:10px;">
+      Kapture Chrome 확장으로 캡처한 JSON 또는 CSV를 업로드하면 <code>v3.seedQuotes</code>에 병합되고 마지막 cron 결과(<code>data/price-quotes.json</code>)와 자동 비교됩니다. 0.2% 초과 차이는 빨간 줄로 표시됩니다.
+    </p>
+    <div class="kapture-source-row">
+      <label>Source:
+        <select id="kaptureSource">
+          <option value="tradingview">TradingView</option>
+          <option value="saveticker">Saveticker</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="kaptureVerify" checked> 마지막 cron 결과와 비교</label>
+    </div>
+    <input type="file" id="kaptureFile" accept=".json,.csv,application/json,text/csv" style="margin:8px 0;">
+    <div style="font-size:0.72em;color:var(--text-muted);margin:4px 0;">또는 붙여넣기:</div>
+    <textarea id="kapturePaste" class="export-textarea" placeholder='{"source":"tradingview","exportedAt":"...","rows":[{"symbol":"GOOGL","price":344.40,...}]}&#10;또는&#10;symbol,price,change,changePct&#10;GOOGL,344.40,5.08,1.50'></textarea>
+    <div id="kaptureCompareWrap" style="max-height:240px;overflow-y:auto;"></div>
+    <div class="modal-actions">
+      <button id="kaptureParse" class="primary">🔍 파싱 & 비교</button>
+      <button id="kaptureApply" disabled>✅ 적용</button>
+      <button id="kaptureClose">닫기</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    v3.5 — ASSET HISTORY / MANUAL ENTRY / AUTO-REFRESH / EXT LINKS
@@ -2485,13 +2568,228 @@ if (document.readyState === 'loading') {
 
     async function loadJson(path) {
         try {
-            const res = await fetch(path, { cache: 'no-store' });
+            const sep = path.includes('?') ? '&' : '?';
+            const res = await fetch(`${path}${sep}t=${Date.now()}`, { cache: 'no-store' });
             if (!res.ok) return null;
             return await res.json();
         } catch (e) {
             console.warn('[v3.5] fetch failed, using fallback:', path, e.message);
             return null;
         }
+    }
+
+    /* ===== Auto-Refresh =====
+       Refresh button reloads data/*.json (cron-written) and merges price-quotes.json
+       into v3.seedQuotes. Kapture import accepts user-captured TV/Saveticker JSON or CSV.
+       Comparator runs locally for Kapture vs last scrape. */
+    const REFRESH_PATHS = [
+        'data/portfolio-current.json',
+        'data/assets-history.json',
+        'data/price-quotes.json',
+        'data/news-feed.json',
+        'data/valuations.json',
+        'data/risk-scores.json'
+    ];
+    let lastPriceQuotes = null;
+    let kaptureStaged = null;
+
+    function showToast(msg, kind = 'info', ms = 3000) {
+        const t = document.createElement('div');
+        t.className = `td-toast ${kind}`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => {
+            t.classList.remove('show');
+            setTimeout(() => t.remove(), 250);
+        }, ms);
+    }
+
+    function setFreshness(state, title) {
+        const el = document.getElementById('dataFreshness');
+        if (!el) return;
+        el.classList.remove('fresh', 'stale', 'error');
+        if (state) el.classList.add(state);
+        if (title) el.title = title;
+    }
+
+    function mergeQuotes(priceQuotes) {
+        if (!priceQuotes?.quotes) return 0;
+        let n = 0;
+        for (const [sym, q] of Object.entries(priceQuotes.quotes)) {
+            if (q?.price == null) continue;
+            v3.seedQuotes[sym] = {
+                price: q.price,
+                change: q.change ?? 0,
+                changePct: q.changePct ?? 0,
+                prevClose: q.prevClose ?? q.price
+            };
+            n++;
+        }
+        return n;
+    }
+
+    async function refreshData() {
+        const btn = document.getElementById('btnRefreshData');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ 새로고침 중'; }
+        try {
+            const results = await Promise.all(REFRESH_PATHS.map(p => loadJson(p)));
+            const [pf, ah, pq, news, val, risk] = results;
+            if (pf?.positions?.length) v3.portfolio = pf.positions;
+            if (ah?.snapshots && !localStorage.getItem(LS_HISTORY)) v3.assetsHistory = ah;
+            const merged = mergeQuotes(pq);
+            lastPriceQuotes = pq;
+            if (news) v3.newsFeed = news;
+            if (val) v3.valuations = val;
+            if (risk) v3.riskScores = risk;
+
+            if (typeof renderAll === 'function') renderAll();
+            if (typeof v3.populateTickers === 'function') v3.populateTickers();
+            if (typeof renderPositions === 'function') renderPositions();
+
+            const freshState = pq?.updated ? 'fresh' : 'stale';
+            const ageHours = pq?.updated ? (Date.now() - new Date(pq.updated).getTime()) / 3600000 : null;
+            const finalState = ageHours != null && ageHours > 24 ? 'stale' : freshState;
+            setFreshness(finalState, pq?.updated ? `최근 cron: ${pq.updated} · ${merged}종목 병합` : 'price-quotes.json 비어있음');
+
+            const okPaths = results.filter(Boolean).length;
+            showToast(`✅ 새로고침 완료 — ${okPaths}/${REFRESH_PATHS.length} JSON · ${merged}종목 시세 병합`, 'success');
+            if (location.protocol === 'file:') {
+                showToast('⚠️ file:// 환경에서는 일부 fetch가 실패합니다. python3 -m http.server 8765 권장', 'warn', 5000);
+            }
+        } catch (e) {
+            console.error('[v3.5] refreshData', e);
+            setFreshness('error', e.message);
+            showToast('❌ 새로고침 실패: ' + e.message, 'error', 4000);
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '↻ 새로고침'; }
+        }
+    }
+
+    function parseKaptureInput(text, source) {
+        const trimmed = (text || '').trim();
+        if (!trimmed) throw new Error('빈 입력');
+        let rows = [];
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            const j = JSON.parse(trimmed);
+            const arr = Array.isArray(j) ? j : (j.rows || j.quotes || j.data || []);
+            rows = arr.map(r => ({
+                symbol: String(r.symbol || r.ticker || '').toUpperCase(),
+                price: Number(r.price ?? r.last ?? r.regularMarketPrice),
+                change: r.change != null ? Number(r.change) : null,
+                changePct: r.changePct != null ? Number(r.changePct) : (r.changePercent != null ? Number(r.changePercent) : null)
+            }));
+        } else {
+            const lines = trimmed.split(/\r?\n/).filter(Boolean);
+            const header = lines.shift().split(',').map(s => s.trim().toLowerCase());
+            const idx = (k) => header.indexOf(k);
+            rows = lines.map(line => {
+                const cols = line.split(',').map(s => s.trim());
+                return {
+                    symbol: (cols[idx('symbol')] || cols[0] || '').toUpperCase(),
+                    price: Number(cols[idx('price')]),
+                    change: idx('change') >= 0 ? Number(cols[idx('change')]) : null,
+                    changePct: idx('changepct') >= 0 ? Number(cols[idx('changepct')]) : (idx('changepercent') >= 0 ? Number(cols[idx('changepercent')]) : null)
+                };
+            });
+        }
+        rows = rows.filter(r => r.symbol && Number.isFinite(r.price));
+        if (!rows.length) throw new Error('유효한 행이 없음 (symbol/price 필수)');
+        return { source, exportedAt: new Date().toISOString(), rows };
+    }
+
+    function compareKapture(kapture, scrape) {
+        const tolerance = scrape?.tolerance ?? 0.002;
+        const rows = [];
+        for (const k of kapture.rows) {
+            const s = scrape?.quotes?.[k.symbol];
+            if (!s || s.price == null) {
+                rows.push({ symbol: k.symbol, kapture: k.price, scrape: null, deltaPct: null, status: 'no-scrape' });
+                continue;
+            }
+            const deltaPct = Math.abs(k.price - s.price) / Math.max(s.price, 1e-6);
+            const status = deltaPct <= tolerance ? 'verified' : 'mismatch';
+            rows.push({ symbol: k.symbol, kapture: k.price, scrape: s.price, deltaPct, status });
+        }
+        return { tolerance, rows };
+    }
+
+    function renderKaptureCompare(cmp) {
+        const wrap = document.getElementById('kaptureCompareWrap');
+        if (!wrap) return;
+        const verifiedN = cmp.rows.filter(r => r.status === 'verified').length;
+        const mismatchN = cmp.rows.filter(r => r.status === 'mismatch').length;
+        const noScrapeN = cmp.rows.filter(r => r.status === 'no-scrape').length;
+        const head = `<div style="font-size:0.78em;color:var(--text-muted);margin-bottom:6px;">tolerance ${(cmp.tolerance * 100).toFixed(2)}% · ✅ ${verifiedN} · ❌ ${mismatchN} · ❔ ${noScrapeN}</div>`;
+        const body = cmp.rows.map(r => {
+            const cls = r.status === 'mismatch' ? 'row-mismatch' : (r.status === 'verified' ? 'row-verified' : '');
+            const dp = r.deltaPct == null ? '—' : (r.deltaPct * 100).toFixed(3) + '%';
+            const sc = r.scrape == null ? '—' : r.scrape.toFixed(2);
+            return `<tr class="${cls}"><td>${r.symbol}</td><td>${r.kapture.toFixed(2)}</td><td>${sc}</td><td>${dp}</td><td>${r.status}</td></tr>`;
+        }).join('');
+        wrap.innerHTML = head + `<table class="kapture-compare-table"><thead><tr><th>Symbol</th><th>Kapture</th><th>Scrape</th><th>ΔPct</th><th>Status</th></tr></thead><tbody>${body}</tbody></table>`;
+    }
+
+    function applyKapture(staged) {
+        if (!staged) return 0;
+        let n = 0;
+        for (const r of staged.kapture.rows) {
+            const cur = v3.seedQuotes[r.symbol];
+            const prev = (cur?.prevClose != null) ? cur.prevClose : r.price;
+            const change = r.change != null ? r.change : +(r.price - prev).toFixed(4);
+            const changePct = r.changePct != null ? r.changePct : (prev !== 0 ? +(((r.price - prev) / prev) * 100).toFixed(4) : 0);
+            v3.seedQuotes[r.symbol] = { price: r.price, change, changePct, prevClose: prev };
+            n++;
+        }
+        return n;
+    }
+
+    function openKaptureModal() {
+        document.getElementById('kapturePaste').value = '';
+        document.getElementById('kaptureFile').value = '';
+        document.getElementById('kaptureCompareWrap').innerHTML = '';
+        document.getElementById('kaptureApply').disabled = true;
+        kaptureStaged = null;
+        document.getElementById('kaptureModal').classList.remove('hidden');
+    }
+    function closeKaptureModal() { document.getElementById('kaptureModal').classList.add('hidden'); }
+
+    async function handleKaptureFile(file) {
+        if (!file) return '';
+        return await file.text();
+    }
+
+    async function handleKaptureParse() {
+        try {
+            const fileEl = document.getElementById('kaptureFile');
+            const pasted = document.getElementById('kapturePaste').value;
+            const source = document.getElementById('kaptureSource').value;
+            const verify = document.getElementById('kaptureVerify').checked;
+            const text = pasted || (fileEl.files[0] ? await handleKaptureFile(fileEl.files[0]) : '');
+            const kapture = parseKaptureInput(text, source);
+            const scrape = lastPriceQuotes || (await loadJson('data/price-quotes.json'));
+            const cmp = verify
+                ? compareKapture(kapture, scrape || { quotes: {}, tolerance: 0.002 })
+                : { tolerance: 0.002, rows: kapture.rows.map(r => ({ symbol: r.symbol, kapture: r.price, scrape: null, deltaPct: null, status: 'skipped-verify' })) };
+            renderKaptureCompare(cmp);
+            kaptureStaged = { kapture, cmp };
+            document.getElementById('kaptureApply').disabled = false;
+            const verifiedN = cmp.rows.filter(r => r.status === 'verified').length;
+            showToast(`📥 Kapture 파싱 — ${kapture.rows.length}행, ${verifiedN}건 검증 통과`, 'success');
+        } catch (e) {
+            console.error('[v3.5] kapture parse', e);
+            showToast('❌ Kapture 파싱 실패: ' + e.message, 'error', 4000);
+        }
+    }
+
+    function handleKaptureApply() {
+        if (!kaptureStaged) return;
+        const n = applyKapture(kaptureStaged);
+        if (typeof renderAll === 'function') renderAll();
+        if (typeof renderPositions === 'function') renderPositions();
+        if (typeof v3.populateTickers === 'function') v3.populateTickers();
+        showToast(`✅ Kapture 적용 — ${n}종목 시세 병합 (메모리)`, 'success');
+        closeKaptureModal();
     }
 
     function loadHistory() {
@@ -2801,6 +3099,11 @@ if (document.readyState === 'loading') {
         document.getElementById('snapSave')?.addEventListener('click', saveSnapshotFromModal);
         document.getElementById('exportClose')?.addEventListener('click', closeExportModal);
         document.getElementById('exportCopy')?.addEventListener('click', copyExport);
+        document.getElementById('btnRefreshData')?.addEventListener('click', refreshData);
+        document.getElementById('btnKaptureImport')?.addEventListener('click', openKaptureModal);
+        document.getElementById('kaptureClose')?.addEventListener('click', closeKaptureModal);
+        document.getElementById('kaptureParse')?.addEventListener('click', handleKaptureParse);
+        document.getElementById('kaptureApply')?.addEventListener('click', handleKaptureApply);
         document.querySelectorAll('.modal-backdrop').forEach(bk => {
             bk.addEventListener('click', (e) => { if (e.target === bk) bk.classList.add('hidden'); });
         });
@@ -2811,6 +3114,16 @@ if (document.readyState === 'loading') {
 
     async function v35Boot() {
         await bootAssetData();
+        const pq = await loadJson('data/price-quotes.json');
+        if (pq) {
+            lastPriceQuotes = pq;
+            const merged = mergeQuotes(pq);
+            const ageHours = pq.updated ? (Date.now() - new Date(pq.updated).getTime()) / 3600000 : null;
+            const state = !pq.updated ? null : (ageHours > 24 ? 'stale' : 'fresh');
+            setFreshness(state, pq.updated ? `최근 cron: ${pq.updated} · ${merged}종목` : 'price-quotes.json 비어있음 (cron 첫 실행 대기)');
+        } else {
+            setFreshness(null, 'price-quotes.json 미발견');
+        }
         wire();
         renderAll();
         // Auto-refresh every 60s

@@ -15,6 +15,7 @@ user edits persist between sessions without requiring a commit.
 | `risk-scores.json` | Per-ticker risk score + entry zone + target | evaluator agent |
 | `news-feed.json` | Collected news items with verification state | collector + validator |
 | `sector-map.json` | Ticker → sector bucket → macro theme | architect agent |
+| `price-quotes.json` | Cron-scraped quote table (Yahoo + Saveticker) with cross-source verification | refresher agent + GH Actions |
 
 ## Resolution order at boot
 
@@ -128,3 +129,53 @@ month-over-month changes without noisy commits.
   ]
 }
 ```
+
+### price-quotes.json
+Refreshed by `.github/workflows/data-refresh.yml` (cron 21:00 UTC + 11:00 UTC on
+weekdays) and merged into `v3.seedQuotes` by the dashboard at boot and on Refresh.
+```jsonc
+{
+  "updated": "2026-04-26T21:05:00Z",   // ISO timestamp of last successful run
+  "asOfDate": "2026-04-26",            // YYYY-MM-DD of the quote reference
+  "agent": "refresher",
+  "sources": ["yahoo", "saveticker"],
+  "tolerance": 0.002,                  // fractional price-diff cutoff for verified=true
+  "quotes": {
+    "GOOGL": {
+      "price": 339.32,
+      "change": 7.04,
+      "changePct": 2.12,
+      "prevClose": 332.28,
+      "verified": true,                // ≥2 sources within tolerance
+      "sourceCount": 2,
+      "perSource": { "yahoo": 339.32, "saveticker": 339.30, "kapture": 339.32 },
+      "lastUpdated": "2026-04-26T21:04:58Z"
+    }
+  },
+  "failures": [
+    { "symbol": "TSMU", "source": "saveticker", "reason": "404" }
+  ]
+}
+```
+
+### Kapture import shape
+The dashboard's "Kapture Import" modal accepts either JSON or CSV exported from
+the Kapture Chrome extension on a TradingView or Saveticker page.
+
+JSON:
+```json
+{
+  "source": "tradingview",
+  "exportedAt": "2026-04-26T20:00:00Z",
+  "rows": [
+    { "symbol": "GOOGL", "price": 339.32, "change": 7.04, "changePct": 2.12 }
+  ]
+}
+```
+CSV (with header):
+```
+symbol,price,change,changePct
+GOOGL,339.32,7.04,2.12
+```
+Imports merge into `price-quotes.json` under `perSource.kapture` and trigger
+the comparator agent unless `verifyAgainstScrape` is unchecked.
