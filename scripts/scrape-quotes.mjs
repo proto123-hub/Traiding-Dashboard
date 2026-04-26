@@ -36,27 +36,41 @@ function stooqSymbol(sym) {
     return `${sym.toLowerCase()}.us`;
 }
 
+function pad2(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}`; }
+
 async function fetchStooqOne(sym, signal) {
     const ssym = stooqSymbol(sym);
-    const url = `https://stooq.com/q/l/?s=${encodeURIComponent(ssym)}&f=sd2t2ohlcvn&h&e=csv`;
+    // Pull a 7-day window so weekends + holidays don't strand us with <2 rows.
+    const today = new Date();
+    const past = new Date(today.getTime() - 7 * 86400000);
+    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&d1=${ymd(past)}&d2=${ymd(today)}&i=d&f=sd2t2ohlcvn&h&e=csv`;
     const res = await fetch(url, {
         signal,
         headers: { 'User-Agent': UA, 'Accept': 'text/csv,text/plain' }
     });
     if (!res.ok) throw new Error(`stooq:http_${res.status}`);
     const text = (await res.text()).trim();
-    const lines = text.split(/\r?\n/);
+    const lines = text.split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) throw new Error('stooq:no_data');
+    // Stooq history puts oldest first; pick the last two rows for prev/today.
     const header = lines[0].split(',').map(s => s.trim().toLowerCase());
-    const cols = lines[1].split(',').map(s => s.trim());
     const idx = (k) => header.indexOf(k);
-    const close = parseFloat(cols[idx('close')]);
-    const open = parseFloat(cols[idx('open')]);
-    if (!Number.isFinite(close)) throw new Error('stooq:no_close');
-    // Stooq daily CSV does not return prevClose directly; open is current
-    // session open, not yesterday close. Mark prevClose as null so verify
-    // step does not falsely compare derived numbers.
-    return { price: close, change: null, changePct: null, prevClose: null, open: Number.isFinite(open) ? open : null };
+    const closeIdx = idx('close');
+    if (closeIdx < 0) throw new Error('stooq:no_close_column');
+
+    const rows = lines.slice(1).map(l => l.split(',').map(c => c.trim()));
+    const validRows = rows.filter(r => Number.isFinite(parseFloat(r[closeIdx])));
+    if (!validRows.length) throw new Error('stooq:no_close');
+    const last = validRows[validRows.length - 1];
+    const prev = validRows.length >= 2 ? validRows[validRows.length - 2] : null;
+
+    const close = parseFloat(last[closeIdx]);
+    const prevClose = prev ? parseFloat(prev[closeIdx]) : null;
+    const change = (prevClose != null) ? +(close - prevClose).toFixed(4) : null;
+    const changePct = (prevClose != null && prevClose !== 0)
+        ? +(((close - prevClose) / prevClose) * 100).toFixed(4) : null;
+    return { price: close, change, changePct, prevClose };
 }
 
 // Yahoo v8 chart endpoint — returns meta with regularMarketPrice + previousClose.
@@ -145,13 +159,17 @@ async function main() {
         if (s?.price != null) perSource.stooq = s.price;
         if (y?.price != null) perSource.yahoo = y.price;
 
-        // Yahoo wins when present (carries prevClose); else Stooq.
-        const primary = (y && y.price != null) ? y : s;
+        // Stooq daily history now returns prevClose directly. Yahoo is kept as
+        // best-effort secondary; when both have prevClose, prefer Stooq's
+        // (which we just computed from the same dataset that yielded `price`).
+        const primary = (s && s.price != null) ? s : y;
         if (!primary?.price) continue;
 
-        // prevClose chain: Yahoo's value > prior file's stored price > today's price (last resort).
+        // prevClose chain: primary's own > the other source's > prior file > today (last resort).
+        const otherPrev = (primary === s) ? y?.prevClose : s?.prevClose;
         const priorPrice = prior?.quotes?.[sym]?.price;
-        const carriedPrev = (y?.prevClose != null) ? y.prevClose
+        const carriedPrev = (primary.prevClose != null) ? primary.prevClose
+                          : (otherPrev != null) ? otherPrev
                           : (priorPrice != null && priorPrice !== primary.price) ? priorPrice
                           : primary.price;
 
