@@ -18,13 +18,15 @@ const YAHOO_GAP_MS = 400;          // Tarpit between Yahoo requests within a wor
 // Match a real Chrome UA to reduce bot-detection 403s on either source.
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-// Stooq's free CSV does not cover these macro symbols cleanly.
-const STOOQ_SKIP = new Set(['VIX', 'DXY', 'US10Y']);
+// Stooq quote endpoint coverage — empirical: q/l/ returned no_close for these
+// in run #1, but worth re-trying since some macro tickers do work. Leave the
+// skip empty and let failures[] tell us if any are still bad.
+const STOOQ_SKIP = new Set();
 
-// NASDAQ public API does not cover macro yields, FX, or non-NASDAQ indices.
-// Equities and ETFs (including leveraged ones like TSMU) usually resolve via
-// the assetclass=stocks->etf->index fallback chain.
-const NASDAQ_SKIP = new Set(['VIX', 'DXY', 'US10Y', 'USDKRW', 'SPX']);
+// NASDAQ public API does not cover non-NASDAQ-native indices (SPX),
+// macro yields (US10Y), or FX (USDKRW). VIX / DXY can succeed via
+// assetclass=index fallback.
+const NASDAQ_SKIP = new Set(['US10Y', 'USDKRW', 'SPX']);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
