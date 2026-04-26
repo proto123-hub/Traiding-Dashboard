@@ -21,9 +21,10 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 // Stooq's free CSV does not cover these macro symbols cleanly.
 const STOOQ_SKIP = new Set(['VIX', 'DXY', 'US10Y']);
 
-// NASDAQ symbol coverage — public api covers most US equities + some indices
-// but not VIX / DXY / yields. Skip those to avoid noise in failures[].
-const NASDAQ_SKIP = new Set(['VIX', 'DXY', 'US10Y', 'TSMU', 'USDKRW', 'BBAI', 'FIG']);
+// NASDAQ public API does not cover macro yields, FX, or non-NASDAQ indices.
+// Equities and ETFs (including leveraged ones like TSMU) usually resolve via
+// the assetclass=stocks->etf->index fallback chain.
+const NASDAQ_SKIP = new Set(['VIX', 'DXY', 'US10Y', 'USDKRW', 'SPX']);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
