@@ -1,5 +1,5 @@
 {
-  "note": "Owned by refresher agent + GitHub Actions data-refresh workflow. Scraped from Yahoo Finance v7 + saveticker.com twice on weekdays. Kapture (TradingView) imports merge into perSource.kapture without overwriting verified scrape values. See data/README.md for schema.",
+  "note": "Owned by refresher agent + GitHub Actions data-refresh workflow. Sources: Stooq.com (CSV quote + daily-history endpoints, no-auth) primary + Yahoo Finance v8 chart (best-effort secondary; runner-IP rate-limit may suppress). Kapture (TradingView) imports merge into perSource.kapture without overwriting verified scrape values. See data/README.md for schema. Known limitation: change/changePct = 0% on first deploy day until carry-forward kicks in on day 2.",
   "updated": "2026-04-26T02:53:15Z",
   "asOfDate": "2026-04-26",
   "agent": "refresher",
