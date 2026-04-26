@@ -18,15 +18,15 @@ const YAHOO_GAP_MS = 400;          // Tarpit between Yahoo requests within a wor
 // Match a real Chrome UA to reduce bot-detection 403s on either source.
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-// Stooq quote endpoint coverage — empirical: q/l/ returned no_close for these
-// in run #1, but worth re-trying since some macro tickers do work. Leave the
-// skip empty and let failures[] tell us if any are still bad.
-const STOOQ_SKIP = new Set();
+// Empirically uncovered by Stooq's free quote endpoint (returns N/D for close).
+const STOOQ_SKIP = new Set(['VIX', 'DXY', 'US10Y']);
 
-// NASDAQ public API does not cover non-NASDAQ-native indices (SPX),
-// macro yields (US10Y), or FX (USDKRW). VIX / DXY can succeed via
-// assetclass=index fallback.
-const NASDAQ_SKIP = new Set(['US10Y', 'USDKRW', 'SPX']);
+// NASDAQ public API coverage gaps (run #10 confirmed):
+// - SPX, VIX (Cboe-listed, not NASDAQ-native — assetclass=index returns no_primaryData)
+// - US10Y (Treasury yield)
+// - USDKRW (FX pair)
+// - DXY (ICE-listed dollar index)
+const NASDAQ_SKIP = new Set(['SPX', 'VIX', 'DXY', 'US10Y', 'USDKRW']);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
