@@ -63,112 +63,61 @@ async function fetchStooqQuote(sym, signal) {
 // We try multiple URL shapes — Stooq's free download URL has historically
 // varied between `q/d/l/?...` and `q/d/?...&e=csv`, and unkeyed sessions
 // sometimes get HTML challenge pages instead of the CSV.
-async function fetchStooqHistory(sym, signal, captures) {
-    const ssym = stooqSymbol(sym);
-    const today = new Date();
-    const past = new Date(today.getTime() - 14 * 86400000);
-    const ymd = (d) => `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-
-    const urls = [
-        `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&d1=${ymd(past)}&d2=${ymd(today)}&i=d`,
-        `https://stooq.com/q/d/l/?i=d&s=${encodeURIComponent(ssym)}`,
-        `https://stooq.com/q/d/?s=${encodeURIComponent(ssym)}&i=d&e=csv`
-    ];
-
-    let lastErr = 'no_attempt';
-    let lastBody = '';
-    for (const url of urls) {
-        try {
-            const res = await fetch(url, {
-                signal,
-                headers: {
-                    'User-Agent': UA,
-                    'Accept': 'text/csv,text/plain,*/*;q=0.5',
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'Referer': 'https://stooq.com/'
-                }
-            });
-            const text = res.ok ? (await res.text()).trim() : '';
-            // Persist a small sample of the response so we can post-mortem
-            // exactly what Stooq returned, since GH Actions log is not
-            // readable via MCP.
-            if (sym === 'GOOGL') {
-                captures.push({
-                    url, status: res.status,
-                    bodySample: text.slice(0, 240),
-                    headers: { 'content-type': res.headers.get('content-type'), 'content-length': res.headers.get('content-length') }
-                });
-            }
-            if (!res.ok) { lastErr = `http_${res.status}`; lastBody = text.slice(0, 80); continue; }
-            if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = 'html_body'; lastBody = text.slice(0, 80); continue; }
-            const lines = text.split(/\r?\n/).filter(Boolean);
-            if (lines.length < 3) { lastErr = `lt_3_lines(${lines.length})`; lastBody = text.slice(0, 80); continue; }
-            const header = lines[0].split(',').map(s => s.trim().toLowerCase());
-            const closeIdx = header.indexOf('close');
-            if (closeIdx < 0) { lastErr = 'no_close_col'; lastBody = lines[0].slice(0, 80); continue; }
-            const rows = lines.slice(1)
-                .map(l => l.split(',').map(c => c.trim()))
-                .filter(r => Number.isFinite(parseFloat(r[closeIdx])));
-            if (rows.length < 2) { lastErr = `lt_2_rows(${rows.length})`; continue; }
-            return {
-                latestClose: parseFloat(rows[rows.length - 1][closeIdx]),
-                prevClose: parseFloat(rows[rows.length - 2][closeIdx])
-            };
-        } catch (e) {
-            lastErr = e.message || 'fetch_err';
-        }
-    }
-    const err = new Error(`stooq-hist:${lastErr}`);
-    err.bodySample = lastBody;
-    throw err;
-}
-
-async function fetchStooqOne(sym, signal, histFailures, histCaptures) {
+// Stooq's daily history endpoint (q/d/l/) now requires a captcha-gated
+// API key (their response body literally instructs "Get your apikey:" with a
+// captcha step). Since we can't automate captcha, we no longer attempt to
+// pull prevClose from Stooq. NASDAQ already provides a clean prevClose via
+// lastSalePrice - netChange. Stooq stays as the high-availability primary
+// for "current price".
+async function fetchStooqOne(sym, signal) {
     const close = await fetchStooqQuote(sym, signal);
-    let prevClose = null;
-    try {
-        const h = await fetchStooqHistory(sym, signal, histCaptures);
-        prevClose = h.prevClose;
-    } catch (e) {
-        // Don't fail the symbol — record diagnostic for ops visibility.
-        histFailures.push({ symbol: sym, reason: e.message, bodySample: e.bodySample || '' });
-    }
-    const change = (prevClose != null) ? +(close - prevClose).toFixed(4) : null;
-    const changePct = (prevClose != null && prevClose !== 0)
-        ? +(((close - prevClose) / prevClose) * 100).toFixed(4) : null;
-    return { price: close, change, changePct, prevClose };
+    return { price: close, change: null, changePct: null, prevClose: null };
 }
 
-// NASDAQ public API — free, no auth, returns prevClose + change as a third
-// independent source. Useful for cross-source verification (was 0 before).
+// NASDAQ public API — free, no auth, returns prevClose + change. Tries
+// assetclass=stocks first; falls back to assetclass=index for SPX/NDX-style
+// market indices, and assetclass=etf for ETFs that reject the stocks path.
 async function fetchNasdaqOne(sym, signal) {
-    const url = `https://api.nasdaq.com/api/quote/${encodeURIComponent(sym)}/info?assetclass=stocks`;
-    const res = await fetch(url, {
-        signal,
-        headers: {
-            'User-Agent': UA,
-            'Accept': 'application/json',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Origin': 'https://www.nasdaq.com',
-            'Referer': 'https://www.nasdaq.com/'
-        }
-    });
-    if (!res.ok) throw new Error(`nasdaq:http_${res.status}`);
-    const j = await res.json();
-    const pd = j?.data?.primaryData;
-    if (!pd) throw new Error('nasdaq:no_primaryData');
     const parseNum = (s) => {
         if (s == null) return null;
         const cleaned = String(s).replace(/[$,%+]/g, '').trim();
         const n = parseFloat(cleaned);
         return Number.isFinite(n) ? n : null;
     };
-    const price = parseNum(pd.lastSalePrice);
-    const change = parseNum(pd.netChange);
-    const changePct = parseNum(pd.percentageChange);
-    if (price == null) throw new Error('nasdaq:no_price');
-    const prevClose = (price != null && change != null) ? +(price - change).toFixed(4) : null;
-    return { price, change, changePct, prevClose };
+    // Map our symbols to NASDAQ's index/etf naming where it differs
+    const indexAlias = { SPX: 'spx', NDX: 'ndx', VIX: 'vix' };
+    const tryClasses = ['stocks', 'etf', 'index'];
+
+    let lastErr = 'no_attempt';
+    for (const cls of tryClasses) {
+        const ndqSym = (cls === 'index') ? (indexAlias[sym] || sym).toLowerCase() : sym.toLowerCase();
+        const url = `https://api.nasdaq.com/api/quote/${encodeURIComponent(ndqSym)}/info?assetclass=${cls}`;
+        try {
+            const res = await fetch(url, {
+                signal,
+                headers: {
+                    'User-Agent': UA,
+                    'Accept': 'application/json',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Origin': 'https://www.nasdaq.com',
+                    'Referer': 'https://www.nasdaq.com/'
+                }
+            });
+            if (!res.ok) { lastErr = `http_${res.status}@${cls}`; continue; }
+            const j = await res.json();
+            const pd = j?.data?.primaryData;
+            if (!pd) { lastErr = `no_primaryData@${cls}`; continue; }
+            const price = parseNum(pd.lastSalePrice);
+            const change = parseNum(pd.netChange);
+            const changePct = parseNum(pd.percentageChange);
+            if (price == null) { lastErr = `no_price@${cls}`; continue; }
+            const prevClose = (change != null) ? +(price - change).toFixed(4) : null;
+            return { price, change, changePct, prevClose };
+        } catch (e) {
+            lastErr = (e.message || 'fetch_err') + '@' + cls;
+        }
+    }
+    throw new Error(`nasdaq:${lastErr}`);
 }
 
 // Yahoo v8 chart endpoint — returns meta with regularMarketPrice + previousClose.
@@ -221,27 +170,20 @@ async function main() {
     const yahooMap = {};
     const nasdaqMap = {};
     const failures = [];
-    const histFailures = []; // diagnostic — does not block the symbol
-    const histCaptures = []; // raw response samples (only for one symbol, GOOGL, to keep size bounded)
 
-    // Stooq fan-out (excluding macros it cannot serve)
+    // Stooq fan-out — current-price only (history endpoint is captcha-gated).
     await Promise.all(tickers.filter(s => !STOOQ_SKIP.has(s)).map(sym => stooqSem.run(async () => {
         try {
-            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s, histFailures, histCaptures), TIMEOUT_MS * 2, `stooq:${sym}`);
+            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s), TIMEOUT_MS, `stooq:${sym}`);
         } catch (e) {
             failures.push({ symbol: sym, source: 'stooq', reason: e.message });
         }
     })));
-    if (histFailures.length) {
-        const reasons = {};
-        for (const f of histFailures) reasons[f.reason] = (reasons[f.reason] || 0) + 1;
-        console.log(`stooq-hist diagnostic: ${histFailures.length} symbols missing prevClose · ${JSON.stringify(reasons)}`);
-    }
 
-    // NASDAQ fan-out (3rd source for cross-verify + prevClose). Skip macros / non-equities.
+    // NASDAQ fan-out — primary prevClose + change source (3 assetclass fallbacks per symbol).
     await Promise.all(tickers.filter(s => !NASDAQ_SKIP.has(s)).map(sym => nasdaqSem.run(async () => {
         try {
-            nasdaqMap[sym] = await withTimeout(s => fetchNasdaqOne(sym, s), TIMEOUT_MS, `nasdaq:${sym}`);
+            nasdaqMap[sym] = await withTimeout(s => fetchNasdaqOne(sym, s), TIMEOUT_MS * 2, `nasdaq:${sym}`);
         } catch (e) {
             failures.push({ symbol: sym, source: 'nasdaq', reason: e.message });
         }
@@ -330,11 +272,7 @@ async function main() {
         runAt: ts,
         asOfDate: todayUtc(),
         perSourceRaw: { stooq: stooqMap, yahoo: yahooMap, nasdaq: nasdaqMap },
-        failures,
-        // Diagnostic: persist Stooq history failures with body samples so the
-        // next session can post-mortem without GH Actions log access.
-        stooqHistFailures: histFailures.slice(0, 30),
-        stooqHistCaptures: histCaptures
+        failures
     };
     await writeJsonAtomic(`reports/raw/${todayUtc()}-quotes.json`, rawDrop);
 
