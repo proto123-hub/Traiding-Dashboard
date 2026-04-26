@@ -7,6 +7,13 @@ on:
     # 11:00 UTC = 07:00 ET = pre-market snapshot (Mon-Fri)
     - cron: '0 11 * * 1-5'
   workflow_dispatch: {}
+  # Run when the workflow itself or any scrape script changes — gives us a
+  # remote dry-run path without needing to wait for the next cron tick.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/data-refresh.yml'
+      - 'scripts/**'
 
 permissions:
   contents: write
