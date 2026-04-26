@@ -18,9 +18,12 @@ const YAHOO_GAP_MS = 400;          // Tarpit between Yahoo requests within a wor
 // Match a real Chrome UA to reduce bot-detection 403s on either source.
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-// Symbols Stooq's free CSV does not cover cleanly (returns N/D for close).
-// Yahoo handles these via v8 chart with the mapped Yahoo symbols.
+// Stooq's free CSV does not cover these macro symbols cleanly.
 const STOOQ_SKIP = new Set(['VIX', 'DXY', 'US10Y']);
+
+// NASDAQ symbol coverage — public api covers most US equities + some indices
+// but not VIX / DXY / yields. Skip those to avoid noise in failures[].
+const NASDAQ_SKIP = new Set(['VIX', 'DXY', 'US10Y', 'TSMU', 'USDKRW', 'BBAI', 'FIG']);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -60,7 +63,7 @@ async function fetchStooqQuote(sym, signal) {
 // We try multiple URL shapes — Stooq's free download URL has historically
 // varied between `q/d/l/?...` and `q/d/?...&e=csv`, and unkeyed sessions
 // sometimes get HTML challenge pages instead of the CSV.
-async function fetchStooqHistory(sym, signal) {
+async function fetchStooqHistory(sym, signal, captures) {
     const ssym = stooqSymbol(sym);
     const today = new Date();
     const past = new Date(today.getTime() - 14 * 86400000);
@@ -73,6 +76,7 @@ async function fetchStooqHistory(sym, signal) {
     ];
 
     let lastErr = 'no_attempt';
+    let lastBody = '';
     for (const url of urls) {
         try {
             const res = await fetch(url, {
@@ -84,15 +88,24 @@ async function fetchStooqHistory(sym, signal) {
                     'Referer': 'https://stooq.com/'
                 }
             });
-            if (!res.ok) { lastErr = `http_${res.status}`; continue; }
-            const text = (await res.text()).trim();
-            // If the body is HTML (challenge page), skip
-            if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = 'html_body'; continue; }
+            const text = res.ok ? (await res.text()).trim() : '';
+            // Persist a small sample of the response so we can post-mortem
+            // exactly what Stooq returned, since GH Actions log is not
+            // readable via MCP.
+            if (sym === 'GOOGL') {
+                captures.push({
+                    url, status: res.status,
+                    bodySample: text.slice(0, 240),
+                    headers: { 'content-type': res.headers.get('content-type'), 'content-length': res.headers.get('content-length') }
+                });
+            }
+            if (!res.ok) { lastErr = `http_${res.status}`; lastBody = text.slice(0, 80); continue; }
+            if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = 'html_body'; lastBody = text.slice(0, 80); continue; }
             const lines = text.split(/\r?\n/).filter(Boolean);
-            if (lines.length < 3) { lastErr = `lt_3_lines(${lines.length})`; continue; }
+            if (lines.length < 3) { lastErr = `lt_3_lines(${lines.length})`; lastBody = text.slice(0, 80); continue; }
             const header = lines[0].split(',').map(s => s.trim().toLowerCase());
             const closeIdx = header.indexOf('close');
-            if (closeIdx < 0) { lastErr = 'no_close_col'; continue; }
+            if (closeIdx < 0) { lastErr = 'no_close_col'; lastBody = lines[0].slice(0, 80); continue; }
             const rows = lines.slice(1)
                 .map(l => l.split(',').map(c => c.trim()))
                 .filter(r => Number.isFinite(parseFloat(r[closeIdx])));
@@ -105,23 +118,57 @@ async function fetchStooqHistory(sym, signal) {
             lastErr = e.message || 'fetch_err';
         }
     }
-    throw new Error(`stooq-hist:${lastErr}`);
+    const err = new Error(`stooq-hist:${lastErr}`);
+    err.bodySample = lastBody;
+    throw err;
 }
 
-async function fetchStooqOne(sym, signal, histFailures) {
+async function fetchStooqOne(sym, signal, histFailures, histCaptures) {
     const close = await fetchStooqQuote(sym, signal);
     let prevClose = null;
     try {
-        const h = await fetchStooqHistory(sym, signal);
+        const h = await fetchStooqHistory(sym, signal, histCaptures);
         prevClose = h.prevClose;
     } catch (e) {
         // Don't fail the symbol — record diagnostic for ops visibility.
-        histFailures.push({ symbol: sym, reason: e.message });
+        histFailures.push({ symbol: sym, reason: e.message, bodySample: e.bodySample || '' });
     }
     const change = (prevClose != null) ? +(close - prevClose).toFixed(4) : null;
     const changePct = (prevClose != null && prevClose !== 0)
         ? +(((close - prevClose) / prevClose) * 100).toFixed(4) : null;
     return { price: close, change, changePct, prevClose };
+}
+
+// NASDAQ public API — free, no auth, returns prevClose + change as a third
+// independent source. Useful for cross-source verification (was 0 before).
+async function fetchNasdaqOne(sym, signal) {
+    const url = `https://api.nasdaq.com/api/quote/${encodeURIComponent(sym)}/info?assetclass=stocks`;
+    const res = await fetch(url, {
+        signal,
+        headers: {
+            'User-Agent': UA,
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Origin': 'https://www.nasdaq.com',
+            'Referer': 'https://www.nasdaq.com/'
+        }
+    });
+    if (!res.ok) throw new Error(`nasdaq:http_${res.status}`);
+    const j = await res.json();
+    const pd = j?.data?.primaryData;
+    if (!pd) throw new Error('nasdaq:no_primaryData');
+    const parseNum = (s) => {
+        if (s == null) return null;
+        const cleaned = String(s).replace(/[$,%+]/g, '').trim();
+        const n = parseFloat(cleaned);
+        return Number.isFinite(n) ? n : null;
+    };
+    const price = parseNum(pd.lastSalePrice);
+    const change = parseNum(pd.netChange);
+    const changePct = parseNum(pd.percentageChange);
+    if (price == null) throw new Error('nasdaq:no_price');
+    const prevClose = (price != null && change != null) ? +(price - change).toFixed(4) : null;
+    return { price, change, changePct, prevClose };
 }
 
 // Yahoo v8 chart endpoint — returns meta with regularMarketPrice + previousClose.
@@ -169,15 +216,18 @@ async function main() {
 
     const stooqSem = new Semaphore(STOOQ_CONCURRENCY);
     const yahooSem = new Semaphore(YAHOO_CONCURRENCY);
+    const nasdaqSem = new Semaphore(3);
     const stooqMap = {};
     const yahooMap = {};
+    const nasdaqMap = {};
     const failures = [];
     const histFailures = []; // diagnostic — does not block the symbol
+    const histCaptures = []; // raw response samples (only for one symbol, GOOGL, to keep size bounded)
 
     // Stooq fan-out (excluding macros it cannot serve)
     await Promise.all(tickers.filter(s => !STOOQ_SKIP.has(s)).map(sym => stooqSem.run(async () => {
         try {
-            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s, histFailures), TIMEOUT_MS * 2, `stooq:${sym}`);
+            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s, histFailures, histCaptures), TIMEOUT_MS * 2, `stooq:${sym}`);
         } catch (e) {
             failures.push({ symbol: sym, source: 'stooq', reason: e.message });
         }
@@ -187,6 +237,15 @@ async function main() {
         for (const f of histFailures) reasons[f.reason] = (reasons[f.reason] || 0) + 1;
         console.log(`stooq-hist diagnostic: ${histFailures.length} symbols missing prevClose · ${JSON.stringify(reasons)}`);
     }
+
+    // NASDAQ fan-out (3rd source for cross-verify + prevClose). Skip macros / non-equities.
+    await Promise.all(tickers.filter(s => !NASDAQ_SKIP.has(s)).map(sym => nasdaqSem.run(async () => {
+        try {
+            nasdaqMap[sym] = await withTimeout(s => fetchNasdaqOne(sym, s), TIMEOUT_MS, `nasdaq:${sym}`);
+        } catch (e) {
+            failures.push({ symbol: sym, source: 'nasdaq', reason: e.message });
+        }
+    })));
 
     // Yahoo throttled fan-out: 2 workers, ~400ms gap each. Yahoo v8 chart is
     // rate-limited per IP — too many parallel hits and every symbol comes
@@ -212,21 +271,23 @@ async function main() {
     for (const sym of tickers) {
         const s = stooqMap[sym];
         const y = yahooMap[sym];
+        const n = nasdaqMap[sym];
         const perSource = {};
         if (s?.price != null) perSource.stooq = s.price;
         if (y?.price != null) perSource.yahoo = y.price;
+        if (n?.price != null) perSource.nasdaq = n.price;
 
-        // Stooq daily history now returns prevClose directly. Yahoo is kept as
-        // best-effort secondary; when both have prevClose, prefer Stooq's
-        // (which we just computed from the same dataset that yielded `price`).
-        const primary = (s && s.price != null) ? s : y;
+        // Source priority: Stooq (high-availability) > NASDAQ (carries
+        // prevClose + change reliably) > Yahoo (often rate-limited but
+        // included when available).
+        const primary = (s && s.price != null) ? s : (n && n.price != null) ? n : y;
         if (!primary?.price) continue;
 
-        // prevClose chain: primary's own > the other source's > prior file > today (last resort).
-        const otherPrev = (primary === s) ? y?.prevClose : s?.prevClose;
+        // prevClose chain: primary's own > NASDAQ (best signal) > Yahoo > prior file > today (last resort).
         const priorPrice = prior?.quotes?.[sym]?.price;
         const carriedPrev = (primary.prevClose != null) ? primary.prevClose
-                          : (otherPrev != null) ? otherPrev
+                          : (n?.prevClose != null) ? n.prevClose
+                          : (y?.prevClose != null) ? y.prevClose
                           : (priorPrice != null && priorPrice !== primary.price) ? priorPrice
                           : primary.price;
 
@@ -235,8 +296,17 @@ async function main() {
             ? +(((primary.price - carriedPrev) / carriedPrev) * 100).toFixed(4)
             : 0;
 
+        // Cross-source verify: any 2 of 3 sources agreeing within tolerance.
+        const prices = [s?.price, y?.price, n?.price].filter(p => p != null);
         let verified = false;
-        if (s?.price != null && y?.price != null) {
+        if (prices.length >= 2) {
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            const diff = (max - min) / Math.max(min, 1e-6);
+            verified = diff <= tolerance;
+        }
+        // Original 2-source check (kept for backward-compat shape)
+        if (!verified && s?.price != null && y?.price != null) {
             const diff = Math.abs(s.price - y.price) / Math.max(y.price, 1e-6);
             verified = diff <= tolerance;
         }
@@ -259,8 +329,12 @@ async function main() {
         agent: 'refresher',
         runAt: ts,
         asOfDate: todayUtc(),
-        perSourceRaw: { stooq: stooqMap, yahoo: yahooMap },
-        failures
+        perSourceRaw: { stooq: stooqMap, yahoo: yahooMap, nasdaq: nasdaqMap },
+        failures,
+        // Diagnostic: persist Stooq history failures with body samples so the
+        // next session can post-mortem without GH Actions log access.
+        stooqHistFailures: histFailures.slice(0, 30),
+        stooqHistCaptures: histCaptures
     };
     await writeJsonAtomic(`reports/raw/${todayUtc()}-quotes.json`, rawDrop);
 
@@ -282,11 +356,11 @@ async function main() {
     }
 
     const out = {
-        note: prior.note || 'Owned by refresher agent + GitHub Actions data-refresh workflow. Sources: Stooq.com (CSV, no-auth) + Yahoo Finance v8 chart (no-auth). Kapture (TradingView) imports merge into perSource.kapture.',
+        note: prior.note || 'Owned by refresher agent + GitHub Actions data-refresh workflow. Sources: Stooq.com primary + NASDAQ public API (prevClose + change) + Yahoo v8 chart (best-effort). Kapture (TradingView) imports merge into perSource.kapture.',
         updated: ts,
         asOfDate: todayUtc(),
         agent: 'refresher',
-        sources: ['stooq', 'yahoo'],
+        sources: ['stooq', 'nasdaq', 'yahoo'],
         tolerance,
         quotes: merged,
         failures

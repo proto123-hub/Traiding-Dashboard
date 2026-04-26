@@ -7,6 +7,13 @@ on:
     # 11:00 UTC = 07:00 ET = pre-market snapshot (Mon-Fri)
     - cron: '0 11 * * 1-5'
   workflow_dispatch: {}
+  # TEMPORARY (will be removed at end of debug session): re-enable push trigger
+  # so we can iterate scrape-script changes without waiting for cron.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/data-refresh.yml'
+      - 'scripts/**'
 
 permissions:
   contents: write
