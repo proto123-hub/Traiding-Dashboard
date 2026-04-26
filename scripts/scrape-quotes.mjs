@@ -57,41 +57,67 @@ async function fetchStooqQuote(sym, signal) {
 }
 
 // History endpoint format is a plain Date,Open,High,Low,Close,Volume CSV.
-// No `f=` / `h` / `e=` query params — those are only for the quote endpoint
-// and confuse the history one. The `i=d` selects daily intervals.
+// We try multiple URL shapes — Stooq's free download URL has historically
+// varied between `q/d/l/?...` and `q/d/?...&e=csv`, and unkeyed sessions
+// sometimes get HTML challenge pages instead of the CSV.
 async function fetchStooqHistory(sym, signal) {
     const ssym = stooqSymbol(sym);
-    const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&i=d`;
-    const res = await fetch(url, { signal, headers: { 'User-Agent': UA, 'Accept': 'text/csv,text/plain' } });
-    if (!res.ok) throw new Error(`stooq-hist:http_${res.status}`);
-    const text = (await res.text()).trim();
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 3) throw new Error('stooq-hist:no_rows'); // need at least header + 2 data rows
-    const header = lines[0].split(',').map(s => s.trim().toLowerCase());
-    const closeIdx = header.indexOf('close');
-    if (closeIdx < 0) throw new Error('stooq-hist:no_close_column');
-    const rows = lines.slice(1)
-        .map(l => l.split(',').map(c => c.trim()))
-        .filter(r => Number.isFinite(parseFloat(r[closeIdx])));
-    if (rows.length < 2) throw new Error('stooq-hist:lt_2_rows');
-    // History is oldest-first; we want the most recent two trading days.
-    return {
-        latestClose: parseFloat(rows[rows.length - 1][closeIdx]),
-        prevClose: parseFloat(rows[rows.length - 2][closeIdx])
-    };
+    const today = new Date();
+    const past = new Date(today.getTime() - 14 * 86400000);
+    const ymd = (d) => `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
+
+    const urls = [
+        `https://stooq.com/q/d/l/?s=${encodeURIComponent(ssym)}&d1=${ymd(past)}&d2=${ymd(today)}&i=d`,
+        `https://stooq.com/q/d/l/?i=d&s=${encodeURIComponent(ssym)}`,
+        `https://stooq.com/q/d/?s=${encodeURIComponent(ssym)}&i=d&e=csv`
+    ];
+
+    let lastErr = 'no_attempt';
+    for (const url of urls) {
+        try {
+            const res = await fetch(url, {
+                signal,
+                headers: {
+                    'User-Agent': UA,
+                    'Accept': 'text/csv,text/plain,*/*;q=0.5',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Referer': 'https://stooq.com/'
+                }
+            });
+            if (!res.ok) { lastErr = `http_${res.status}`; continue; }
+            const text = (await res.text()).trim();
+            // If the body is HTML (challenge page), skip
+            if (/^\s*<(!doctype|html)/i.test(text)) { lastErr = 'html_body'; continue; }
+            const lines = text.split(/\r?\n/).filter(Boolean);
+            if (lines.length < 3) { lastErr = `lt_3_lines(${lines.length})`; continue; }
+            const header = lines[0].split(',').map(s => s.trim().toLowerCase());
+            const closeIdx = header.indexOf('close');
+            if (closeIdx < 0) { lastErr = 'no_close_col'; continue; }
+            const rows = lines.slice(1)
+                .map(l => l.split(',').map(c => c.trim()))
+                .filter(r => Number.isFinite(parseFloat(r[closeIdx])));
+            if (rows.length < 2) { lastErr = `lt_2_rows(${rows.length})`; continue; }
+            return {
+                latestClose: parseFloat(rows[rows.length - 1][closeIdx]),
+                prevClose: parseFloat(rows[rows.length - 2][closeIdx])
+            };
+        } catch (e) {
+            lastErr = e.message || 'fetch_err';
+        }
+    }
+    throw new Error(`stooq-hist:${lastErr}`);
 }
 
-async function fetchStooqOne(sym, signal) {
-    // Quote first (canonical "now" price). History second to get prevClose.
-    // If history fails we still return the quote.
+async function fetchStooqOne(sym, signal, histFailures) {
     const close = await fetchStooqQuote(sym, signal);
     let prevClose = null;
     try {
         const h = await fetchStooqHistory(sym, signal);
-        // Use history's prev (which corresponds to history's latest); this
-        // works as long as the quote and history agree on "today's close".
         prevClose = h.prevClose;
-    } catch (_) { /* swallow — change will be 0 this run, carry-forward next */ }
+    } catch (e) {
+        // Don't fail the symbol — record diagnostic for ops visibility.
+        histFailures.push({ symbol: sym, reason: e.message });
+    }
     const change = (prevClose != null) ? +(close - prevClose).toFixed(4) : null;
     const changePct = (prevClose != null && prevClose !== 0)
         ? +(((close - prevClose) / prevClose) * 100).toFixed(4) : null;
@@ -146,15 +172,21 @@ async function main() {
     const stooqMap = {};
     const yahooMap = {};
     const failures = [];
+    const histFailures = []; // diagnostic — does not block the symbol
 
     // Stooq fan-out (excluding macros it cannot serve)
     await Promise.all(tickers.filter(s => !STOOQ_SKIP.has(s)).map(sym => stooqSem.run(async () => {
         try {
-            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s), TIMEOUT_MS, `stooq:${sym}`);
+            stooqMap[sym] = await withTimeout(s => fetchStooqOne(sym, s, histFailures), TIMEOUT_MS * 2, `stooq:${sym}`);
         } catch (e) {
             failures.push({ symbol: sym, source: 'stooq', reason: e.message });
         }
     })));
+    if (histFailures.length) {
+        const reasons = {};
+        for (const f of histFailures) reasons[f.reason] = (reasons[f.reason] || 0) + 1;
+        console.log(`stooq-hist diagnostic: ${histFailures.length} symbols missing prevClose · ${JSON.stringify(reasons)}`);
+    }
 
     // Yahoo throttled fan-out: 2 workers, ~400ms gap each. Yahoo v8 chart is
     // rate-limited per IP — too many parallel hits and every symbol comes
