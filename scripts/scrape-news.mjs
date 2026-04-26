@@ -1,32 +1,65 @@
 #!/usr/bin/env node
-// Scrape headlines from saveticker.com per ticker; append to data/news-feed.json
-// with verified=false. Validator stamps verified later.
+// Scrape headlines per ticker from Google News RSS (no-auth, stable).
+// Append to data/news-feed.json with verified=false. Validator stamps later.
+//
+// Why Google News RSS: saveticker.com serves 403 to non-browser UAs
+// (Cloudflare). Google News RSS is key-less, returns multi-publisher
+// headlines (Reuters / CNBC / Bloomberg / Yahoo / etc.), and gives us a
+// per-publisher `source` field — which is actually richer than saveticker's
+// pre-aggregated feed for the validator's >=2-source check.
 
 import { readJson, writeJsonAtomic, nowIso, todayUtc, withTimeout, Semaphore, slugify } from './lib/io.mjs';
 
-const TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 8000;
 const CONCURRENCY = 4;
-const UA = 'Mozilla/5.0 (compatible; TraidingDashboardBot/1.0; +https://github.com/proto123-hub/Traiding-Dashboard)';
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 const MAX_PER_TICKER = 5;
 
-async function fetchSavetickerNews(symbol, signal) {
-    const url = `https://saveticker.com/ticker/${symbol.toLowerCase()}`;
+function decodeXmlEntities(s) {
+    return String(s)
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
+}
+
+function parseRssItems(xml, max) {
+    const items = [];
+    const re = /<item\b[^>]*>([\s\S]*?)<\/item>/g;
+    let m;
+    while ((m = re.exec(xml)) && items.length < max) {
+        const block = m[1];
+        const grab = (tag) => {
+            const cdata = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`).exec(block);
+            if (cdata) return cdata[1];
+            const plain = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`).exec(block);
+            return plain ? plain[1] : '';
+        };
+        const title = decodeXmlEntities(grab('title')).trim();
+        const link = decodeXmlEntities(grab('link')).trim();
+        const pubDate = grab('pubDate').trim();
+        const sourceRaw = grab('source').trim();
+        const source = decodeXmlEntities(sourceRaw.replace(/^.*?>([^<]+)<.*$/, '$1') || sourceRaw || 'Google News').trim();
+        if (!title) continue;
+        items.push({ title, link, pubDate, source });
+    }
+    return items;
+}
+
+async function fetchGoogleNews(symbol, signal) {
+    // hl=en-US, gl=US, ceid=US:en — US English news edition
+    const q = `${symbol}+stock`;
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
     const res = await fetch(url, {
         signal,
-        headers: { 'User-Agent': UA, 'Accept': 'text/html' }
+        headers: { 'User-Agent': UA, 'Accept': 'application/rss+xml,application/xml,text/xml' }
     });
-    if (!res.ok) throw new Error(`saveticker:http_${res.status}`);
-    const html = await res.text();
-    const m = html.match(/<script\s+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (!m) throw new Error('saveticker:no_next_data');
-    const data = JSON.parse(m[1]);
-    const news = data?.props?.pageProps?.news || data?.props?.pageProps?.headlines || [];
-    return news.slice(0, MAX_PER_TICKER).map(n => ({
-        headline: n.title || n.headline || '',
-        source: n.source || n.publisher || 'saveticker',
-        url: n.url || n.link || '',
-        publishedAt: n.publishedAt || n.date || null
-    })).filter(n => n.headline);
+    if (!res.ok) throw new Error(`google-news:http_${res.status}`);
+    const xml = await res.text();
+    return parseRssItems(xml, MAX_PER_TICKER);
 }
 
 async function main() {
@@ -46,18 +79,18 @@ async function main() {
 
     await Promise.all(tickers.map(sym => sem.run(async () => {
         try {
-            const items = await withTimeout(s => fetchSavetickerNews(sym, s), TIMEOUT_MS, `news:${sym}`);
+            const items = await withTimeout(s => fetchGoogleNews(sym, s), TIMEOUT_MS, `news:${sym}`);
             for (const it of items) {
-                const day = (it.publishedAt || todayUtc()).slice(0, 10);
-                const id = `${day}-${sym.toLowerCase()}-${slugify(it.headline)}`;
+                const day = (it.pubDate ? new Date(it.pubDate).toISOString().slice(0, 10) : todayUtc());
+                const id = `${day}-${sym.toLowerCase()}-${slugify(it.title)}`;
                 if (existingIds.has(id)) continue;
                 existingIds.add(id);
                 collected.push({
                     id,
                     ticker: sym,
-                    headline: it.headline,
-                    source: it.source,
-                    url: it.url,
+                    headline: it.title,
+                    source: it.source || 'Google News',
+                    url: it.link,
                     collectedAt: ts,
                     verified: false,
                     verifiedBy: [],
@@ -69,7 +102,7 @@ async function main() {
                 });
             }
         } catch (e) {
-            failures.push({ symbol: sym, source: 'saveticker', reason: e.message });
+            failures.push({ symbol: sym, source: 'google-news', reason: e.message });
         }
     })));
 
@@ -86,7 +119,7 @@ async function main() {
             appendedItems: collected,
             failures
         };
-        await writeJsonAtomic(`reports/raw/${todayUtc()}-saveticker-news.json`, rawDrop);
+        await writeJsonAtomic(`reports/raw/${todayUtc()}-google-news.json`, rawDrop);
     }
 
     console.log(`scrape-news: appended ${collected.length} items across ${tickers.length} tickers, ${failures.length} failures`);
