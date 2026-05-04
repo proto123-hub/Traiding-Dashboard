@@ -4,6 +4,59 @@ Single-file HTML dashboard (`index.html`) + typed JSON data layer (`data/*.json`
 7 Claude Code subagents under `.claude/agents/`. No build step, no framework, no
 server. Chart.js is loaded via CDN. That's it.
 
+---
+
+## Coding Behavior — Karpathy Guidelines
+
+> Behavioral rules to reduce common LLM coding mistakes. Bias toward caution over speed; for trivial tasks use judgment.
+> Source: [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) · [@karpathy](https://x.com/karpathy/status/2015883857489522876)
+
+### 1. Think Before Coding — 코딩 전에 생각하라
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- State assumptions explicitly. If uncertain, ask.
+- Multiple interpretations? Present them — don't pick silently.
+- Simpler approach exists? Say so. Push back when warranted.
+- Unclear? Stop. Name what's confusing. Ask.
+
+### 2. Simplicity First — 단순함이 우선
+**Minimum code that solves the problem. Nothing speculative.**
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- 200 lines could be 50? Rewrite.
+- Self-check: "Would a senior engineer call this overcomplicated?"
+
+### 3. Surgical Changes — 외과적 변경
+**Touch only what you must. Clean up only your own mess.**
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- Notice unrelated dead code? Mention it — don't delete it.
+- Remove only orphans (imports/vars/funcs) YOUR changes created.
+- Test: every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution — 목표 주도 실행
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan with verify steps:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let me loop independently. Weak criteria ("make it work") force constant clarification.
+
+> **Working when:** fewer unnecessary diff lines · fewer rewrites due to overcomplication · clarifying questions come *before* implementation, not after mistakes.
+
+---
+
 ## Repo map
 
 ```
