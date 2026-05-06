@@ -297,6 +297,23 @@
 
   /* version stamp */
   .version-stamp { font-family: var(--mono); font-size: 9px; color: var(--faint); padding: 12px; text-align: center; }
+
+  /* sidebar-click flash feedback */
+  @keyframes flashHighlight {
+    0%   { box-shadow: 0 0 0 3px var(--cyan, #00B7C7), 0 0 24px rgba(0,183,199,0.45); }
+    100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; }
+  }
+  .flash-target { animation: flashHighlight 1.5s ease-out; }
+  .v36-toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--ink, #0F1A2A); color: #fff; padding: 10px 16px;
+    border-radius: 8px; font-size: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35); opacity: 0;
+    transform: translateY(8px); transition: opacity .2s, transform .2s;
+    max-width: 360px; line-height: 1.5;
+  }
+  .v36-toast.show { opacity: 1; transform: translateY(0); }
+  .v36-toast .v36-toast-tag { color: var(--cyan, #00B7C7); font-weight: 700; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -314,21 +331,22 @@
     </div>
 
     <div class="side-section"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
-    <div class="side-link active"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (24)</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">밸류에이션</span><span class="en">Valuation</span></div>
+    <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
+    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (24)</span></div>
+    <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
+    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">밸류에이션</span><span class="en">Valuation</span></div>
 
     <div class="side-section"><span class="ko">인사이트</span><span class="en">Insights</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
-    <div class="side-link"><span class="dot red"></span><span class="ko">Trump Truth 트리거</span><span class="en">Trump Triggers</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">실적 캘린더</span><span class="en">Earnings Calendar</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">매크로/지정학</span><span class="en">Macro / Geo</span></div>
+    <div class="side-link" data-scroll="whales"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
+    <div class="side-link" data-scroll="triggers"><span class="dot red"></span><span class="ko">Trump Truth 트리거</span><span class="en">Trump Triggers</span></div>
+    <div class="side-link" data-scroll="triggers"><span class="dot"></span><span class="ko">실적 캘린더</span><span class="en">Earnings Calendar</span></div>
+    <div class="side-link" data-scroll="glance"><span class="dot"></span><span class="ko">매크로/지정학</span><span class="en">Macro / Geo</span></div>
 
     <div class="side-section"><span class="ko">리포트</span><span class="en">Reports</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">PreMarket DOCX</span><span class="en">PreMarket DOCX</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">Daily 리포트</span><span class="en">Daily Report</span></div>
-    <div class="side-link"><span class="dot"></span><span class="ko">주간 리밸런스</span><span class="en">Weekly Rebal.</span></div>
+    <div class="side-link" data-href="valuation-dashboard-v3.6.html"><span class="dot"></span><span class="ko">📊 v3.7.5 Dashboard</span><span class="en">📊 v3.7.5 Dashboard</span></div>
+    <div class="side-link" data-href="SESSION_LOG.md"><span class="dot"></span><span class="ko">SESSION_LOG</span><span class="en">SESSION_LOG</span></div>
+    <div class="side-link" data-href="premarket-report-2026-04-30.md"><span class="dot"></span><span class="ko">PreMarket DOCX</span><span class="en">PreMarket DOCX</span></div>
+    <div class="side-link" data-href="weekly-preview-2026-04-27.md"><span class="dot"></span><span class="ko">주간 리밸런스</span><span class="en">Weekly Rebal.</span></div>
 
     <div class="side-status">
       <div class="row"><span class="lab">Cowork-A</span><span class="pill idle" id="status-A"><span class="blob"></span>IDLE</span></div>
@@ -337,7 +355,7 @@
       <div class="row"><span class="lab">Next Cron</span><span class="val">19:00 KST</span></div>
     </div>
 
-    <div class="version-stamp">v3.6.0 · 2026-05-03</div>
+    <div class="version-stamp">v3.6.1 · 2026-05-06 · sidebar fix</div>
   </aside>
 
   <!-- ===== Topbar ===== -->
@@ -754,6 +772,59 @@
     renderSectors();
     renderWatchlist();
     document.getElementById('last-sync').textContent = new Date().toTimeString().slice(0, 8);
+  });
+
+  // ===== Sidebar nav (flash feedback + 404-safe href open) =====
+  function flashCard(card) {
+    if (!card) return;
+    card.classList.remove('flash-target');
+    void card.offsetWidth;
+    card.classList.add('flash-target');
+    setTimeout(() => card.classList.remove('flash-target'), 1600);
+  }
+  function showToast(msg, opts) {
+    opts = opts || {};
+    const t = document.createElement('div');
+    t.className = 'v36-toast';
+    t.innerHTML = (opts.tag ? '<span class="v36-toast-tag">' + opts.tag + '</span>' : '') + msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => {
+      t.classList.remove('show');
+      setTimeout(() => t.remove(), 250);
+    }, opts.ms || 3200);
+  }
+  document.querySelectorAll('.side-link[data-scroll]').forEach(link => {
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', () => {
+      const targetId = link.dataset.scroll;
+      const target = document.getElementById(targetId);
+      if (target) {
+        const card = target.closest('.card') || target;
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        flashCard(card);
+        document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      } else {
+        showToast('Target not rendered: ' + targetId, { tag: 'INFO' });
+      }
+    });
+  });
+  document.querySelectorAll('.side-link[data-href]').forEach(link => {
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', async () => {
+      const href = link.dataset.href;
+      try {
+        const res = await fetch(href, { method: 'HEAD' });
+        if (res.ok) {
+          window.open(href, '_blank');
+        } else {
+          showToast('파일이 아직 repo에 없습니다: <code>' + href + '</code>', { tag: 'NOT YET', ms: 4000 });
+        }
+      } catch (e) {
+        showToast('파일 접근 실패: <code>' + href + '</code>', { tag: 'ERROR', ms: 4000 });
+      }
+    });
   });
 
   // ===== Live tick =====
