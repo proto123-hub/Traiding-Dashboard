@@ -534,6 +534,25 @@
 
   /* version stamp */
   .version-stamp { font-family: var(--mono); font-size: 9px; color: var(--faint); padding: 12px; text-align: center; }
+
+  /* v3.7.5: sidebar-click flash feedback */
+  @keyframes flashHighlight {
+    0%   { box-shadow: 0 0 0 3px var(--cyan, #00B7C7), 0 0 24px rgba(0,183,199,0.45); }
+    100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; }
+  }
+  .flash-target { animation: flashHighlight 1.5s ease-out; }
+
+  /* v3.7.5: missing-file toast */
+  .v36-toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--ink, #0F1A2A); color: #fff; padding: 10px 16px;
+    border-radius: 8px; font-size: 12px; font-family: var(--sans);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35); opacity: 0;
+    transform: translateY(8px); transition: opacity .2s, transform .2s;
+    max-width: 360px; line-height: 1.5;
+  }
+  .v36-toast.show { opacity: 1; transform: translateY(0); }
+  .v36-toast .v36-toast-tag { color: var(--cyan, #00B7C7); font-weight: 700; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -1187,7 +1206,28 @@
     } catch (e) { /* ignore */ }
   });
 
-  // ===== Sidebar nav =====
+  // ===== Sidebar nav (v3.7.5: flash feedback on scroll-target cards) =====
+  function flashCard(card) {
+    if (!card) return;
+    card.classList.remove('flash-target');
+    void card.offsetWidth;  // force reflow to restart CSS animation
+    card.classList.add('flash-target');
+    setTimeout(() => card.classList.remove('flash-target'), 1600);
+  }
+
+  function showToast(msg, opts) {
+    opts = opts || {};
+    const t = document.createElement('div');
+    t.className = 'v36-toast';
+    t.innerHTML = (opts.tag ? '<span class="v36-toast-tag">' + opts.tag + '</span>' : '') + msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => {
+      t.classList.remove('show');
+      setTimeout(() => t.remove(), 250);
+    }, opts.ms || 3200);
+  }
+
   document.querySelectorAll('.side-link[data-scroll]').forEach(link => {
     link.style.cursor = 'pointer';
     link.addEventListener('click', () => {
@@ -1196,14 +1236,34 @@
       if (target) {
         const card = target.closest('.card') || target;
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        flashCard(card);
         document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
+      } else {
+        showToast('Target section not yet rendered: ' + targetId, { tag: 'INFO' });
       }
     });
   });
+
+  // data-href links open external markdown reports. Most reports are not yet
+  // committed to the public Pages repo — show a toast instead of a 404.
+  const HREF_PRESENT = new Set();  // populate at runtime via HEAD probe (best-effort)
   document.querySelectorAll('.side-link[data-href]').forEach(link => {
     link.style.cursor = 'pointer';
-    link.addEventListener('click', () => { window.open(link.dataset.href, '_blank'); });
+    link.addEventListener('click', async () => {
+      const href = link.dataset.href;
+      try {
+        const res = await fetch(href, { method: 'HEAD' });
+        if (res.ok) {
+          HREF_PRESENT.add(href);
+          window.open(href, '_blank');
+        } else {
+          showToast('리포트 파일이 아직 repo에 커밋되지 않았습니다: <code>' + href + '</code>', { tag: 'NOT YET', ms: 4000 });
+        }
+      } catch (e) {
+        showToast('리포트 파일 접근 실패: <code>' + href + '</code>', { tag: 'ERROR', ms: 4000 });
+      }
+    });
   });
 
   // ===== Clock =====
