@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="en" data-lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trading Command Center v3.6 — Daniel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    /* v3.5 cyan/gold light theme inheritance */
+    --bg:        #F4F6F8;
+    --panel:     #FFFFFF;
+    --panel-2:   #FAFBFC;
+    --line:      #E2E6EB;
+    --line-2:    #EEF1F4;
+    --ink:       #0F1A2A;
+    --ink-2:     #2C3A4D;
+    --muted:     #6B7889;
+    --faint:     #94A0B0;
+
+    --cyan:      #00B7C7;
+    --cyan-2:    #0892A0;
+    --cyan-soft: #E0F7FA;
+    --gold:      #C9A227;
+    --gold-2:    #8C6D14;
+    --gold-soft: #FBF4D9;
+
+    --green:     #047857;
+    --green-soft:#D8F1E8;
+    --red:       #B91C1C;
+    --red-soft:  #FCE4E4;
+    --amber:     #B45309;
+    --amber-soft:#FBE7CC;
+    --blue:      #1D4ED8;
+
+    --r-sm: 6px;
+    --r:    10px;
+    --r-lg: 14px;
+    --shadow-sm: 0 1px 2px rgba(15,26,42,.04), 0 0 0 1px var(--line);
+    --shadow:    0 2px 8px rgba(15,26,42,.06), 0 0 0 1px var(--line);
+
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Manrope', ui-sans-serif, -apple-system, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px; line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--cyan-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ===== Layout ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 56px 1fr;
+    grid-template-areas:
+      "sidebar topbar"
+      "sidebar main";
+    height: 100vh;
+  }
+  .sidebar { grid-area: sidebar; background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; }
+  .topbar  { grid-area: topbar;  background: var(--panel); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 16px; gap: 16px; }
+  .main    { grid-area: main; overflow-y: auto; padding: 16px; }
+
+  /* ===== Sidebar ===== */
+  .brand { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--cyan), var(--gold));
+    display: grid; place-items: center; color: white; font-weight: 800; font-size: 12px;
+  }
+  .brand-name { font-weight: 800; letter-spacing: -0.01em; font-size: 14px; }
+  .brand-sub  { font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.05em; }
+
+  .side-section { padding: 12px 8px 4px; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .side-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; margin: 1px 6px; border-radius: var(--r-sm);
+    color: var(--ink-2); cursor: pointer; font-size: 12.5px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .side-link > span:not(.dot) { overflow: hidden; text-overflow: ellipsis; }
+  .side-link:hover { background: var(--cyan-soft); color: var(--cyan-2); }
+  .side-link.active { background: var(--cyan-soft); color: var(--cyan-2); font-weight: 600; }
+  .side-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .side-link .dot.green { background: var(--green); }
+  .side-link .dot.red { background: var(--red); }
+
+  .side-status { padding: 12px; margin: 8px 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r); }
+  .side-status .row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 11px; }
+  .side-status .lab { color: var(--muted); }
+  .side-status .val { font-family: var(--mono); font-weight: 600; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+    font-family: var(--mono); letter-spacing: 0.04em;
+  }
+  .pill .blob { width: 6px; height: 6px; border-radius: 50%; }
+  .pill.live  { background: var(--green-soft); color: var(--green); }
+  .pill.live .blob { background: var(--green); animation: pulse 1.5s infinite; }
+  .pill.idle  { background: var(--line-2); color: var(--muted); }
+  .pill.idle .blob { background: var(--faint); }
+  .pill.warn  { background: var(--amber-soft); color: var(--amber); }
+  .pill.warn .blob { background: var(--amber); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* ===== Topbar ===== */
+  .top-title { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .top-title small { color: var(--muted); font-weight: 500; margin-left: 8px; font-family: var(--mono); }
+  @media (max-width: 1100px) { .top-title small { display: none; } }
+  .top-spacer { flex: 1; }
+  .top-clock { font-family: var(--mono); font-size: 12px; color: var(--ink-2); display: flex; gap: 16px; }
+  .top-clock span b { color: var(--ink); font-weight: 600; }
+
+  /* v3.6.3 NEW — Phase 2: Narrative chips + Top/Bottom split + Collapse */
+  .narrative-chips {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 1100px) { .narrative-chips { grid-template-columns: repeat(2, 1fr); } }
+  .narr-chip {
+    padding: 12px 14px;
+    border-radius: var(--r-sm, 6px);
+    border: 1px solid var(--line-2, #e8e6df);
+    background: var(--panel-2, #f8f6f0);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .narr-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  .narr-chip.strong-week { border-left: 3px solid #2E7D32; background: rgba(46,125,50,0.05); }
+  .narr-chip.weak-week { border-left: 3px solid #C62828; background: rgba(198,40,40,0.05); }
+  .narr-chip.overbought { border-left: 3px solid #F57F17; background: rgba(245,127,23,0.06); }
+  .narr-chip.oversold { border-left: 3px solid #B8860B; background: rgba(184,134,11,0.06); }
+  .narr-chip .narr-lab { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted, #666); margin-bottom: 4px; }
+  .narr-chip .narr-val { font-size: 14px; font-weight: 800; color: var(--ink, #1a1a1a); margin-bottom: 4px; }
+  .narr-chip .narr-detail { font-size: 11px; color: var(--muted, #666); line-height: 1.45; }
+
+  .topbottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .topbottom { grid-template-columns: 1fr; } }
+  .tb-col {
+    background: var(--panel-2, #f8f6f0);
+    border-radius: var(--r-sm, 6px);
+    padding: 12px;
+    border: 1px solid var(--line-2, #e8e6df);
+  }
+  .tb-strong { border-left: 3px solid #2E7D32; }
+  .tb-weak { border-left: 3px solid #C62828; }
+  .tb-head {
+    font-size: 12px; font-weight: 800; color: var(--ink, #1a1a1a);
+    letter-spacing: 0.02em; margin-bottom: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line-2, #e8e6df);
+  }
+  .tb-row {
+    display: grid;
+    grid-template-columns: 24px 60px 1fr 70px 70px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line-2, #e8e6df);
+  }
+  .tb-row:last-child { border-bottom: none; }
+  .tb-rank { font-family: var(--mono, monospace); font-size: 10px; color: var(--muted, #888); font-weight: 700; }
+  .tb-tic { font-family: var(--mono, monospace); font-size: 13px; font-weight: 800; color: var(--ink, #1a1a1a); }
+  .tb-name { font-size: 11px; color: var(--muted, #666); }
+  .tb-chg { font-family: var(--mono, monospace); font-size: 13px; font-weight: 700; text-align: right; }
+  .tb-chg.up { color: #2E7D32; }
+  .tb-chg.down { color: #C62828; }
+  .tb-tag {
+    font-size: 9.5px; font-weight: 700; text-align: center;
+    padding: 3px 6px; border-radius: 4px;
+    background: var(--panel-3, #ebe9e2); color: var(--muted, #666);
+  }
+  .tb-tag.warn { background: rgba(245,127,23,0.20); color: #c25b00; }
+
+  /* v3.7.0 NEW — Entry Zone Analyst Card */
+  .ez-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 1100px) { .ez-grid { grid-template-columns: 1fr; } }
+  .ez-tier1-row {
+    border: 1px solid var(--line-2, #e8e6df);
+    border-radius: var(--r-sm, 6px);
+    padding: 12px 14px;
+    background: var(--panel, #fff);
+    border-left: 4px solid #b48a3a;
+  }
+  .ez-tier1-row.holding { background: rgba(180,138,58,0.04); }
+  .ez-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line-2, #e8e6df); }
+  .ez-tic { font-family: var(--mono); font-size: 16px; font-weight: 800; color: var(--ink, #1a1a1a); }
+  .ez-name { font-size: 11px; color: var(--muted, #666); flex: 1; }
+  .ez-spark { display: inline-block; vertical-align: middle; }
+  .ez-fire { font-size: 13px; }
+  .ez-action {
+    font-size: 9.5px; font-weight: 800; padding: 3px 7px;
+    border-radius: 3px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .ez-action.hold { background: rgba(46,125,50,0.15); color: #2E7D32; }
+  .ez-action.trim { background: rgba(198,40,40,0.15); color: #c02020; }
+  .ez-action.add { background: rgba(46,125,50,0.20); color: #1b5e20; }
+  .ez-action.watch { background: rgba(180,138,58,0.15); color: #b48a3a; }
+  .ez-action.scale { background: rgba(245,127,23,0.15); color: #c25b00; }
+  .ez-action.avoid { background: rgba(96,96,96,0.15); color: #606060; }
+
+  .ez-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+  .ez-met { padding: 5px 7px; background: var(--panel-2, #f8f6f0); border-radius: 4px; }
+  .ez-met-lab { font-size: 9px; color: var(--muted, #888); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .ez-met-val { font-family: var(--mono); font-size: 12px; font-weight: 800; color: var(--ink, #1a1a1a); margin-top: 2px; }
+  .ez-met-val.good { color: #2E7D32; }
+  .ez-met-val.warn { color: #c25b00; }
+  .ez-met-val.bad { color: #c02020; }
+
+  .ez-zones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; background: var(--panel-2, #f8f6f0); border-radius: 4px; }
+  .ez-zone {
+    padding: 6px 8px; border-radius: 4px; text-align: center;
+    border: 1px dashed var(--line-2, #e8e6df);
+  }
+  .ez-zone.aggr { border-color: rgba(245,127,23,0.30); background: rgba(245,127,23,0.04); }
+  .ez-zone.cons { border-color: rgba(180,138,58,0.30); background: rgba(180,138,58,0.04); }
+  .ez-zone.deep { border-color: rgba(46,125,50,0.30); background: rgba(46,125,50,0.04); }
+  .ez-zone-lab { font-size: 8.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted, #666); margin-bottom: 2px; }
+  .ez-zone-px { font-family: var(--mono); font-size: 12px; font-weight: 800; color: var(--ink, #1a1a1a); }
+
+  .ez-thesis {
+    margin-top: 8px; padding: 7px 10px; background: rgba(180,138,58,0.04);
+    border-radius: 4px; border-left: 2px solid #b48a3a;
+    font-size: 10.5px; color: var(--ink, #1a1a1a); line-height: 1.5;
+  }
+
+  /* v3.6.5 NEW — Technical Analysis Matrix (RSI/Cross/Ichimoku) */
+  .ta-recommend {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 1100px) { .ta-recommend { grid-template-columns: 1fr; } }
+  .ta-rec-box {
+    background: var(--panel-2, #f8f6f0);
+    border-radius: var(--r-sm, 6px);
+    padding: 12px 14px;
+    border: 1px solid var(--line-2, #e8e6df);
+  }
+  .ta-rec-box.primary { border-left: 4px solid #C62828; background: rgba(198,40,40,0.04); }
+  .ta-rec-box.secondary { border-left: 4px solid #F57F17; background: rgba(245,127,23,0.04); }
+  .ta-rec-box.tertiary { border-left: 4px solid #2E7D32; background: rgba(46,125,50,0.04); }
+  .ta-rec-head { font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; color: var(--muted, #666); margin-bottom: 6px; text-transform: uppercase; }
+  .ta-rec-tic { font-family: var(--mono, monospace); font-size: 18px; font-weight: 800; color: var(--ink, #1a1a1a); margin-bottom: 4px; }
+  .ta-rec-action { font-size: 13px; font-weight: 700; color: var(--ink, #1a1a1a); margin-bottom: 6px; }
+  .ta-rec-detail { font-size: 11px; color: var(--muted, #666); line-height: 1.55; }
+  .ta-rec-pnl { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+  .ta-rec-pnl.up { background: rgba(46,125,50,0.15); color: #2E7D32; }
+
+  .ta-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .ta-table thead th {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 2px solid var(--line, #d4d2c8);
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted, #888); background: var(--panel-2, #f8f6f0);
+  }
+  .ta-table thead th.r { text-align: right; }
+  .ta-table thead th.c { text-align: center; }
+  .ta-table tbody td {
+    padding: 7px 10px; border-bottom: 1px dashed var(--line-2, #e8e6df);
+    vertical-align: middle;
+  }
+  .ta-table tbody tr:hover { background: var(--panel-2, #f8f6f0); }
+  .ta-table .tic { font-family: var(--mono); font-weight: 800; color: var(--ink, #1a1a1a); }
+  .ta-table .rsi { font-family: var(--mono); font-weight: 700; text-align: right; }
+  .ta-table .rsi.extreme { color: #c02020; }
+  .ta-table .rsi.over { color: #c25b00; }
+  .ta-table .rsi.neut { color: var(--muted); }
+  .ta-table .rsi.under { color: #2E7D32; }
+  .ta-table .sig { text-align: center; font-size: 12px; }
+  .ta-table .action {
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 3px; text-align: center; display: inline-block; min-width: 80px;
+  }
+  .ta-table .action.trim { background: rgba(198,40,40,0.15); color: #c02020; }
+  .ta-table .action.scale { background: rgba(245,127,23,0.15); color: #c25b00; }
+  .ta-table .action.hold { background: rgba(46,125,50,0.12); color: #2E7D32; }
+  .ta-table .action.watch { background: rgba(180,138,58,0.12); color: #b48a3a; }
+  .ta-table .action.avoid { background: rgba(96,96,96,0.15); color: #606060; }
+
+  .sox-trigger {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-2, #e8e6df);
+  }
+  @media (max-width: 1100px) { .sox-trigger { grid-template-columns: repeat(2, 1fr); } }
+  .sox-trig-cell {
+    padding: 8px 10px; border-radius: var(--r-sm, 6px);
+    background: var(--panel-2, #f8f6f0); border: 1px solid var(--line-2, #e8e6df);
+  }
+  .sox-trig-cell .lvl { font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--ink, #1a1a1a); }
+  .sox-trig-cell .act { font-size: 10.5px; color: var(--muted, #666); margin-top: 2px; line-height: 1.4; }
+  .sox-trig-cell.bull { border-left: 3px solid #2E7D32; }
+  .sox-trig-cell.warn { border-left: 3px solid #F57F17; }
+  .sox-trig-cell.danger { border-left: 3px solid #C62828; }
+
+  /* Card collapse toggle */
+  .collapse-btn {
+    background: none; border: none; padding: 0 6px 0 0;
+    cursor: pointer; font-size: 11px; color: var(--muted, #888);
+    transition: transform 0.2s; line-height: 1;
+  }
+  .collapse-btn:hover { color: var(--ink, #1a1a1a); }
+  .collapse-btn.collapsed { transform: rotate(-90deg); }
+  .card-body.hidden { display: none; }
+
+  /* v3.6.2 NEW — Refresh button + STALE indicator pills */
+  .refresh-btn {
+    background: var(--panel-2, #f6f6f4);
+    border: 1px solid var(--line-2, #e8e6df);
+    border-radius: var(--r-sm, 6px);
+    padding: 5px 9px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: transform 0.4s, background 0.2s;
+    line-height: 1;
+  }
+  .refresh-btn:hover {
+    background: var(--panel-3, #ebe9e2);
+    transform: rotate(180deg);
+  }
+  .refresh-btn:active { opacity: 0.5; }
+  .pill.cached {
+    background: rgba(180, 138, 58, 0.12);
+    color: var(--gold-2, #b48a3a);
+    border-color: rgba(180, 138, 58, 0.30);
+  }
+  .pill.cached .blob { background: var(--gold-2, #b48a3a); }
+  .pill.stale {
+    background: rgba(245, 127, 23, 0.15);
+    color: #c25b00;
+    border-color: rgba(245, 127, 23, 0.40);
+  }
+  .pill.stale .blob { background: #c25b00; }
+  .pill.dead {
+    background: rgba(192, 32, 32, 0.15);
+    color: #c02020;
+    border-color: rgba(192, 32, 32, 0.40);
+  }
+  .pill.dead .blob { background: #c02020; }
+
+  .lang-toggle {
+    display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; font-size: 11px;
+  }
+  .lang-toggle button {
+    background: transparent; border: 0; padding: 4px 10px; cursor: pointer; color: var(--muted); font-weight: 600;
+    font-family: var(--mono);
+  }
+  .lang-toggle button.active { background: var(--ink); color: white; }
+
+  /* ===== Today Glance strip ===== */
+  .glance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .glance-cell {
+    background: var(--panel); padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .glance-cell .lab { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+  .glance-cell .val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink); }
+  .glance-cell .chg { font-size: 11px; font-family: var(--mono); font-weight: 600; }
+  .chg.up   { color: var(--green); }
+  .chg.down { color: var(--red); }
+  .chg.flat { color: var(--muted); }
+
+  /* ===== Cards / Sections ===== */
+  .row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row.r-2 { grid-template-columns: 380px 1fr; }
+  .row.r-3 { grid-template-columns: repeat(3, 1fr); }
+  .row.r-4 { grid-template-columns: repeat(4, 1fr); }
+  .row.r-2-1 { grid-template-columns: 2fr 1fr; }
+  @media (max-width: 1200px) {
+    .row.r-2-1 { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr) !important; }
+    .sectors { grid-template-columns: repeat(4, 1fr) !important; }
+    .whales { grid-template-columns: repeat(3, 1fr) !important; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line-2);
+  }
+  .card-head h3 {
+    margin: 0; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink);
+    white-space: nowrap;
+  }
+  .card-head .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .card-head .sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .card-head .spacer { flex: 1; }
+  .card-body { padding: 16px; }
+  .card-body.flush { padding: 0; }
+
+  /* ===== Regime Gauge ===== */
+  .regime { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: center; }
+  .regime-gauge { position: relative; width: 200px; height: 120px; }
+  .regime-readout { display: flex; flex-direction: column; gap: 8px; }
+  .regime-score { font-family: var(--mono); font-size: 32px; font-weight: 800; line-height: 1; color: var(--ink); }
+  .regime-label { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; width: fit-content; }
+  .regime-label.on   { background: var(--green-soft); color: var(--green); }
+  .regime-label.off  { background: var(--red-soft); color: var(--red); }
+  .regime-label.neut { background: var(--line-2); color: var(--ink-2); }
+  .regime-quality { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .regime-spark { height: 32px; }
+
+  .regime-comp { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+  .regime-comp .c { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; border-radius: var(--r-sm); background: var(--panel-2); }
+  .regime-comp .c .clab { font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+  .regime-comp .c .cval { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+
+  /* ===== Playbook ===== */
+  .playbook { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .playbook-row { padding: 12px; background: var(--panel-2); border-radius: var(--r); border: 1px solid var(--line-2); }
+  .playbook-row .horizon { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .playbook-row .winrate { font-family: var(--mono); font-size: 22px; font-weight: 800; color: var(--ink); }
+  .playbook-row .winrate small { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .dist { display: flex; gap: 4px; align-items: center; margin-top: 8px; font-family: var(--mono); font-size: 10px; }
+  .dist-bar { position: relative; height: 8px; border-radius: 4px; flex: 1; background: linear-gradient(90deg, var(--red-soft), var(--line-2), var(--green-soft)); }
+  .dist-bar .marker { position: absolute; top: -2px; width: 2px; height: 12px; background: var(--ink); }
+  .dist-bar .band { position: absolute; top: 0; height: 8px; background: var(--cyan); opacity: 0.35; border-radius: 4px; }
+
+  /* ===== Watchlist ===== */
+  .watchlist { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .watchlist thead th {
+    text-align: left; padding: 10px 12px; background: var(--panel-2);
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--line); position: sticky; top: 0;
+  }
+  .watchlist tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line-2); }
+  .watchlist tbody tr:hover { background: var(--cyan-soft); }
+  .watchlist .sym { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+  .watchlist .name { color: var(--muted); font-size: 11px; }
+  .watchlist .price { font-family: var(--mono); font-weight: 600; text-align: right; }
+  .watchlist .chg-cell { font-family: var(--mono); font-weight: 600; text-align: right; }
+  .watchlist .chg-cell.up   { color: var(--green); }
+  .watchlist .chg-cell.down { color: var(--red); }
+  .watchlist .num { font-family: var(--mono); text-align: right; color: var(--ink-2); }
+  .watchlist .sector-tag {
+    display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;
+    background: var(--cyan-soft); color: var(--cyan-2); font-family: var(--mono); letter-spacing: 0.04em;
+  }
+  .sector-tag.Semi   { background: #FFE5D9; color: #B45309; }
+  .sector-tag.Equip  { background: #E8E0FF; color: #5B21B6; }
+  .sector-tag.Growth { background: var(--green-soft); color: var(--green); }
+  .sector-tag.Bench  { background: var(--line-2); color: var(--muted); }
+
+  /* ===== Sector heatmap ===== */
+  .sectors { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .sector-cell {
+    padding: 12px; border-radius: var(--r); border: 1px solid var(--line);
+    background: var(--panel-2); display: flex; flex-direction: column; gap: 4px;
+  }
+  .sector-cell .name { font-size: 11px; font-weight: 600; color: var(--ink-2); line-height: 1.2; }
+  .sector-cell .chg { font-family: var(--mono); font-size: 16px; font-weight: 700; }
+  .sector-cell .breadth { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); font-family: var(--mono); }
+  .breadth-bar { width: 40px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .breadth-bar .fill { height: 100%; background: var(--cyan); }
+
+  /* ===== Whale strip ===== */
+  .whales { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .whale {
+    padding: 12px; border: 1px solid var(--line); border-radius: var(--r);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .whale .fund { font-size: 11px; font-weight: 700; color: var(--ink); }
+  .whale .flag { font-size: 10.5px; color: var(--muted); line-height: 1.4; min-height: 28px; }
+  .whale-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line-2); }
+  .whale .concord { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .whale .sig { font-size: 14px; }
+
+  /* ===== Trump triggers ===== */
+  .triggers { display: flex; flex-direction: column; gap: 1px; background: var(--line-2); border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); }
+  .trigger { background: var(--panel); padding: 10px 14px; display: grid; grid-template-columns: 60px 1fr 100px; gap: 12px; align-items: start; }
+  .trigger .ts { font-family: var(--mono); font-size: 10px; color: var(--muted); padding-top: 2px; }
+  .trigger .text { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+  .trigger .text .kw { background: var(--gold-soft); color: var(--gold-2); padding: 1px 5px; border-radius: 3px; font-weight: 600; font-family: var(--mono); font-size: 10px; }
+  .trigger .impact { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--cyan-2); text-align: right; padding-top: 2px; }
+
+  /* ===== Mini stats ===== */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat {
+    padding: 14px; border: 1px solid var(--line); border-radius: var(--r);
+    background: var(--panel);
+  }
+  .stat .lab { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat .val { font-family: var(--mono); font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1; }
+  .stat .delta { font-family: var(--mono); font-size: 11px; margin-top: 4px; font-weight: 600; }
+
+  /* ===== Lang switcher visibility ===== */
+  [data-lang="ko"] .en { display: none; }
+  [data-lang="en"] .ko { display: none; }
+
+  /* ===== Scrollbar ===== */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+  /* version stamp */
+  .version-stamp { font-family: var(--mono); font-size: 9px; color: var(--faint); padding: 12px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div>
+        <div class="brand-name">Trading Center</div>
+        <div class="brand-sub">v3.6 · DANIEL</div>
+      </div>
+    </div>
+
+    <div class="side-section"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
+    <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
+    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (24)</span></div>
+    <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
+    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">밸류에이션</span><span class="en">Valuation</span></div>
+
+    <div class="side-section"><span class="ko">인사이트</span><span class="en">Insights</span></div>
+    <div class="side-link" data-scroll="whales"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
+    <div class="side-link" data-scroll="triggers"><span class="dot red"></span><span class="ko">Trump Truth 트리거</span><span class="en">Trump Triggers</span></div>
+    <div class="side-link" data-scroll="triggers"><span class="dot"></span><span class="ko">실적 캘린더</span><span class="en">Earnings Calendar</span></div>
+    <div class="side-link" data-scroll="glance"><span class="dot"></span><span class="ko">매크로/지정학</span><span class="en">Macro / Geo</span></div>
+
+    <div class="side-section"><span class="ko">리포트</span><span class="en">Reports</span></div>
+    <div class="side-link" data-href="premarket-report-2026-04-30.md"><span class="dot"></span><span class="ko">PreMarket DOCX</span><span class="en">PreMarket DOCX</span></div>
+    <div class="side-link" data-href="googl-q1-2026-pichai-deep-dive-2026-05-04.md"><span class="dot"></span><span class="ko">GOOGL Pichai 분석</span><span class="en">GOOGL Pichai Deep Dive</span></div>
+    <div class="side-link" data-href="whale-insight-snapshot-2026-04-27.md"><span class="dot"></span><span class="ko">Daily 리포트</span><span class="en">Daily Report</span></div>
+    <div class="side-link" data-href="weekly-preview-2026-04-27.md"><span class="dot"></span><span class="ko">주간 리밸런스</span><span class="en">Weekly Rebal.</span></div>
+
+    <div class="side-status">
+      <div class="row"><span class="lab">Cowork-A</span><span class="pill idle" id="status-A"><span class="blob"></span>IDLE</span></div>
+      <div class="row"><span class="lab">Cowork-B</span><span class="pill live" id="status-B"><span class="blob"></span>ACTIVE</span></div>
+      <div class="row"><span class="lab">Last Sync</span><span class="val" id="last-sync">14:32:18</span></div>
+      <div class="row"><span class="lab">Next Cron</span><span class="val">19:00 KST</span></div>
+    </div>
+
+    <div class="version-stamp">v3.7.5 · 2026-05-06 LIVE · 🔥 AMD BLOWOUT AH +15% · MU $640+ ($700B mcap) · 포트 +21.91% ($211,918) · 실현차익 +$289.78 · 8 ATH · Regime Risk-On</div>
+  </aside>
+
+  <!-- ===== Topbar ===== -->
+  <header class="topbar">
+    <div class="top-title">
+      <span class="ko">시장 종합 대시보드</span>
+      <span class="en">Market Overview</span>
+      <small>S&amp;P · Nasdaq · Dow · 24-Ticker · Korea Lead</small>
+    </div>
+    <div class="top-spacer"></div>
+    <span class="pill" id="session-phase" title="Auto-detected from NY time (Premarket/Regular/AH/Closed)">
+      <span class="blob"></span><span id="session-phase-text">Loading...</span>
+    </span>
+    <span class="pill live" id="data-freshness" title="Data age from last cron sync">
+      <span class="blob"></span><span id="freshness-text">LIVE</span>
+      <span style="color:var(--muted); margin-left:4px" id="freshness-detail">—</span>
+    </span>
+    <button class="refresh-btn" id="refresh-btn" title="지금 새로고침 / Refresh now" aria-label="refresh">🔄</button>
+    <div class="top-clock">
+      <span><b id="clock-ny">09:42:18</b> NY</span>
+      <span><b id="clock-kst">22:42:18</b> KST</span>
+    </div>
+    <div class="lang-toggle">
+      <button data-set-lang="ko" class="active">한국어</button>
+      <button data-set-lang="en">EN</button>
+    </div>
+  </header>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+
+    <div class="glance" id="glance"></div>
+
+    <div class="row r-2-1">
+      <div class="card">
+        <div class="card-head">
+          <h3><span class="ko">시장 레짐</span><span class="en">Market Regime</span></h3>
+          <span class="sub">−100 → +100 · 5 components</span>
+          <span class="spacer"></span>
+          <span class="pill warn"><span class="blob"></span>NEUTRAL</span>
+        </div>
+        <div class="card-body">
+          <div class="regime">
+            <div class="regime-gauge"><canvas id="gauge"></canvas></div>
+            <div class="regime-readout">
+              <div class="regime-score" id="regime-score">+7.5</div>
+              <div class="regime-label neut" id="regime-label">Neutral</div>
+              <div class="regime-quality"><span class="ko">추세 유지 중</span><span class="en">Trending Maintained</span></div>
+              <div class="regime-spark"><canvas id="regime-spark"></canvas></div>
+            </div>
+          </div>
+          <div class="regime-comp" id="regime-comp"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3><span class="ko">레짐 플레이북</span><span class="en">Regime Playbook</span></h3>
+          <span class="sub">k=20 historical lookalikes</span>
+        </div>
+        <div class="card-body">
+          <div class="playbook">
+            <div class="playbook-row">
+              <div class="horizon">5-Day Forward</div>
+              <div class="winrate" id="pb-h5-win">60%<small>win-rate</small></div>
+              <div class="dist">
+                <span class="chg down" id="pb-h5-p25">−0.8%</span>
+                <div class="dist-bar"><div class="band" id="pb-h5-band"></div><div class="marker" id="pb-h5-mark"></div></div>
+                <span class="chg up" id="pb-h5-p75">+1.6%</span>
+              </div>
+            </div>
+            <div class="playbook-row">
+              <div class="horizon">20-Day Forward</div>
+              <div class="winrate" id="pb-h20-win">80%<small>win-rate</small></div>
+              <div class="dist">
+                <span class="chg down" id="pb-h20-p25">−1.2%</span>
+                <div class="dist-bar"><div class="band" id="pb-h20-band"></div><div class="marker" id="pb-h20-mark"></div></div>
+                <span class="chg up" id="pb-h20-p75">+3.4%</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; padding: 10px 12px; background: var(--gold-soft); border-radius: var(--r-sm); font-size: 11px; color: var(--gold-2);">
+            <b><span class="ko">전술</span><span class="en">Tactic</span>:</b>
+            <span class="ko">중립 구간 — AI/반도체 코어 보유 유지, 신규 진입은 엔트리존 하단에서만. VIX &lt; 15 유지 시 점진 추가.</span>
+            <span class="en">Neutral — hold AI/Semi core, scale in at entry-zone bottom only. Add gradually if VIX stays &lt; 15.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="stats">
+        <div class="stat"><div class="lab"><span class="ko">상승/하락</span><span class="en">Adv / Dec</span></div><div class="val">2,148 / 1,652</div><div class="delta up">+496 net · 56% adv</div></div>
+        <div class="stat"><div class="lab"><span class="ko">52주 신고가</span><span class="en">52W Highs</span></div><div class="val">182</div><div class="delta up">+18 vs yest · NVDA, GOOGL, RKLB</div></div>
+        <div class="stat"><div class="lab"><span class="ko">기관 순매수</span><span class="en">Inst. Net Flow</span></div><div class="val">+$1.42B</div><div class="delta up">AI/Semi concentrated · 78% in top 10</div></div>
+        <div class="stat"><div class="lab"><span class="ko">VIX 텀구조</span><span class="en">VIX Term</span></div><div class="val">+12.4%</div><div class="delta up">Contango · risk premium normalized</div></div>
+      </div>
+    </div>
+
+    <!-- 🆕 v3.6.3 Phase 2: Market Narrative Summary Chips -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3>
+          <button class="collapse-btn" data-target="narrative-body" title="Toggle">▼</button>
+          <span class="ko">시장 Narrative</span><span class="en">Market Narrative</span>
+        </h3>
+        <span class="sub">5초 안에 시장 흐름 캐치 · auto-summary</span>
+      </div>
+      <div class="card-body" id="narrative-body">
+        <div class="narrative-chips">
+          <div class="narr-chip strong-week">
+            <div class="narr-lab">🟢🔥 PLTR Q1 BLOWOUT (5/4 AMC)</div>
+            <div class="narr-val">Rev $1.63B +85% YoY</div>
+            <div class="narr-detail">EPS $0.33 vs $0.28 est (+18% BEAT) · FY26 가이던스 $7.65-7.66B (+71%) · 순이익 4배 $870M · 단, 주가 -2% 밸류에이션 벽 (P/S 48x)</div>
+          </div>
+          <div class="narr-chip strong-week">
+            <div class="narr-lab">🔥 AMD Q1 AMC 오늘 (D-Day 5/5)</div>
+            <div class="narr-val">컨센 $9.9B / EPS $1.29</div>
+            <div class="narr-detail">DC $5.56B (+51.5% YoY) 핵심 · 비GAAP GM 55% (Q4 57% 대비 하락 주의) · OpenAI Helios MI450 파트너십 · HSBC Hold 다운그레이드 경계 · 결과 오후 4:30 ET</div>
+          </div>
+          <div class="narr-chip strong-week">
+            <div class="narr-lab">🟢 빅테크 Q1 2026 서프라이즈 마무리</div>
+            <div class="narr-val">META +33% / GOOGL Cloud +63%</div>
+            <div class="narr-detail">META Rev $56.3B · EPS $10.44 +61% · Capex $145B 2026 / GOOGL Cloud Backlog $462B · MSFT Cloud +29% (YTD -14.5% 상대약세) · QCOM Q2 $10.6B BEAT (+자동차 +38%)</div>
+          </div>
+          <div class="narr-chip overbought">
+            <div class="narr-lab">🔬 MS Research: AI Bottleneck Shift</div>
+            <div class="narr-val">HBM→EUV+CPU (2H 2026~)</div>
+            <div class="narr-detail">Morgan Stanley: Agentic AI CPU TAM $32.5-60B 증분 by 2030 · CPU 50-90% 워크로드 레이턴시 담당 · DRAM 15-45 EB 추가수요 · INTC/ARM/KLAC 수혜 부각</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 Daniel Portfolio Top vs Bottom -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3>
+          <button class="collapse-btn" data-target="topbottom-body" title="Toggle">▼</button>
+          <span class="ko">Daniel 포트 — Top vs Bottom (오늘)</span>
+          <span class="en">Daniel Portfolio — Today's Top vs Bottom</span>
+        </h3>
+        <span class="sub">6 holdings 좌우 비교 · KOSPI +5.12% spillover</span>
+        <span class="spacer"></span>
+        <span class="pill live"><span class="blob"></span>+16.4% 🔥</span>
+      </div>
+      <div class="card-body" id="topbottom-body">
+        <div class="topbottom">
+          <div class="tb-col tb-strong">
+            <div class="tb-head">🟢 5/4 Strong (한국 효과 spillover)</div>
+            <div class="tb-row"><div class="tb-rank">1</div><div class="tb-tic">GOOGL</div><div class="tb-name">Alphabet · 240주@$317.88 (44.0%) · $5T 임박</div><div class="tb-chg up">$383.46</div><div class="tb-tag">+20.6% (+$15.7K)</div></div>
+            <div class="tb-row"><div class="tb-rank">2</div><div class="tb-tic">MU</div><div class="tb-name">Micron · SK Hynix +12.5% 동조 (ATH)</div><div class="tb-chg up">~$560 (+3.3%)</div><div class="tb-tag">+25.6%</div></div>
+            <div class="tb-row"><div class="tb-rank">3</div><div class="tb-tic">MRVL</div><div class="tb-name">Marvell · KOSPI AI ASIC fuel</div><div class="tb-chg up">~$167 (+3%)</div><div class="tb-tag">+27.6%</div></div>
+          </div>
+          <div class="tb-col tb-weak">
+            <div class="tb-head">🟡 5/4 Watch (변동성 모니터)</div>
+            <div class="tb-row"><div class="tb-rank">1</div><div class="tb-tic">AVGO</div><div class="tb-name">Broadcom · Whale 경고 + Trim Limit 대기</div><div class="tb-chg up">$420.27</div><div class="tb-tag warn">$420+ Trim</div></div>
+            <div class="tb-row"><div class="tb-rank">2</div><div class="tb-tic">TSM ✅</div><div class="tb-name">TSMC · 5/4 AH 매도 @ $401.10 (+7.10%)</div><div class="tb-chg up">+$266.10</div><div class="tb-tag">REALIZED</div></div>
+            <div class="tb-row"><div class="tb-rank">3</div><div class="tb-tic">CLS</div><div class="tb-name">Celestica · 안정화 (Trim 1/3 후)</div><div class="tb-chg up">~$378 (+1%)</div><div class="tb-tag">75주 HOLD</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 Pichai Q1 2026 Earnings Highlight -->
+    <div class="card" style="margin-bottom: 16px; border: 1px solid var(--gold-2, #b48a3a); background: linear-gradient(135deg, rgba(180,138,58,0.05), rgba(180,138,58,0.02));">
+      <div class="card-head">
+        <h3><span class="ko">📢 GOOGL Q1 2026 — Pichai 어닝콜 (Daniel 43.9% 집중)</span><span class="en">📢 GOOGL Q1 2026 — Pichai Call</span></h3>
+        <span class="sub">2026-04-29 AMC · 4-way Guru Consensus Vindicated</span>
+        <span class="spacer"></span>
+        <span class="pill live"><span class="blob"></span>BEAT BIG</span>
+      </div>
+      <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
+          <div class="glance-cell"><div class="lab">Cloud Rev</div><div class="val">$20B</div><div class="chg up">+63% YoY (cons +50%)</div></div>
+          <div class="glance-cell"><div class="lab">Cloud Backlog</div><div class="val">$462B</div><div class="chg up">QoQ ~2x · 3yr visibility</div></div>
+          <div class="glance-cell"><div class="lab">Search Rev</div><div class="val">+19% YoY</div><div class="chg up">AI Mode 사용량 ATH</div></div>
+          <div class="glance-cell"><div class="lab">Net Income</div><div class="val">$62.6B</div><div class="chg up">+81% YoY · EPS $5.11</div></div>
+        </div>
+        <div style="padding: 10px 12px; background: var(--gold-soft, rgba(180,138,58,0.08)); border-radius: var(--r-sm, 6px); font-size: 11.5px; line-height: 1.6;">
+          <b><span class="ko">Daniel 시사점</span><span class="en">Daniel Insight</span>:</b>
+          <span class="ko">GOOGL 43.9% 집중 = 4-way 거장 컨센 (Ackman 39% / Buffett +$4B / Druckenmiller 신규 / NPS top 5) 완전 vindication. Cloud +63% blowout + Backlog $462B 두 배 = 장기 HOLD 정당화.</span>
+          <span class="en">GOOGL 43.9% concentration fully vindicated by 4-way guru consensus. Cloud +63% blowout + Backlog $462B doubled = long-term HOLD justified.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 Asset 평가 — Daniel Portfolio Snapshot -->
+    <div class="card" style="margin-bottom: 16px; border:1px solid #2E7D32; background: linear-gradient(135deg, rgba(46,125,50,0.04), rgba(46,125,50,0.01));">
+      <div class="card-head">
+        <h3>
+          <button class="collapse-btn" data-target="asset-body" title="Toggle">▼</button>
+          <span class="ko">💼 Asset 평가 — Daniel Portfolio (5/5 Mon 갱신)</span>
+          <span class="en">💼 Asset Valuation</span>
+        </h3>
+        <span class="sub">6 holdings · Total Cost $173,825 · 평가 $211,918 · 차익 +$38,093 (+21.91%) · 실현 +$289.78 · MU 15주 ($508.47→$640) · SOXL Tier1 돌파</span>
+        <span class="spacer"></span>
+        <span class="pill live"><span class="blob"></span>+$289.78 실현</span>
+      </div>
+      <div class="card-body" id="asset-body">
+        <table class="ta-table">
+          <thead><tr><th>Ticker</th><th class="r">수량</th><th class="r">매수평균</th><th class="r">매수금액</th><th class="r">현재가 (5/5)</th><th class="r">평가금액</th><th class="r">평가손익</th><th class="r">수익률</th><th class="r">비중</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr style="background: rgba(180,138,58,0.06);"><td class="tic">GOOGL ⭐</td><td class="r" style="font-family: var(--mono);">240</td><td class="r" style="font-family: var(--mono);">$317.8767</td><td class="r" style="font-family: var(--mono);">$76,290.41</td><td class="r" style="font-family: var(--mono);">$394.00</td><td class="r" style="font-family: var(--mono); font-weight:700;">$94,560.00</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$18,269.59</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+23.95%</td><td class="r" style="font-family: var(--mono); font-weight:700;">44.4%</td><td style="font-size:11px;">5/5 close $394 · Pichai $5T 임박 · 240주 hold</td></tr>
+            <tr><td class="tic">CLS</td><td class="r" style="font-family: var(--mono);">110</td><td class="r" style="font-family: var(--mono);">$366.59</td><td class="r" style="font-family: var(--mono);">$40,324.90</td><td class="r" style="font-family: var(--mono);">$425.00</td><td class="r" style="font-family: var(--mono); font-weight:700;">$46,750.00</td><td class="r" style="font-family: var(--mono); font-weight:700; color:#2E7D32;">+$6,425.10</td><td class="r" style="font-family: var(--mono); font-weight:700; color:#2E7D32;">+15.93%</td><td class="r" style="font-family: var(--mono); font-weight:700;">23.4%</td><td style="font-size:11px;">5/5 close $425 · 양도세용 26주 Trim 예정</td></tr>
+            <tr><td class="tic">AVGO</td><td class="r" style="font-family: var(--mono);">70</td><td class="r" style="font-family: var(--mono);">$377.3671</td><td class="r" style="font-family: var(--mono);">$26,415.70</td><td class="r" style="font-family: var(--mono);">$440.00</td><td class="r" style="font-family: var(--mono); font-weight:700;">$30,800.00</td><td class="r" style="font-family: var(--mono); font-weight:700; color:#2E7D32;">+$4,384.30</td><td class="r" style="font-family: var(--mono); font-weight:700; color:#2E7D32;">+16.60%</td><td class="r" style="font-family: var(--mono); font-weight:700;">15.4%</td><td style="font-size:11px;">5/5 close $440 · ⚠️ Trim 10주 예정 · Whale -23.81%</td></tr>
+            <tr style="background: rgba(180,138,58,0.06);"><td class="tic">MRVL ⭐</td><td class="r" style="font-family: var(--mono);">172</td><td class="r" style="font-family: var(--mono);">$130.8481</td><td class="r" style="font-family: var(--mono);">$22,505.87</td><td class="r" style="font-family: var(--mono);">$172.00</td><td class="r" style="font-family: var(--mono); font-weight:700;">$29,584.00</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$7,078.13</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+31.45%</td><td class="r" style="font-family: var(--mono); font-weight:700;">13.1%</td><td style="font-size:11px;">5/5 close $172 · AWS Trainium 3 + KOSPI 효과</td></tr>
+            <tr style="background: rgba(180,138,58,0.06);"><td class="tic">MU ⭐</td><td class="r" style="font-family: var(--mono);">15 (+6)</td><td class="r" style="font-family: var(--mono);">$508.4673</td><td class="r" style="font-family: var(--mono);">$7,627.01</td><td class="r" style="font-family: var(--mono);">$640.20 (+11.06%)</td><td class="r" style="font-family: var(--mono); font-weight:700;">$9,603.00</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$1,975.99</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+25.91%</td><td class="r" style="font-family: var(--mono); font-weight:700;">4.4%</td><td style="font-size:11px;">5/5 +11.06% $640 ($700B mcap) · AH +3% $660+ · HBM monopoly</td></tr>
+            <tr style="background: rgba(245,127,23,0.06);"><td class="tic">SOXL ⚠️</td><td class="r" style="font-family: var(--mono);">5</td><td class="r" style="font-family: var(--mono);">$132.21</td><td class="r" style="font-family: var(--mono);">$661.05</td><td class="r" style="font-family: var(--mono);">$144.16 (+13.02%)</td><td class="r" style="font-family: var(--mono); font-weight:700;">$720.80</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$59.75</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+9.04%</td><td class="r" style="font-family: var(--mono); font-weight:700;">0.4%</td><td style="font-size:11px;">⚠️ Tier 1 ($140) 돌파 — 2-3주 익절 검토 · Stop $125</td></tr>
+            <tr><td class="tic">TSM ✅</td><td class="r" style="font-family: var(--mono);">— (10주 SOLD)</td><td class="r" style="font-family: var(--mono);">$374.49</td><td class="r" style="font-family: var(--mono);">$3,744.90</td><td class="r" style="font-family: var(--mono);">$401.10 EXIT</td><td class="r" style="font-family: var(--mono); font-weight:700;">$4,011.00 (cash)</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$266.10</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+7.10%</td><td class="r" style="font-family: var(--mono); font-weight:700;">REALIZED</td><td style="font-size:11px;">✅ AH 매도 · 양도세 자금 확보 · Druck. profit-taking 동조</td></tr>
+            <tr style="background: rgba(46,125,50,0.06);"><td class="tic">SOXL ✅</td><td class="r" style="font-family: var(--mono);">— (5주 SOLD)</td><td class="r" style="font-family: var(--mono);">$125.144</td><td class="r" style="font-family: var(--mono);">$625.72</td><td class="r" style="font-family: var(--mono);">$129.88 EXIT</td><td class="r" style="font-family: var(--mono); font-weight:700;">$649.40 (cash)</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+$23.68</td><td class="r" style="font-family: var(--mono); font-weight:800; color:#2E7D32;">+3.78%</td><td class="r" style="font-family: var(--mono); font-weight:700;">REALIZED</td><td style="font-size:11px;">✅ 전량 매도 (3X decay 회피) · 양도세 자금원</td></tr>
+          </tbody>
+          <tfoot>
+            <tr style="background: var(--panel-2, #f8f6f0); font-weight: 800;">
+              <td colspan="3" style="padding:10px 10px; text-align:right;">📊 합계 (보유 6종 · 5/5 NY close)</td>
+              <td class="r" style="font-family: var(--mono);">$173,824.94</td><td class="r"></td>
+              <td class="r" style="font-family: var(--mono);">$211,917.80</td>
+              <td class="r" style="font-family: var(--mono); color:#2E7D32;">+$38,092.86</td>
+              <td class="r" style="font-family: var(--mono); color:#2E7D32;">+21.91%</td>
+              <td class="r" style="font-family: var(--mono);">100%</td>
+              <td style="font-size:10.5px; color:var(--muted);">Cash $385 (실현 $4,660 활용 후)</td>
+            </tr>
+            <tr style="background: rgba(46,125,50,0.06); font-weight: 700;">
+              <td colspan="6" style="padding:8px 10px; text-align:right;">✅ 실현차익 누적 (SOXL 1차 + TSM)</td>
+              <td class="r" style="font-family: var(--mono); color:#2E7D32;">+$289.78</td>
+              <td class="r" style="font-family: var(--mono); color:#2E7D32;">+5.65% avg</td>
+              <td colspan="2" style="font-size:10.5px; color:var(--muted);">SOXL +$23.68 + TSM +$266.10</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- v3.7.4: Portfolio Charts (Donut + Bar + Combo) -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3>📊 Portfolio Charts — Allocation · P&amp;L · Realized</h3>
+        <span class="sub">Chart.js v4 · Live render · v3.7.4</span>
+      </div>
+      <div class="card-body" style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">📊 6종목 비중 (Donut)</div>
+          <div style="height:280px; position:relative;"><canvas id="ds-port-donut"></canvas></div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">💵 종목별 평가차익 ($)</div>
+          <div style="height:280px; position:relative;"><canvas id="ds-port-pnl"></canvas></div>
+        </div>
+      </div>
+      <div class="card-body" style="border-top: 1px solid var(--line-2);">
+        <div style="font-size:11px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">✅ 실현차익 — 거래별 ($) + 누적 (선)</div>
+        <div style="height:240px; position:relative;"><canvas id="ds-realized-combo"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 🆕 v3.7.0: Entry Zone + Valuation Analyst (Tier 1/2/3) -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3>
+          <button class="collapse-btn" data-target="ez-body" title="Toggle">▼</button>
+          <span class="ko">🎯 Entry Zone + Valuation Analyst — Multi-Horizon</span>
+          <span class="en">🎯 Entry Zone + Valuation</span>
+        </h3>
+        <span class="sub">Tier 1 (보유 6) deep · Tier 2 (워치 7) mid · Tier 3 (15+WDC+SNDK) light</span>
+        <span class="spacer"></span>
+        <span class="pill cached"><span class="blob"></span>v3.7.0 ANALYST</span>
+      </div>
+      <div class="card-body" id="ez-body">
+
+        <div style="margin-bottom: 10px; padding: 8px 12px; background: rgba(180,138,58,0.08); border-radius: var(--r-sm); border-left: 3px solid #b48a3a;">
+          <b style="font-size: 12px; color: var(--ink, #1a1a1a);">🥇 TIER 1 — Daniel 보유 6종 (풀스택 Analyst)</b>
+        </div>
+        <div class="ez-grid">
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">GOOGL</span><span class="ez-name">Alphabet · 240주@$317.88 · 44.0%</span><span class="ez-fire">🔥🔥🔥</span><span class="ez-action add">STRONG HOLD + DCA</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val">29.1x</div></div><div class="ez-met"><div class="ez-met-lab">PT (avg)</div><div class="ez-met-val good">$386.82</div></div><div class="ez-met"><div class="ez-met-lab">Truist</div><div class="ez-met-val good">$415</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggressive</div><div class="ez-zone-px">$383+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv.</div><div class="ez-zone-px">$360-365</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep Value</div><div class="ez-zone-px">$320-330</div></div></div>
+            <div class="ez-thesis">Cloud Rev <b>+63% YoY $20B</b> · Backlog <b>$462B (2x QoQ)</b> · TPU 8세대 Ironwood · Anthropic 15% 지분 · Strong Buy (45 analysts) · 9.5/10</div>
+          </div>
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">CLS</span><span class="ez-name">Celestica · 110주@$366.59 · 23.3%</span><span class="ez-fire">🔥🔥🔥</span><span class="ez-action hold">HOLD (Trim 검토)</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val">55x / 32x</div></div><div class="ez-met"><div class="ez-met-lab">PT (CIBC)</div><div class="ez-met-val good">$480</div></div><div class="ez-met"><div class="ez-met-lab">RBC</div><div class="ez-met-val good">$440</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggressive</div><div class="ez-zone-px">$378+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv.</div><div class="ez-zone-px">$355-360</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep Value</div><div class="ez-zone-px">$300-310</div></div></div>
+            <div class="ez-thesis">Hyperscaler Rev <b>+66% YoY $4.8B</b> · 2026 Outlook <b>$17B raised</b> · CPO 신규 win · AMD Helios 파트너 · 9.0/10</div>
+          </div>
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">AVGO</span><span class="ez-name">Broadcom · 70주@$377.37 · 15.2%</span><span class="ez-fire">🔥🔥🔥</span><span class="ez-action trim">TRIM 10주 ⚠️</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val">27-31x</div></div><div class="ez-met"><div class="ez-met-lab">PT</div><div class="ez-met-val good">$458</div></div><div class="ez-met"><div class="ez-met-lab">Whale</div><div class="ez-met-val bad">-23.81%</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggr ⚠️</div><div class="ez-zone-px">$420+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv.</div><div class="ez-zone-px">$390-395</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep</div><div class="ez-zone-px">$355-360</div></div></div>
+            <div class="ez-thesis"><b>ASIC #1 (55-60% share)</b> · Google TPU · MS top pick PT $470 · <b>RSI 80 + Whale 매도</b> · 양도세 1순위 · 9.0/10</div>
+          </div>
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">MRVL</span><span class="ez-name">Marvell · 172주@$130.85 · 13.0%</span><span class="ez-fire">🔥🔥</span><span class="ez-action hold">HOLD</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val">36.4x</div></div><div class="ez-met"><div class="ez-met-lab">PT</div><div class="ez-met-val good">$150-170</div></div><div class="ez-met"><div class="ez-met-lab">P&L</div><div class="ez-met-val good">+27.6%</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggr</div><div class="ez-zone-px">$167+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv.</div><div class="ez-zone-px">$155-160</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep</div><div class="ez-zone-px">$135-140</div></div></div>
+            <div class="ez-thesis"><b>ASIC #2 (15% share)</b> · AWS Trainium 3 · NVDA $2B + NVLink Fusion · Google ASIC 2종 · 8.0/10</div>
+          </div>
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">MU</span><span class="ez-name">Micron · 9주@$445.79 · 2.5%</span><span class="ez-fire">🔥🔥🔥</span><span class="ez-action hold">HOLD ($480 Stop)</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val good">8x ⚡</div></div><div class="ez-met"><div class="ez-met-lab">PT (Avg)</div><div class="ez-met-val good">$534</div></div><div class="ez-met"><div class="ez-met-lab">Bull</div><div class="ez-met-val good">$700</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggr ⚠️</div><div class="ez-zone-px">$560+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv.</div><div class="ez-zone-px">$510-520</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep</div><div class="ez-zone-px">$440-460</div></div></div>
+            <div class="ez-thesis"><b>HBM Sold Out 2026+2027</b> · Q2 FY26 Rev <b>+196% / EPS +682%</b> · OP 67.6% · NVDA Blackwell+Rubin · 9.5/10</div>
+          </div>
+          <div class="ez-tier1-row holding">
+            <div class="ez-head"><span class="ez-tic">TSM ✅</span><span class="ez-name">TSMC · 5/4 AH SOLD @ $401.10 (+$266.10)</span><span class="ez-fire">🔥🔥🔥</span><span class="ez-action hold" style="background: rgba(46,125,50,0.18); color:#2E7D32;">REALIZED ✅</span></div>
+            <div class="ez-metrics"><div class="ez-met"><div class="ez-met-lab">Fwd P/E</div><div class="ez-met-val">25-26x</div></div><div class="ez-met"><div class="ez-met-lab">PT (DA)</div><div class="ez-met-val good">$450</div></div><div class="ez-met"><div class="ez-met-lab">Mean</div><div class="ez-met-val good">$423.50</div></div></div>
+            <div class="ez-zones"><div class="ez-zone aggr"><div class="ez-zone-lab">Aggr</div><div class="ez-zone-px">$406+</div></div><div class="ez-zone cons"><div class="ez-zone-lab">Conserv ⭐</div><div class="ez-zone-px">$385-390</div></div><div class="ez-zone deep"><div class="ez-zone-lab">Deep</div><div class="ez-zone-px">$345-355</div></div></div>
+            <div class="ez-thesis"><b>2nm yield 60-70% monopoly</b> · Q1 Rev <b>+35% Profit +58%</b> · Druckenmiller 4/5분기 매수 · 9.5/10</div>
+          </div>
+        </div>
+
+        <div style="margin: 16px 0 10px 0; padding: 8px 12px; background: rgba(46,125,50,0.06); border-radius: var(--r-sm); border-left: 3px solid #2E7D32;">
+          <b style="font-size: 12px;">🥈 TIER 2 — 워치리스트 핵심 7종 (Mid Analysis)</b>
+        </div>
+        <table class="ta-table">
+          <thead><tr><th>Ticker</th><th class="r">Fwd P/E</th><th class="r">PT</th><th class="c">Hot</th><th class="c">Aggressive</th><th class="c">Conserv.</th><th class="c">Deep</th><th class="c">Action</th><th>Thesis</th></tr></thead>
+          <tbody>
+            <tr><td class="tic">NVDA</td><td class="r" style="font-family: var(--mono); color: #2E7D32; font-weight: 700;">23.94x</td><td class="r" style="font-family: var(--mono);">$215-275</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$215+</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$200</td><td class="r" style="font-family: var(--mono);">$175</td><td><span class="action watch">WATCH</span></td><td style="font-size: 10.5px;">GPU monopoly · Blackwell+Rubin · RSI Sell vs MA Strong Buy 혼조</td></tr>
+            <tr><td class="tic">AMD</td><td class="r" style="font-family: var(--mono); color: #c25b00;">30-46x</td><td class="r" style="font-family: var(--mono);">$289-375</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$345+</td><td class="r" style="font-family: var(--mono);">$315</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$275</td><td><span class="action scale">SCALE OUT 50%</span></td><td style="font-size: 10.5px;">⭐ 5/5 Q1 AMC D-Day · 컨센 $9.84B/EPS$1.29 · DC $5.56B · OpenAI Helios MI450</td></tr>
+            <tr><td class="tic">INTC</td><td class="r" style="font-family: var(--mono); color: var(--muted);">N/A</td><td class="r" style="font-family: var(--mono);">DA Up</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$85+</td><td class="r" style="font-family: var(--mono);">$75</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$60</td><td><span class="action scale">SCALE OUT 30%</span></td><td style="font-size: 10.5px;">Q1 BLOWOUT EPS $0.29 (29x) · Foundry 14A · Anthropic</td></tr>
+            <tr><td class="tic">ARM</td><td class="r" style="font-family: var(--mono); color: #c02020;">110x ⚠️</td><td class="r" style="font-family: var(--mono);">$250</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$235+</td><td class="r" style="font-family: var(--mono);">$215</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$180</td><td><span class="action scale">SCALE OUT 50%</span></td><td style="font-size: 10.5px;">AGI CPU FY31 $15B TAM · ARM-IBM · Evercore/Citi raised</td></tr>
+            <tr style="background: rgba(46,125,50,0.04);"><td class="tic">QCOM ⭐</td><td class="r" style="font-family: var(--mono); color: #2E7D32; font-weight: 700;">27x ⚡</td><td class="r" style="font-family: var(--mono);">+20%</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$155+</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$145</td><td class="r" style="font-family: var(--mono);">$125</td><td><span class="action add">HOLD/ADD</span></td><td style="font-size: 10.5px;"><b>peer P/E 70x 대비 cheap!</b> · AI200 CPU 2026 · Saudi Humain 200MW · NVLink Fusion</td></tr>
+            <tr><td class="tic">MSFT</td><td class="r" style="font-family: var(--mono);">36x</td><td class="r" style="font-family: var(--mono);">Strong Buy</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$485+</td><td class="r" style="font-family: var(--mono);">$465</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$420</td><td><span class="action add">HOLD/ADD</span></td><td style="font-size: 10.5px;">Azure +40% · OpenAI · Q3 BEAT · Death cross 약화 후 회복</td></tr>
+            <tr><td class="tic">META</td><td class="r" style="font-family: var(--mono);">28x</td><td class="r" style="font-family: var(--mono);">Strong Buy</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$680+</td><td class="r" style="font-family: var(--mono);">$645</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$580</td><td><span class="action hold">HOLD ⚠️</span></td><td style="font-size: 10.5px;">ARM AGI lead · Q1 BEAT but <b>CapEx $145B 쇼크</b></td></tr>
+          </tbody>
+        </table>
+
+        <div style="margin: 16px 0 10px 0; padding: 8px 12px; background: var(--panel-2, #f8f6f0); border-radius: var(--r-sm); border-left: 3px solid #888;">
+          <b style="font-size: 12px;">🥉 TIER 3 — 워치리스트 17종 (Entry Zone Only) · 🆕 WDC + SNDK 추가 (AI Storage 슈퍼사이클)</b>
+        </div>
+        <table class="ta-table">
+          <thead><tr><th>Ticker</th><th>Sector</th><th class="c">Hot</th><th class="c">Aggressive</th><th class="c">Conserv.</th><th class="c">Deep</th><th class="c">Action</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td class="tic">TSLA</td><td>AI</td><td class="sig">🔥</td><td class="r" style="font-family: var(--mono);">$378+</td><td class="r" style="font-family: var(--mono);">$345</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$300</td><td><span class="action watch">WATCH</span></td><td style="font-size: 10.5px;">Capex $25B 쇼크 안정화</td></tr>
+            <tr><td class="tic">PLTR</td><td>AI</td><td class="sig">🟡</td><td class="r" style="font-family: var(--mono); color: #c02020;">WATCH</td><td class="r" style="font-family: var(--mono);">$133 RSI&lt;38</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$120</td><td><span class="action watch">WATCH</span></td><td style="font-size: 10.5px;">Q1 BEAT +85% · 주가 -2% (P/S 48x) · Burry PUT</td></tr>
+            <tr><td class="tic">ORCL</td><td>Semi</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$295+</td><td class="r" style="font-family: var(--mono);">$275</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$245</td><td><span class="action hold">HOLD</span></td><td style="font-size: 10.5px;">안정 상승</td></tr>
+            <tr><td class="tic">AMAT</td><td>Equip</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$235+</td><td class="r" style="font-family: var(--mono);">$215</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$185</td><td><span class="action scale">TRIM 30%</span></td><td style="font-size: 10.5px;">YTD +62.5% ATH</td></tr>
+            <tr><td class="tic">LRCX</td><td>Equip</td><td class="sig">🔥</td><td class="r" style="font-family: var(--mono);">$98+</td><td class="r" style="font-family: var(--mono);">$90</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$78</td><td><span class="action scale">TRIM 30%</span></td><td style="font-size: 10.5px;">KLAC 88% 상관</td></tr>
+            <tr><td class="tic">KLAC</td><td>Equip</td><td class="sig">🔥🔥</td><td class="r" style="font-family: var(--mono);">$905+</td><td class="r" style="font-family: var(--mono);">$830</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$720</td><td><span class="action scale">TRIM 50%</span></td><td style="font-size: 10.5px;">1M +40% 모멘텀 최강</td></tr>
+            <tr><td class="tic">CRWD</td><td>Growth</td><td class="sig">🟡</td><td class="r" style="font-family: var(--mono);">$418+</td><td class="r" style="font-family: var(--mono);">$390</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$350</td><td><span class="action watch">WATCH</span></td><td style="font-size: 10.5px;">모멘텀 부재</td></tr>
+            <tr><td class="tic">SNOW</td><td>Growth</td><td class="sig">🔴</td><td class="r" style="font-family: var(--mono); color: #c02020;">AVOID</td><td class="r" style="font-family: var(--mono);">$200</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$175</td><td><span class="action avoid">AVOID</span></td><td style="font-size: 10.5px;">음운 진입 · Death</td></tr>
+            <tr><td class="tic">RKLB</td><td>Growth</td><td class="sig">🔥</td><td class="r" style="font-family: var(--mono);">$30+</td><td class="r" style="font-family: var(--mono);">$27</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$22</td><td><span class="action add">HOLD/ADD</span></td><td style="font-size: 10.5px;">우주 모멘텀 5/7 AMC earnings</td></tr>
+            <tr style="background: rgba(46,125,50,0.04);"><td class="tic">WDC ⭐</td><td>Storage</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$465+</td><td class="r" style="font-family: var(--mono);">$420</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$365</td><td><span class="action add">신규 진입권</span></td><td style="font-size: 10.5px;">HDD sold out 2026~2029 · Citi PT $500 · Hyperscaler 89%</td></tr>
+            <tr style="background: rgba(46,125,50,0.04);"><td class="tic">SNDK ⭐</td><td>Storage</td><td class="sig">🔥🔥🔥</td><td class="r" style="font-family: var(--mono);">$1,468+</td><td class="r" style="font-family: var(--mono);">$1,300</td><td class="r" style="font-family: var(--mono); color: #2E7D32;">$1,100</td><td><span class="action add">신규 진입권</span></td><td style="font-size: 10.5px;">NAND/SSD · Bernstein PT $1,700 · Fwd P/E 19.4x</td></tr>
+            <tr style="background: rgba(0,0,0,0.02);"><td class="tic">SPY</td><td>Bench</td><td class="sig">—</td><td class="r" style="font-family: var(--mono);">$615+</td><td class="r" style="font-family: var(--mono);">$590</td><td class="r" style="font-family: var(--mono);">$550</td><td><span class="action hold">—</span></td><td style="font-size: 10.5px;">ATH 근접</td></tr>
+            <tr style="background: rgba(0,0,0,0.02);"><td class="tic">QQQ</td><td>Bench</td><td class="sig">—</td><td class="r" style="font-family: var(--mono);">$674+</td><td class="r" style="font-family: var(--mono);">$645</td><td class="r" style="font-family: var(--mono);">$590</td><td><span class="action hold">—</span></td><td style="font-size: 10.5px;">NDX ATH</td></tr>
+            <tr style="background: rgba(0,0,0,0.02);"><td class="tic">^SOX</td><td>Bench</td><td class="sig">🔥</td><td class="r" style="font-family: var(--mono);">10,595+</td><td class="r" style="font-family: var(--mono);">10,200</td><td class="r" style="font-family: var(--mono);">9,200</td><td><span class="action watch">EXTENDED</span></td><td style="font-size: 10.5px;">22/23 win streak</td></tr>
+            <tr style="background: rgba(0,0,0,0.02);"><td class="tic">SOXX</td><td>Bench</td><td class="sig">🔥</td><td class="r" style="font-family: var(--mono);">$465+</td><td class="r" style="font-family: var(--mono);">$440</td><td class="r" style="font-family: var(--mono);">$395</td><td><span class="action watch">EXTENDED</span></td><td style="font-size: 10.5px;">ATH</td></tr>
+            <tr style="background: rgba(46,125,50,0.04);"><td class="tic">SOXL ✅</td><td>3X</td><td class="sig">⚠️</td><td class="r" style="font-family: var(--mono); color: var(--muted);">EXIT</td><td class="r" style="font-family: var(--mono);">$115 재진입</td><td class="r" style="font-family: var(--mono);">$95</td><td><span class="action hold" style="background: rgba(46,125,50,0.18); color:#2E7D32;">SOLD ✅</span></td><td style="font-size: 10.5px;">+$23.68 실현 · 3X decay 회피</td></tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 14px; padding: 12px 14px; background: var(--gold-soft, rgba(180,138,58,0.08)); border-radius: var(--r-sm); font-size: 11.5px; line-height: 1.6;">
+          <b>📊 Daniel Action Priority (5/5 Mon 마감 기준)</b>:
+          <ol style="margin: 6px 0 4px 20px; padding: 0; font-size: 11px;">
+            <li><b>AVGO TRIM 10주</b> ($4,200 → 양도세) — Whale -23.81% + RSI 80</li>
+            <li><b>CLS HOLD or Trim 30주 if 부족</b> ($11,340 추가 옵션)</li>
+            <li><b>TSM HOLD + Scale In on $385</b> — Druckenmiller 컨센서스</li>
+            <li><b>GOOGL STRONG HOLD + DCA on $360</b> — Mag 7 leadership shift</li>
+            <li><b>MRVL HOLD</b> — KOSPI 효과 + NVDA $2B</li>
+            <li><b>MU HOLD with $480 Stop</b> — HBM monopoly + Fwd P/E 8x</li>
+          </ol>
+          <b>최우선</b>: AVGO 10주 + CLS 30주 Trim → 양도세 22M KRW (~$15.4K) 충당
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 v3.6.5: Technical Analysis Matrix (RSI / Cross / Ichimoku) -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3>
+          <button class="collapse-btn" data-target="ta-body" title="Toggle">▼</button>
+          <span class="ko">📊 기술 분석 — RSI · Golden/Death Cross · Ichimoku Cloud</span>
+          <span class="en">📊 Technical Analysis Matrix</span>
+        </h3>
+        <span class="sub">SOXL 익절 + 28종목 · TradingView/Investing/Barchart cross-check</span>
+        <span class="spacer"></span>
+        <span class="pill stale"><span class="blob"></span>SOXL TRIM</span>
+      </div>
+      <div class="card-body" id="ta-body">
+        <div class="ta-recommend">
+          <div class="ta-rec-box tertiary">
+            <div class="ta-rec-head">✅ EXECUTED — SOXL 전량 익절</div>
+            <div class="ta-rec-tic">SOXL · 5주 SOLD @ $129.88</div>
+            <div class="ta-rec-action">Avg $125.144 → Exit $129.88</div>
+            <div class="ta-rec-detail">5주 × $4.736 = <b>+$23.68 실현차익</b> (+3.78%) · Cash $649.40 회수.</div>
+            <div class="ta-rec-pnl up">+$23.68 (+3.78%) REALIZED</div>
+          </div>
+          <div class="ta-rec-box secondary">
+            <div class="ta-rec-head">🟡 Priority #2 — Watch SOX</div>
+            <div class="ta-rec-tic">^SOX · 10,595</div>
+            <div class="ta-rec-action">Strong Buy + Extended</div>
+            <div class="ta-rec-detail">200D MA 위 +18% · Golden Cross 활성 · Daily/Weekly/Monthly all Strong Buy.</div>
+          </div>
+          <div class="ta-rec-box tertiary">
+            <div class="ta-rec-head">🟢 Priority #3 — AVGO Trim</div>
+            <div class="ta-rec-tic">AVGO · Trim 10주</div>
+            <div class="ta-rec-action">RSI 80.47 + Whale -23.81%</div>
+            <div class="ta-rec-detail">Golden Cross 활성하나 RSI Extreme + 13F 기관 매도. 양도세 22M KRW + 24% 버퍼.</div>
+            <div class="ta-rec-pnl up">+11% 양도차익</div>
+          </div>
+        </div>
+
+        <table class="ta-table">
+          <thead><tr><th>Ticker</th><th>Sector</th><th class="r">Price</th><th class="r">RSI(14)</th><th class="c">50/200 Cross</th><th class="c">Ichimoku</th><th class="c">Action</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr style="background: rgba(180,138,58,0.04);"><td class="tic">GOOGL ⭐</td><td>AI</td><td class="r" style="font-family: var(--mono);">$383.46</td><td class="rsi over">76.57</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold">HOLD</span></td><td>Pichai $5T 임박 · 43.9% 보유</td></tr>
+            <tr style="background: rgba(180,138,58,0.04);"><td class="tic">CLS ⭐</td><td>AI</td><td class="r" style="font-family: var(--mono);">~$378</td><td class="rsi over">75.78</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold">HOLD</span></td><td>Trim 1/3 완료</td></tr>
+            <tr style="background: rgba(198,40,40,0.05);"><td class="tic">AVGO ⭐</td><td>Semi</td><td class="r" style="font-family: var(--mono);">$420.27</td><td class="rsi extreme">80.47</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action trim">TRIM 10주</span></td><td>⚠️ Whale Q1 -23.81%</td></tr>
+            <tr style="background: rgba(180,138,58,0.04);"><td class="tic">MRVL ⭐</td><td>AI</td><td class="r" style="font-family: var(--mono);">~$167</td><td class="rsi over">~75</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold">HOLD</span></td><td>+27% 양도차익 부담</td></tr>
+            <tr style="background: rgba(180,138,58,0.04);"><td class="tic">MU ⭐</td><td>Semi</td><td class="r" style="font-family: var(--mono);">~$640</td><td class="rsi extreme">~85</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운(ext.)</td><td><span class="action watch">$480 STOP</span></td><td>SK Hynix 동조 · ATH</td></tr>
+            <tr style="background: rgba(180,138,58,0.04);"><td class="tic">TSM ⭐</td><td>Semi</td><td class="r" style="font-family: var(--mono);">~$406</td><td class="rsi over">71.3</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold">HOLD+ADD</span></td><td>Druck. 매수 · 2nm</td></tr>
+            <tr><td class="tic">NVDA</td><td>AI</td><td class="r" style="font-family: var(--mono);">~$215</td><td class="rsi over">71.37</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action watch">WATCH</span></td><td>RSI Sell + MA Strong Buy 혼조</td></tr>
+            <tr><td class="tic">AMD</td><td>Semi</td><td class="r" style="font-family: var(--mono);">~$355</td><td class="rsi extreme">85</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action scale">SCALE OUT 50%</span></td><td>RSI 80~89 Extreme</td></tr>
+            <tr><td class="tic">INTC</td><td>Semi</td><td class="r" style="font-family: var(--mono);">~$85</td><td class="rsi extreme">82</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action scale">SCALE OUT 30%</span></td><td>Q1 BLOWOUT 후 +23.6%</td></tr>
+            <tr><td class="tic">ARM</td><td>Equip</td><td class="r" style="font-family: var(--mono);">~$240</td><td class="rsi extreme">85</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action scale">SCALE OUT 50%</span></td><td>AGI CPU FY31 $15B</td></tr>
+            <tr><td class="tic">QCOM</td><td>Semi</td><td class="r" style="font-family: var(--mono);">~$155</td><td class="rsi over">70</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold">HOLD</span></td><td>AI200 + Saudi Humain</td></tr>
+            <tr style="background: rgba(46,125,50,0.06);"><td class="tic">SOXL ✅</td><td>Bench(3X)</td><td class="r" style="font-family: var(--mono);"><b>$129.88</b></td><td class="rsi over">70.71</td><td class="sig">🟢 Golden</td><td class="sig">🟢 양운</td><td><span class="action hold" style="background: rgba(46,125,50,0.18); color:#2E7D32;">SOLD ✅</span></td><td>5주 EXIT @ $129.88 · +$23.68</td></tr>
+          </tbody>
+        </table>
+
+        <div class="sox-trigger">
+          <div class="sox-trig-cell bull"><div class="lvl">▲ SOX 10,800</div><div class="act">SOXL 추가 30% 익절 · climax 가능성</div></div>
+          <div class="sox-trig-cell warn"><div class="lvl">▼ SOX 10,400</div><div class="act">SOXL 전량 정리 · 50D MA 근접</div></div>
+          <div class="sox-trig-cell danger"><div class="lvl">▼ SOX 10,200</div><div class="act">SOXL 손절 · SOXS 전환 검토</div></div>
+          <div class="sox-trig-cell danger"><div class="lvl">▼ SOX 9,800</div><div class="act">방어 모드 · 반도체 비중 -30%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sector Heatmap -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></h3>
+        <span class="sub">7 buckets · PROJECT_GUIDELINES §18.4</span>
+      </div>
+      <div class="card-body">
+        <div class="sectors" id="sectors"></div>
+      </div>
+    </div>
+
+    <!-- Watchlist (now 26 with WDC + SNDK) -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3><span class="ko">워치리스트 — 26 종목 (WDC/SNDK 포함)</span><span class="en">Watchlist — 26 Tickers (incl. WDC/SNDK)</span></h3>
+        <span class="sub">CLAUDE.md authoritative · 2-source verified</span>
+        <span class="spacer"></span>
+        <span class="pill live"><span class="blob"></span>SYNCED</span>
+      </div>
+      <div class="card-body flush">
+        <table class="watchlist">
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Sector</th>
+              <th style="text-align:right">Price</th>
+              <th style="text-align:right">Chg %</th>
+              <th style="text-align:right">Volume</th>
+              <th style="text-align:right">Mkt Cap</th>
+              <th style="text-align:right">Fwd P/E</th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Whale + Trump -->
+    <div class="row r-2-1">
+      <div class="card">
+        <div class="card-head">
+          <h3><span class="ko">Whale Insight — 13F 정합도</span><span class="en">Whale Insight — 13F Concord</span></h3>
+          <span class="sub">Q3 2025 · NPS / Buffett / Ackman / Druck. / Burry</span>
+        </div>
+        <div class="card-body">
+          <div class="whales" id="whales"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>🎺 Trump Truth Triggers</h3>
+          <span class="sub">Algo trigger #1</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="triggers" id="triggers"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 24px;"></div>
+  </main>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function() {
+  // ===== Lang toggle =====
+  document.querySelectorAll('[data-set-lang]').forEach(b => {
+    b.addEventListener('click', () => {
+      const lang = b.dataset.setLang;
+      document.documentElement.dataset.lang = lang;
+      document.querySelectorAll('[data-set-lang]').forEach(x => x.classList.toggle('active', x === b));
+    });
+  });
+
+  // ===== Session Phase Indicator =====
+  function updateSessionPhase() {
+    const now = new Date();
+    const etStr = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric', minute: 'numeric', weekday: 'short',
+      hour12: false, timeZone: 'America/New_York'
+    }).formatToParts(now);
+    const parts = Object.fromEntries(etStr.map(p => [p.type, p.value]));
+    const etHour = parseInt(parts.hour, 10) % 24;
+    const etMin = parseInt(parts.minute, 10);
+    const totalMin = etHour * 60 + etMin;
+    const wd = parts.weekday;
+    const isWeekend = (wd === 'Sat' || wd === 'Sun');
+
+    let phaseClass = 'idle', label = 'Closed', emoji = '⚫';
+    if (isWeekend) {
+      phaseClass = 'idle'; label = 'Closed (Weekend)'; emoji = '⚫';
+    } else if (totalMin >= 4 * 60 && totalMin < 9 * 60 + 30) {
+      phaseClass = 'cached'; label = 'Premarket'; emoji = '🟠';
+    } else if (totalMin >= 9 * 60 + 30 && totalMin < 16 * 60) {
+      phaseClass = 'live'; label = 'Market Open'; emoji = '🟢';
+    } else if (totalMin >= 16 * 60 && totalMin < 20 * 60) {
+      phaseClass = 'cached'; label = 'After Hours'; emoji = '🟡';
+    } else {
+      phaseClass = 'idle'; label = 'Closed'; emoji = '⚫';
+    }
+
+    const pill = document.getElementById('session-phase');
+    const txt = document.getElementById('session-phase-text');
+    if (pill && txt) {
+      pill.className = 'pill ' + phaseClass;
+      txt.textContent = emoji + ' ' + label;
+    }
+  }
+  setInterval(updateSessionPhase, 30 * 1000);
+  updateSessionPhase();
+
+  // ===== Data Freshness =====
+  function updateFreshness() {
+    const meta = (window.MarketData && window.MarketData.meta) || {};
+    const lastStr = meta.lastUpdate;
+    if (!lastStr) return;
+    const updated = new Date(lastStr);
+    const now = new Date();
+    const ageMs = now - updated;
+    const ageMin = ageMs / 60000;
+    const ageHour = ageMin / 60;
+    const ageDay = ageHour / 24;
+
+    const pill = document.getElementById('data-freshness');
+    const txt = document.getElementById('freshness-text');
+    const detail = document.getElementById('freshness-detail');
+    if (!pill || !txt || !detail) return;
+
+    let cls, label, det;
+    if (ageMin < 5) { cls = 'live'; label = 'LIVE'; det = Math.floor(ageMin) + 'm'; }
+    else if (ageHour < 6) { cls = 'live'; label = 'FRESH'; det = Math.floor(ageHour) + 'h ' + Math.floor(ageMin % 60) + 'm'; }
+    else if (ageHour < 24) { cls = 'cached'; label = 'CACHED'; det = Math.floor(ageHour) + 'h'; }
+    else if (ageDay < 7) { cls = 'stale'; label = 'STALE'; det = ageDay.toFixed(1) + 'd'; }
+    else { cls = 'dead'; label = 'STALE'; det = Math.floor(ageDay) + 'd+'; }
+    pill.className = 'pill ' + cls;
+    txt.textContent = label;
+    detail.textContent = det;
+  }
+  setInterval(updateFreshness, 30 * 1000);
+  setTimeout(updateFreshness, 100);
+
+  // ===== Manual Refresh Button =====
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.style.opacity = '0.5';
+      refreshBtn.disabled = true;
+      setTimeout(() => location.reload(), 300);
+    });
+  }
+
+  // ===== Card Collapse Toggle =====
+  document.querySelectorAll('.collapse-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetId = btn.dataset.target;
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const isHidden = target.classList.toggle('hidden');
+      btn.classList.toggle('collapsed', isHidden);
+      btn.textContent = isHidden ? '▶' : '▼';
+      try {
+        const key = 'v36-collapse-' + targetId;
+        localStorage.setItem(key, isHidden ? '1' : '0');
+      } catch (e) { /* ignore */ }
+    });
+    try {
+      const key = 'v36-collapse-' + btn.dataset.target;
+      const saved = localStorage.getItem(key);
+      if (saved === '1') {
+        const target = document.getElementById(btn.dataset.target);
+        if (target) {
+          target.classList.add('hidden');
+          btn.classList.add('collapsed');
+          btn.textContent = '▶';
+        }
+      }
+    } catch (e) { /* ignore */ }
+  });
+
+  // ===== Sidebar nav =====
+  document.querySelectorAll('.side-link[data-scroll]').forEach(link => {
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', () => {
+      const targetId = link.dataset.scroll;
+      const target = document.getElementById(targetId);
+      if (target) {
+        const card = target.closest('.card') || target;
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  });
+  document.querySelectorAll('.side-link[data-href]').forEach(link => {
+    link.style.cursor = 'pointer';
+    link.addEventListener('click', () => { window.open(link.dataset.href, '_blank'); });
+  });
+
+  // ===== Clock =====
+  function tickClock() {
+    const now = new Date();
+    const ny = new Intl.DateTimeFormat('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'America/New_York' }).format(now);
+    const kst = new Intl.DateTimeFormat('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'Asia/Seoul' }).format(now);
+    const ne = document.getElementById('clock-ny'); if (ne) ne.textContent = ny;
+    const ke = document.getElementById('clock-kst'); if (ke) ke.textContent = kst;
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  // ===== Render Glance =====
+  function renderGlance() {
+    if (!window.MarketData || !MarketData.glance) return;
+    const g = MarketData.glance;
+    const items = [
+      { lab: 'S&P 500', k: 'spx', fmt: 'price' },
+      { lab: 'NASDAQ', k: 'ndx', fmt: 'price' },
+      { lab: 'DOW', k: 'dji', fmt: 'price' },
+      { lab: 'RUSSELL 2K', k: 'rut', fmt: 'price' },
+      { lab: 'VIX', k: 'vix', fmt: 'price', invert: true },
+      { lab: 'DXY', k: 'dxy', fmt: 'price' },
+      { lab: 'US 10Y', k: 'tnx', fmt: 'yield' },
+      { lab: 'WTI', k: 'oil', fmt: 'price' },
+      { lab: 'GOLD', k: 'gold', fmt: 'price' },
+      { lab: 'BTC', k: 'btc', fmt: 'big' },
+    ];
+    const html = items.map(it => {
+      const x = g[it.k]; if (!x) return '';
+      const cls = x.chg > 0 ? 'up' : x.chg < 0 ? 'down' : 'flat';
+      const goodCls = it.invert ? (x.chg > 0 ? 'down' : 'up') : cls;
+      const sign = x.chg > 0 ? '+' : '';
+      const priceFmt = it.fmt === 'yield' ? x.price.toFixed(3) + '%'
+                     : it.fmt === 'big' ? '$' + Math.round(x.price).toLocaleString()
+                     : x.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '<div class="glance-cell"><div class="lab">' + it.lab + '</div><div class="val">' + priceFmt + '</div><div class="chg ' + goodCls + '">' + sign + x.chg.toFixed(2) + '%</div></div>';
+    }).join('');
+    const el = document.getElementById('glance'); if (el) el.innerHTML = html;
+  }
+
+  // ===== Regime gauge =====
+  let gaugeChart, sparkChart;
+  function renderGauge() {
+    if (!window.MarketData || !MarketData.regime) return;
+    const r = MarketData.regime;
+    const score = r.score;
+    const sc = document.getElementById('regime-score'); if (sc) sc.textContent = (score >= 0 ? '+' : '') + score.toFixed(1);
+    const label = document.getElementById('regime-label');
+    if (label) {
+      label.textContent = r.label;
+      label.className = 'regime-label ' + (r.label === 'Risk On' ? 'on' : r.label === 'Risk Off' ? 'off' : 'neut');
+    }
+
+    const gctx = document.getElementById('gauge');
+    if (gctx && !gaugeChart) {
+      gaugeChart = new Chart(gctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          datasets: [
+            { data: [33, 17, 17, 33], backgroundColor: ['#FCE4E4', '#EEF1F4', '#EEF1F4', '#D8F1E8'], borderWidth: 0, circumference: 180, rotation: 270, cutout: '72%' },
+            { data: [(score + 100) / 2, 100 - (score + 100) / 2], backgroundColor: ['transparent', 'transparent'], borderWidth: 0, circumference: 180, rotation: 270, cutout: '60%' }
+          ]
+        },
+        options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, responsive: true, maintainAspectRatio: false, animation: { duration: 600 } }
+      });
+    } else if (gaugeChart) {
+      gaugeChart.data.datasets[1].data = [(score + 100) / 2, 100 - (score + 100) / 2];
+      gaugeChart.update();
+    }
+
+    const sctx = document.getElementById('regime-spark');
+    if (sctx && !sparkChart) {
+      sparkChart = new Chart(sctx.getContext('2d'), {
+        type: 'line',
+        data: { labels: r.history.map((_, i) => i), datasets: [{ data: r.history, borderColor: '#00B7C7', backgroundColor: 'rgba(0,183,199,0.15)', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0 }] },
+        options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, min: -100, max: 100 } }, responsive: true, maintainAspectRatio: false }
+      });
+    } else if (sparkChart) {
+      sparkChart.data.labels = r.history.map((_, i) => i);
+      sparkChart.data.datasets[0].data = r.history;
+      sparkChart.update('none');
+    }
+
+    const c = r.components;
+    const compEl = document.getElementById('regime-comp');
+    if (compEl && c) {
+      compEl.innerHTML = [
+        ['BREADTH', c.breadth], ['FLOW', c.flow], ['VIX TERM', c.vix_term], ['SECTOR DIFF', c.sector_diff], ['KOREA LEAD', c.korea_lead]
+      ].map(([lab, v]) => {
+        const color = v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--ink-2)';
+        return '<div class="c"><div class="clab">' + lab + '</div><div class="cval" style="color:' + color + '">' + (v > 0 ? '+' : '') + v + '</div></div>';
+      }).join('');
+    }
+  }
+
+  // ===== Sectors =====
+  function renderSectors() {
+    if (!window.MarketData || !MarketData.SECTORS) return;
+    const html = MarketData.SECTORS.map(s => {
+      const cls = s.chg > 0 ? 'up' : 'down';
+      const sign = s.chg > 0 ? '+' : '';
+      return '<div class="sector-cell"><div class="name">' + s.name + '</div><div class="chg ' + cls + '">' + sign + s.chg.toFixed(2) + '%</div><div class="breadth"><div class="breadth-bar"><div class="fill" style="width:' + (s.breadth * 100).toFixed(0) + '%"></div></div>' + (s.breadth * 100).toFixed(0) + '%</div></div>';
+    }).join('');
+    const el = document.getElementById('sectors'); if (el) el.innerHTML = html;
+  }
+
+  // ===== Watchlist =====
+  function renderWatchlist() {
+    if (!window.MarketData || !MarketData.TICKERS) return;
+    const html = MarketData.TICKERS.map(t => {
+      const cls = t.chg > 0 ? 'up' : t.chg < 0 ? 'down' : 'flat';
+      const sign = t.chg > 0 ? '+' : '';
+      return '<tr><td><div class="sym">' + t.sym + '</div><div class="name">' + t.name + '</div></td><td><span class="sector-tag ' + t.sector + '">' + t.sector + '</span></td><td class="price">' + t.price.toFixed(2) + '</td><td class="chg-cell ' + cls + '">' + sign + t.chg.toFixed(2) + '%</td><td class="num">' + t.vol + '</td><td class="num">' + t.mcap + '</td><td class="num">' + (t.pe == null ? '—' : t.pe) + '</td></tr>';
+    }).join('');
+    const el = document.getElementById('watchlist-body'); if (el) el.innerHTML = html;
+  }
+
+  // ===== Whales =====
+  function renderWhales() {
+    if (!window.MarketData || !MarketData.WHALES) return;
+    const html = MarketData.WHALES.map(w => {
+      const concordPct = (w.concord * 100).toFixed(0);
+      const concordCls = w.concord > 0.5 ? 'up' : w.concord < 0 ? 'down' : 'flat';
+      return '<div class="whale"><div class="fund">' + w.fund + '</div><div class="flag">' + w.flag + '</div><div class="whale-bottom"><span class="concord ' + concordCls + '">' + concordPct + '%</span><span class="sig">' + w.sig + '</span></div></div>';
+    }).join('');
+    const el = document.getElementById('whales'); if (el) el.innerHTML = html;
+  }
+
+  // ===== Trump triggers =====
+  function renderTriggers() {
+    if (!window.MarketData || !MarketData.TRUMP_TRIGGERS) return;
+    const html = MarketData.TRUMP_TRIGGERS.map(t => {
+      let text = t.text;
+      (t.kw || []).forEach(kw => {
+        text = text.replace(new RegExp('\\b' + kw + '\\b', 'gi'), '<span class="kw">' + kw + '</span>');
+      });
+      return '<div class="trigger"><div class="ts">' + t.ts + '</div><div class="text">' + text + '</div><div class="impact">' + t.impact + '</div></div>';
+    }).join('');
+    const el = document.getElementById('triggers'); if (el) el.innerHTML = html;
+  }
+
+  // ===== v3.7.4: Portfolio Charts (Donut + Bar + Combo) =====
+  let DS_CHARTS = [];
+  function renderCharts() {
+    if (!window.Chart) return;
+    DS_CHARTS.forEach(c => c && c.destroy());
+    DS_CHARTS = [];
+    const PORTFOLIO = [
+      { sym: 'GOOGL', shares: 240, avg: 317.8767, pct: 44.4 },
+      { sym: 'CLS',   shares: 110, avg: 366.59,   pct: 23.4 },
+      { sym: 'AVGO',  shares: 70,  avg: 377.3671, pct: 15.4 },
+      { sym: 'MRVL',  shares: 172, avg: 130.8481, pct: 13.1 },
+      { sym: 'MU',    shares: 15,  avg: 508.4673, pct: 4.4  },
+      { sym: 'SOXL',  shares: 5,   avg: 132.21,   pct: 0.4  }
+    ];
+    const REALIZED = [
+      { sym: 'SOXL', date: '5/4', profit: 23.68 },
+      { sym: 'TSM',  date: '5/4', profit: 266.10 }
+    ];
+    const colors = ['#b48a3a', '#1976D2', '#7B1FA2', '#2E7D32', '#F57F17', '#c62828'];
+
+    const c1 = document.getElementById('ds-port-donut');
+    if (c1) {
+      DS_CHARTS.push(new Chart(c1, {
+        type: 'doughnut',
+        data: { labels: PORTFOLIO.map(p => p.sym), datasets: [{ data: PORTFOLIO.map(p => p.pct), backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + '%' } } } }
+      }));
+    }
+
+    const c2 = document.getElementById('ds-port-pnl');
+    if (c2) {
+      const prices = { GOOGL: 394, CLS: 425, AVGO: 440, MRVL: 172, MU: 640.20, SOXL: 144.16 };
+      const pls = PORTFOLIO.map(p => p.shares * (prices[p.sym] - p.avg));
+      DS_CHARTS.push(new Chart(c2, {
+        type: 'bar',
+        data: { labels: PORTFOLIO.map(p => p.sym), datasets: [{ label: 'P&L $', data: pls, backgroundColor: pls.map(v => v >= 0 ? '#2E7D32' : '#c62828') }] },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.x.toLocaleString(undefined, { maximumFractionDigits: 0 }) } } }, scales: { x: { ticks: { callback: v => '$' + (v / 1000).toFixed(1) + 'K' } } } }
+      }));
+    }
+
+    const c3 = document.getElementById('ds-realized-combo');
+    if (c3) {
+      const profits = REALIZED.map(r => r.profit);
+      let cum = 0;
+      const cumArr = profits.map(p => cum += p);
+      DS_CHARTS.push(new Chart(c3, {
+        type: 'bar',
+        data: {
+          labels: REALIZED.map(r => r.sym + ' ' + r.date),
+          datasets: [
+            { type: 'bar', label: '거래별 차익 ($)', data: profits, backgroundColor: '#2E7D32', order: 2 },
+            { type: 'line', label: '누적 차익 ($)', data: cumArr, borderColor: '#b48a3a', backgroundColor: 'rgba(180,138,58,0.15)', tension: 0.3, fill: true, pointRadius: 4, order: 1 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) } } }, scales: { y: { ticks: { callback: v => '$' + v.toFixed(0) } } } }
+      }));
+    }
+  }
+
+  // ===== Initial render + subscribe =====
+  function renderAll() {
+    renderGlance();
+    renderGauge();
+    renderSectors();
+    renderWatchlist();
+    renderWhales();
+    renderTriggers();
+    renderCharts();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderAll();
+    if (window.MarketData && MarketData.subscribe) MarketData.subscribe(renderAll);
+  });
+})();
+</script>
+
+</body>
+</html>
