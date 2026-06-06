@@ -33,15 +33,19 @@ month-over-month changes without noisy commits.
 ### portfolio-current.json
 ```jsonc
 {
-  "asOf": "2026-04-22",         // YYYY-MM-DD of the quote reference
+  "asOf": "2026-05-05",         // YYYY-MM-DD of the quote reference
   "broker": ["Kiwoom", "Samsung Securities"],
-  "totalCost": 172850.08,       // USD
+  "currency": "USD",            // book currency
+  "totalCost": 171976.46,       // USD — broker-recorded book cost (authoritative;
+                                //   may differ from Σ(shares×avgCost) by rounding)
+  "cash": 2232.93,              // USD — uninvested cash balance (optional)
+  "note": "5/5 sync — ...",     // optional provenance note for the snapshot
   "positions": [
     {
       "symbol": "GOOGL",
-      "shares": 237,
-      "avgCost": 317.39,
-      "weight": 0.4355,         // fraction, not percent
+      "shares": 240,
+      "avgCost": 317.8767,
+      "weight": 0.4436,         // fraction, not percent; cost-fraction of positions (Σ ≈ 1.0)
       "broker": "Samsung",      // optional
       "note": "Custom Silicon thesis anchor"
     }
@@ -72,38 +76,62 @@ month-over-month changes without noisy commits.
 ```
 
 ### valuations.json
+Per-ticker entries live under a `valuations` wrapper (a top-level `note`
+documents ownership). Held positions + peer-reference tickers may both appear.
 ```jsonc
 {
-  "GOOGL": {
-    "updated": "2026-04-22",
-    "agent": "evaluator",
-    "fvLow": 310,
-    "fvMid": 370,
-    "fvHigh": 443,
-    "currentPrice": 339.32,
-    "method": ["DCF-10y", "EV/EBITDA-peer", "SOTP-Cloud+Search+Waymo"],
-    "rationale": "...",
-    "catalysts": ["Gemini 3 GA", "TPU v7 cloud revenue", "DOJ remedy clarity"],
-    "nextReview": "2026-05-01"
+  "note": "Owned by the evaluator agent. Writes must include method[], rationale, catalysts[], nextReview.",
+  "valuations": {
+    "GOOGL": {
+      "updated": "2026-06-05",
+      "agent": "evaluator",
+      "fvLow": 330,
+      "fvMid": 367,
+      "fvHigh": 430,
+      "currentPrice": 365.51,        // adopted price from the validator price-stamp
+      "upsideMidPct": 0.41,          // (fvMid / currentPrice − 1) × 100
+      "method": ["DCF-10y", "EV/EBITDA-peer", "SOTP-Cloud+Search+Waymo"],
+      "rationale": "...",            // single-line string; cite each method's inputs
+      "catalysts": ["Gemini 3 GA", "TPU v7 cloud revenue", "DOJ remedy clarity"],
+      "risks": ["DOJ remedy", "43.5% book concentration"],  // optional string[]
+      "nextReview": "2026-07-01"
+    }
   }
 }
 ```
+> FV bands (`fvLow/fvMid/fvHigh`) are fundamental — they do **not** move on price
+> alone. On a price refresh only `currentPrice` + `upsideMidPct` re-anchor.
+> Leveraged ETFs use NAV-decay methods, e.g. `method: ["NAV-decay-adjusted", "3x-beta-scaling"]`.
 
 ### risk-scores.json
+Per-ticker entries live under a `scores` wrapper, alongside a top-level `note`
+and a `legend` (score bands + verdict vocabulary). Only held positions get a
+risk score — peer-reference tickers stay valuation-only.
 ```jsonc
 {
-  "GOOGL": {
-    "updated": "2026-04-22",
-    "score": 42,                // 0=low risk, 100=max risk
-    "verdict": "HOLD",
-    "entryZone": { "low": 315, "high": 330 },
-    "target": { "base": 400, "bull": 443, "bear": 310 },
-    "stopLoss": 298,
-    "rrr": 2.4,                 // reward/risk
-    "risks": [
-      { "tag": "regulatory", "severity": "high", "note": "DOJ remedy Q4 ruling" },
-      { "tag": "concentration", "severity": "medium", "note": "43.5% of book" }
-    ]
+  "note": "Owned by evaluator agent. Score 0-100 (low=safe). Entry zone, target, stop-loss, rrr all required.",
+  "legend": {
+    "score": { "0-30": "low", "30-60": "medium", "60-100": "high" },
+    "verdict": ["STRONG_BUY", "BUY", "HOLD", "TRIM", "SELL"]
+  },
+  "scores": {
+    "GOOGL": {
+      "updated": "2026-06-05",
+      "score": 43,                // 0=low risk, 100=max risk
+      "verdict": "HOLD",          // may diverge from score band w/ rationale (e.g. position mgmt)
+      "entryZone": { "low": 345, "high": 360 },
+      "target": { "base": 400, "bull": 443, "bear": 310 },
+      "stopLoss": 340,
+      "rrr": 1.35,                // (target.base − currentPrice) / (currentPrice − stopLoss)
+      "risks": [
+        { "tag": "regulatory", "severity": "high", "note": "DOJ remedy Q4 ruling" },
+        { "tag": "concentration", "severity": "medium", "note": "40.9% of book" }
+      ],
+      "decisionLog": [            // APPEND-ONLY — never rewrite prior entries
+        { "date": "2026-04-22", "action": "HOLD", "by": "evaluator", "reason": "At mid-FV" },
+        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "Concentration >40% threshold" }
+      ]
+    }
   }
 }
 ```
