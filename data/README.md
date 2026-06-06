@@ -197,6 +197,18 @@ weekdays) and merged into `v3.seedQuotes` by the dashboard at boot and on Refres
 }
 ```
 
+### tickers-universe.json
+Array of tickers under the `tickers` key. Each entry:
+```
+  "symbol"  string   — ticker symbol (authoritative key)
+  "name"    string   — human-readable company / fund name  [added 2026-06-06]
+  "sector"  string   — fine-grained sector bucket (matches sector-map.json keys)
+  "held"    boolean  — true if currently in portfolio-current.json positions
+  "theme"   string[] — 2-4 thesis tags (matched to sector-map.json theme strings)
+```
+Also contains an `"indices"` array for macro reference symbols (SPX, NDX, VIX, DXY, US10Y).
+These are NOT rendered in the watchlist table.
+
 ### Kapture import shape
 The dashboard's "Kapture Import" modal accepts either JSON or CSV exported from
 the Kapture Chrome extension on a TradingView or Saveticker page.
