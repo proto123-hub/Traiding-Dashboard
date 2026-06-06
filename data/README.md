@@ -28,6 +28,17 @@ Writes from the manual-entry UI go to `localStorage` only. Committing the
 (see dashboard footer button) — this keeps git history as the audit trail for
 month-over-month changes without noisy commits.
 
+The valuation panel (`index.html` `#valuation-panel`) fetches these four files
+directly at boot via `fetch()`:
+- `data/valuations.json` — FV bands + currentPrice
+- `data/risk-scores.json` — verdict + score (held tickers only)
+- `data/portfolio-current.json` — held symbol set
+- `data/sector-map.json` — sector label lookup
+
+These reads are non-blocking: the rest of the dashboard renders from `data.js`
+as before; the valuation card populates when the fetches resolve (~50ms local).
+No localStorage key is written by the valuation panel.
+
 ## Schemas
 
 ### portfolio-current.json
