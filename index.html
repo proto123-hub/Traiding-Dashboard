@@ -543,7 +543,9 @@
               <th>Theme</th>
             </tr>
           </thead>
-          <tbody id="watchlist-body"></tbody>
+          <tbody id="watchlist-body">
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -854,7 +856,6 @@
     renderGlance();
     renderGauge();
     renderSectors();
-    renderWatchlist();
     renderWhales();
     renderTriggers();
   }
@@ -993,6 +994,8 @@
     } catch (e) {
       document.getElementById('valuation-body').innerHTML =
         '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--red)">밸류에이션 데이터 로드 실패 — data/valuations.json을 확인하세요.</td></tr>';
+      document.getElementById('watchlist-body').innerHTML =
+        '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--red)">워치리스트 데이터 로드 실패 — data/price-quotes.json·tickers-universe.json을 확인하세요.</td></tr>';
     }
   }
 
