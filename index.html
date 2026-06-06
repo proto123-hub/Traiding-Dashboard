@@ -314,6 +314,52 @@
   }
   .v36-toast.show { opacity: 1; transform: translateY(0); }
   .v36-toast .v36-toast-tag { color: var(--cyan, #00B7C7); font-weight: 700; margin-right: 6px; }
+
+  /* ===== Valuation FV Panel ===== */
+  .fv-band { white-space: nowrap; text-align: center; font-family: var(--mono); font-size: 11px; }
+  .fv-low, .fv-high { color: var(--muted); }
+  .fv-mid  { color: var(--ink); font-weight: 700; }
+  .fv-sep  { color: var(--faint); }
+
+  .fv-bar-wrap { display: flex; align-items: center; justify-content: center; }
+  .fv-bar {
+    position: relative; width: 60px; height: 8px;
+    background: linear-gradient(90deg, var(--red-soft), var(--amber-soft), var(--green-soft));
+    border-radius: 4px;
+  }
+  .fv-bar-marker {
+    position: absolute; top: -3px; width: 2px; height: 14px;
+    background: var(--ink); border-radius: 1px;
+  }
+
+  .val-sort-btn {
+    padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--panel-2); color: var(--ink-2); font-size: 11px;
+    font-weight: 600; cursor: pointer; font-family: var(--mono);
+  }
+  .val-sort-btn:hover  { background: var(--cyan-soft); color: var(--cyan-2); }
+  .val-sort-btn.active { background: var(--cyan-soft); color: var(--cyan-2); border-color: var(--cyan); }
+
+  .verdict-pill {
+    display: inline-block; padding: 2px 7px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; font-family: var(--mono); letter-spacing: 0.04em;
+  }
+  .verdict-STRONG_BUY { background: var(--green-soft);  color: var(--green); }
+  .verdict-BUY        { background: var(--green-soft);  color: var(--green); }
+  .verdict-HOLD       { background: var(--line-2);      color: var(--muted); }
+  .verdict-TRIM       { background: var(--amber-soft);  color: var(--amber); }
+  .verdict-SELL       { background: var(--red-soft);    color: var(--red);   }
+
+  @media (max-width: 768px) {
+    #valuation-table th:nth-child(6),
+    #valuation-table td:nth-child(6) { display: none; }
+  }
+  @media (max-width: 480px) {
+    #valuation-table th:nth-child(4),
+    #valuation-table td:nth-child(4),
+    #valuation-table th:nth-child(8),
+    #valuation-table td:nth-child(8) { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -334,7 +380,7 @@
     <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
     <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (24)</span></div>
     <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
-    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">밸류에이션</span><span class="en">Valuation</span></div>
+    <div class="side-link" data-scroll="valuation-panel"><span class="dot"></span><span class="ko">밸류에이션 FV</span><span class="en">Valuations FV</span></div>
 
     <div class="side-section"><span class="ko">인사이트</span><span class="en">Insights</span></div>
     <div class="side-link" data-scroll="whales"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
@@ -499,6 +545,41 @@
             </tr>
           </thead>
           <tbody id="watchlist-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Valuations -->
+    <div class="card" id="valuation-panel" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3><span class="ko">밸류에이션 — FV 밴드</span><span class="en">Valuations — FV Bands</span></h3>
+        <span class="sub" id="val-updated">data/valuations.json · 2026-06-05</span>
+        <span class="spacer"></span>
+        <div class="lang-toggle" id="val-filter-held">
+          <button data-val-filter="all" class="active">전체</button>
+          <button data-val-filter="held">보유</button>
+          <button data-val-filter="watch">워치</button>
+        </div>
+        <button id="val-sort-upside" class="val-sort-btn active" data-sort="desc">Upside ↓</button>
+        <span class="pill live"><span class="blob"></span>SYNCED</span>
+      </div>
+      <div class="card-body flush">
+        <table class="watchlist" id="valuation-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Sector</th>
+              <th style="text-align:right">Price</th>
+              <th style="text-align:center">FV Band (Low — Mid — High)</th>
+              <th style="text-align:right">Upside</th>
+              <th style="text-align:center">Band Pos</th>
+              <th style="text-align:center">Verdict</th>
+              <th style="text-align:right">Next Review</th>
+            </tr>
+          </thead>
+          <tbody id="valuation-body">
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -837,6 +918,147 @@
     }
     document.getElementById('next-tick').textContent = countdown + 's';
   }, 1000);
+
+  // ===== Valuation FV Panel =====
+  let v3 = window.v3 || {}; window.v3 = v3;
+  v3.valuationRows = [];
+  v3.valFilter = 'all';
+  v3.valSort = 'desc';
+  v3.tickerSector = {};
+
+  async function bootValuations() {
+    try {
+      const [valData, riskData, portData, sectorData] = await Promise.all([
+        fetch('data/valuations.json').then(r => r.json()),
+        fetch('data/risk-scores.json').then(r => r.json()),
+        fetch('data/portfolio-current.json').then(r => r.json()),
+        fetch('data/sector-map.json').then(r => r.json()),
+      ]);
+
+      // Build inverted sector map: ticker → sector name
+      Object.entries(sectorData.sectors).forEach(([sec, obj]) => {
+        obj.tickers.forEach(t => { v3.tickerSector[t] = sec; });
+      });
+
+      const heldSymbols = new Set(portData.positions.map(p => p.symbol));
+
+      v3.valuationRows = Object.entries(valData.valuations).map(([sym, v]) => {
+        const risk = riskData.scores[sym] || null;
+        return {
+          sym,
+          held: heldSymbols.has(sym),
+          fvLow:      v.fvLow,
+          fvMid:      v.fvMid,
+          fvHigh:     v.fvHigh,
+          price:      v.currentPrice,
+          upside:     v.upsideMidPct,
+          method:     v.method,
+          verdict:    risk ? risk.verdict : null,
+          score:      risk ? risk.score : null,
+          nextReview: v.nextReview,
+        };
+      });
+
+      renderValuations();
+    } catch (e) {
+      document.getElementById('valuation-body').innerHTML =
+        '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--red)">밸류에이션 데이터 로드 실패 — data/valuations.json을 확인하세요.</td></tr>';
+    }
+  }
+
+  function renderValuations() {
+    let rows = v3.valuationRows;
+    if (v3.valFilter === 'held')  rows = rows.filter(r => r.held);
+    if (v3.valFilter === 'watch') rows = rows.filter(r => !r.held);
+    if (v3.valSort !== 'none') {
+      rows = [...rows].sort((a, b) =>
+        v3.valSort === 'desc' ? b.upside - a.upside : a.upside - b.upside
+      );
+    }
+    document.getElementById('valuation-body').innerHTML = rows.map(buildValRow).join('');
+  }
+
+  function buildValRow(r) {
+    const sector = v3.tickerSector[r.sym] || '—';
+
+    // Column 3: price
+    const priceFmt = '$' + r.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Column 5: upside color and sign
+    const upsideColor = r.upside > 5 ? 'var(--green)' : r.upside > 0 ? 'var(--amber)' : 'var(--red)';
+    const upsideSign = r.upside >= 0 ? '+' : '';
+    const upsideFmt = upsideSign + r.upside.toFixed(2) + '%';
+
+    // Column 6: FV bar marker position clamped to [0, 60px]
+    const range = r.fvHigh - r.fvLow;
+    const pct = range > 0 ? Math.max(0, Math.min(1, (r.price - r.fvLow) / range)) : 0;
+    const markerLeft = (pct * 60).toFixed(1);
+
+    // Column 7: verdict pill
+    let verdictHtml;
+    if (r.verdict) {
+      verdictHtml = '<span class="verdict-pill verdict-' + r.verdict + '">' + r.verdict.replace('_', ' ') + '</span>';
+    } else {
+      verdictHtml = '<span style="color:var(--faint)">—</span>';
+    }
+
+    // Column 1: ticker + held badge
+    const heldBadge = r.held
+      ? ' <span class="pill live" style="font-size:9px;padding:1px 5px">보유</span>'
+      : '';
+
+    return '<tr>' +
+      '<td><div class="sym">' + r.sym + '</div>' + heldBadge + '</td>' +
+      '<td><span class="sector-tag" style="background:var(--line-2);color:var(--ink-2)">' + sector + '</span></td>' +
+      '<td style="text-align:right;font-family:var(--mono);font-size:12px">' + priceFmt + '</td>' +
+      '<td class="fv-band">' +
+        '<span class="fv-low">$' + r.fvLow.toLocaleString() + '</span>' +
+        '<span class="fv-sep"> — </span>' +
+        '<span class="fv-mid">$' + r.fvMid.toLocaleString() + '</span>' +
+        '<span class="fv-sep"> — </span>' +
+        '<span class="fv-high">$' + r.fvHigh.toLocaleString() + '</span>' +
+      '</td>' +
+      '<td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:' + upsideColor + '">' + upsideFmt + '</td>' +
+      '<td>' +
+        '<div class="fv-bar-wrap">' +
+          '<div class="fv-bar">' +
+            '<div class="fv-bar-marker" style="left:' + markerLeft + 'px"></div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td style="text-align:center">' + verdictHtml + '</td>' +
+      '<td style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">' + (r.nextReview || '—') + '</td>' +
+      '</tr>';
+  }
+
+  // Filter buttons
+  document.getElementById('val-filter-held').addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-val-filter]');
+    if (!btn) return;
+    v3.valFilter = btn.dataset.valFilter;
+    this.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    renderValuations();
+  });
+
+  // Sort button: desc → asc → none → desc
+  document.getElementById('val-sort-upside').addEventListener('click', function() {
+    if (v3.valSort === 'desc') {
+      v3.valSort = 'asc';
+      this.textContent = 'Upside ↑';
+      this.classList.add('active');
+    } else if (v3.valSort === 'asc') {
+      v3.valSort = 'none';
+      this.textContent = 'Upside —';
+      this.classList.remove('active');
+    } else {
+      v3.valSort = 'desc';
+      this.textContent = 'Upside ↓';
+      this.classList.add('active');
+    }
+    renderValuations();
+  });
+
+  document.addEventListener('DOMContentLoaded', bootValuations);
 
 </script>
 
