@@ -378,7 +378,7 @@
 
     <div class="side-section"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
     <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
-    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (24)</span></div>
+    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (22)</span></div>
     <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
     <div class="side-link" data-scroll="valuation-panel"><span class="dot"></span><span class="ko">밸류에이션 FV</span><span class="en">Valuations FV</span></div>
 
@@ -527,7 +527,7 @@
     <!-- Watchlist -->
     <div class="card" style="margin-bottom: 16px;">
       <div class="card-head">
-        <h3><span class="ko">워치리스트 — 24 종목</span><span class="en">Watchlist — 24 Tickers</span></h3>
+        <h3><span class="ko">워치리스트 — 22 종목</span><span class="en">Watchlist — 22 Tickers</span></h3>
         <span class="sub">CLAUDE.md authoritative · 2-source verified</span>
         <span class="spacer"></span>
         <span class="pill live"><span class="blob"></span>SYNCED</span>
@@ -536,12 +536,11 @@
         <table class="watchlist">
           <thead>
             <tr>
-              <th>Ticker</th><th>Sector</th>
+              <th>Ticker</th>
+              <th>Sector</th>
               <th style="text-align:right">Price</th>
               <th style="text-align:right">Chg %</th>
-              <th style="text-align:right">Volume</th>
-              <th style="text-align:right">Mkt Cap</th>
-              <th style="text-align:right">Fwd P/E</th>
+              <th>Theme</th>
             </tr>
           </thead>
           <tbody id="watchlist-body"></tbody>
@@ -790,19 +789,33 @@
 
   // ===== Watchlist =====
   function renderWatchlist() {
-    document.getElementById('watchlist-body').innerHTML = MarketData.TICKERS.map(t => {
-      const cls = t.chg > 0 ? 'up' : t.chg < 0 ? 'down' : 'flat';
-      const sign = t.chg > 0 ? '+' : '';
-      return `<tr>
-        <td><div class="sym">${t.sym}</div><div class="name">${t.name}</div></td>
-        <td><span class="sector-tag ${t.sector}">${t.sector}</span></td>
-        <td class="price">${t.price.toFixed(2)}</td>
-        <td class="chg-cell ${cls}">${sign}${t.chg.toFixed(2)}%</td>
-        <td class="num">${t.vol}</td>
-        <td class="num">${t.mcap}</td>
-        <td class="num">${t.pe ?? '—'}</td>
-      </tr>`;
-    }).join('');
+    if (!v3.watchlistRows.length) return;
+    document.getElementById('watchlist-body').innerHTML = v3.watchlistRows.map(buildWatchRow).join('');
+  }
+
+  function buildWatchRow(r) {
+    const cls = r.changePct > 0 ? 'up' : r.changePct < 0 ? 'down' : 'flat';
+    const sign = r.changePct > 0 ? '+' : '';
+    const priceFmt = r.price != null ? '$' + r.price.toFixed(2) : '—';
+    const chgFmt = r.changePct != null ? sign + r.changePct.toFixed(2) + '%' : '—';
+    const themeFmt = r.themes.slice(0, 2).join(' · ');
+    const heldBadge = r.held
+      ? '<span class="pill live" style="font-size:9px;padding:1px 5px">보유</span>'
+      : '';
+    const verifiedDot = r.verified
+      ? '<span class="blob" style="background:var(--green)"></span>'
+      : '';
+    return `<tr>
+      <td>
+        <div class="sym">${r.sym}</div>
+        <div class="name">${r.name}</div>
+        ${heldBadge}
+      </td>
+      <td><span class="sector-tag" style="background:var(--line-2);color:var(--ink-2)">${r.sector}</span></td>
+      <td class="price">${verifiedDot}${priceFmt}</td>
+      <td class="chg-cell ${cls}">${chgFmt}</td>
+      <td style="color:var(--muted);font-size:11px">${themeFmt}</td>
+    </tr>`;
   }
 
   // ===== Whales =====
@@ -851,7 +864,6 @@
     renderGlance();
     renderGauge();
     renderSectors();
-    renderWatchlist();
     document.getElementById('last-sync').textContent = new Date().toTimeString().slice(0, 8);
   });
 
@@ -922,17 +934,20 @@
   // ===== Valuation FV Panel =====
   let v3 = window.v3 || {}; window.v3 = v3;
   v3.valuationRows = [];
+  v3.watchlistRows = [];
   v3.valFilter = 'all';
   v3.valSort = 'desc';
   v3.tickerSector = {};
 
   async function bootValuations() {
     try {
-      const [valData, riskData, portData, sectorData] = await Promise.all([
+      const [valData, riskData, portData, sectorData, quotesData, universeData] = await Promise.all([
         fetch('data/valuations.json').then(r => r.json()),
         fetch('data/risk-scores.json').then(r => r.json()),
         fetch('data/portfolio-current.json').then(r => r.json()),
         fetch('data/sector-map.json').then(r => r.json()),
+        fetch('data/price-quotes.json').then(r => r.json()),
+        fetch('data/tickers-universe.json').then(r => r.json()),
       ]);
 
       // Build inverted sector map: ticker → sector name
@@ -959,7 +974,22 @@
         };
       });
 
+      v3.watchlistRows = universeData.tickers.map(t => {
+        const q = quotesData.quotes[t.symbol] || null;
+        return {
+          sym:       t.symbol,
+          name:      t.name,
+          sector:    t.sector,
+          themes:    t.theme,
+          held:      heldSymbols.has(t.symbol),
+          price:     q ? q.price : null,
+          changePct: q ? q.changePct : null,
+          verified:  q ? q.verified : false,
+        };
+      });
+
       renderValuations();
+      renderWatchlist();
     } catch (e) {
       document.getElementById('valuation-body').innerHTML =
         '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--red)">밸류에이션 데이터 로드 실패 — data/valuations.json을 확인하세요.</td></tr>';
