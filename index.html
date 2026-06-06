@@ -1020,6 +1020,11 @@
     document.getElementById('valuation-body').innerHTML = rows.map(buildValRow).join('');
   }
 
+  function verdictClass(v) {
+    const allowed = new Set(['STRONG_BUY', 'BUY', 'HOLD', 'TRIM', 'SELL']);
+    return allowed.has(v) ? v : 'UNKNOWN';
+  }
+
   function buildValRow(r) {
     const sector = v3.tickerSector[r.sym] || '—';
 
@@ -1039,7 +1044,7 @@
     // Column 7: verdict pill
     let verdictHtml;
     if (r.verdict) {
-      verdictHtml = '<span class="verdict-pill verdict-' + r.verdict + '">' + escapeHtml(r.verdict.replace('_', ' ')) + '</span>';
+      verdictHtml = '<span class="verdict-pill verdict-' + verdictClass(r.verdict) + '">' + escapeHtml(r.verdict.replace('_', ' ')) + '</span>';
     } else {
       verdictHtml = '<span style="color:var(--faint)">—</span>';
     }
