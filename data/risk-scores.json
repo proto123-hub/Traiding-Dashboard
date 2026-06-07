@@ -93,7 +93,7 @@
       ]
     },
     "SOXL": {
-      "updated": "2026-06-05",
+      "updated": "2026-06-07",
       "score": 31,
       "verdict": "TRIM",
       "entryZone": { "low": 185, "high": 210 },
@@ -101,13 +101,14 @@
       "stopLoss": 170,
       "rrr": 7.73,
       "risks": [
-        { "tag": "leveraged-etf", "severity": "high", "note": "3x leveraged ETF daily-reset decay — rubric +15 pts" },
-        { "tag": "technical", "severity": "high", "note": "6/5 -17.24% single-session drawdown — sector breakdown +8 pts" },
-        { "tag": "stop-proximity", "severity": "critical", "note": "EOD $181.46 is only 6.7% above hard-stop $170 (was 27.9% buffer at 13:51Z $217.41) — SOX -2.3% session erases remaining buffer; 3x decay accelerates toward stop" },
+        { "tag": "leveraged-etf", "severity": "high", "note": "3x leveraged ETF daily-reset decay — rubric +15 pts; decay risk re-confirmed across 4 verified news events (SA+Yahoo+STD, 2025-09-24 through 2026-04-19)" },
+        { "tag": "technical", "severity": "high", "note": "6/5 -17.24% single-session drawdown — sector breakdown +8 pts; no new session to reassess" },
+        { "tag": "stop-proximity", "severity": "critical", "note": "EOD $181.46 (provisional, single-source, as-of 2026-06-05) only 6.7% above hard-stop $170; no new verified price to update buffer" },
         { "tag": "macro", "severity": "medium", "note": "SOX sector macro risk (tariff/export ban) +8 pts" }
       ],
       "decisionLog": [
-        { "date": "2026-06-05", "action": "TRIM", "by": "evaluator", "reason": "EOD $181.46 only 6.7% above hard-stop $170; 3x decay + further drawdown risk; reduce to preserve capital; stop proximity critical" }
+        { "date": "2026-06-05", "action": "TRIM", "by": "evaluator", "reason": "EOD $181.46 only 6.7% above hard-stop $170; 3x decay + further drawdown risk; reduce to preserve capital; stop proximity critical" },
+        { "date": "2026-06-07", "action": "TRIM", "by": "evaluator", "reason": "Early re-eval: no new verified price; decay risk re-confirmed multi-source; score 31 unchanged; TRIM maintained" }
       ]
     }
   }
