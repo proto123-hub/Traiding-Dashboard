@@ -318,9 +318,9 @@ evaluator는 `verified: true`인 항목만 소비한다. validator가 충분한 
 아래 종목들의 현재 `currentPrice`는 단일 소스(nasdaq only)로 기재되어 있다. validator가 재검증 시 교차 소스를 확보해야 한다.
 
 ```
-단일 소스 위험 종목: AMD, ARM, INTC, AMAT, LRCX, KLAC, MSFT, META, TSLA, SNOW, CRWD, ORCL
+단일 소스 위험 종목: AMD, ARM, INTC, AMAT, LRCX, KLAC, MSFT, META, TSLA, SNOW, CRWD
 2-source 검증 완료: GOOGL, PLTR (stooq+yahoo)
-stooq primary (validator 정책): ORCL
+2-source 불일치(stooq-primary 채택, verified=false): ORCL (stooq $213.68 vs nasdaq $212.40 = 0.6% > 0.2% tolerance)
 ```
 
 ### 7-4. TSM (보유 해제 종목)
