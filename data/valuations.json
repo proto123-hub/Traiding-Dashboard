@@ -72,7 +72,7 @@
       "nextReview": "2026-07-01"
     },
     "SOXL": {
-      "updated": "2026-06-05",
+      "updated": "2026-06-07",
       "agent": "evaluator",
       "fvLow": 170,
       "fvMid": 240,
@@ -80,10 +80,10 @@
       "currentPrice": 181.46,
       "upsideMidPct": 32.27,
       "method": ["NAV-decay-adjusted", "3x-beta-scaling"],
-      "rationale": "NAV-decay-adjusted: Underlying SOX index fair value estimated ~$5,700-$6,000; SOXL theoretical NAV at SOX FV midpoint adjusted for daily-reset decay (~5-8%/30d at VIX ~16) → $230-$280, decay-penalized mid $240. 3x-beta-scaling: 6/5 SOXL -17.24% vs SOX sector -4 to -9% — consistent with 3x leverage confirmation. Entry cost $132.21. EOD 22:15Z $181.46 is only 6.7% above hard-stop $170 (vs 13:51Z $217.41 which was 27.9% above stop). Stop proximity materially elevated. fvLow $170 reflects SOX bear scenario + 60-day decay drag. FV band unchanged.",
-      "catalysts": ["SOX sector recovery on risk-on rotation", "NDX reversal above 30,000", "Semi capex cycle confirmation"],
-      "risks": ["Leveraged ETF daily-reset decay in sideways/volatile market", "3x downside amplification — SOX -10% → SOXL ~-30%", "VIX spike erodes carry rapidly", "6/5 -17.24% single-session drawdown", "EOD $181.46 only 6.7% above hard-stop $170 — stop-proximity critical"],
-      "nextReview": "2026-06-20"
+      "rationale": "2026-06-07 early re-evaluation (조기 재평가): no new verified price since 2026-06-05; currentPrice $181.46 is provisional, single-source (nasdaq only), as-of 2026-06-05 EOD — not anchored to new session. FV band unchanged — no new fundamental inputs justify band revision. upsideMidPct 32.27 carried over from 6-05 — not recomputed (no new price). NAV-decay-adjusted: SOX FV ~$5,700-$6,000; SOXL NAV at SOX FV midpoint adjusted for daily-reset decay (~5-8%/30d at VIX ~16) → $230-$280, decay-penalized mid $240. 3x-beta-scaling: 6/5 SOXL -17.24% confirms 3x leverage. Decay risk multi-source re-confirmed across 4 verified news items: 2026-03-16 (SA+Yahoo+STD, id:2026-03-16-soxl-soxl-levered-semis-are-a-risky-bet), 2025-09-24 (SA+Yahoo+STD, id:2025-09-24-soxl-soxl-evaluating-the-valuation-case), 2025-12-01 (Yahoo+SA+STD, id:2025-12-01-soxl-big-returns-and-big-risk), 2026-04-19 (SA+Yahoo+STD, id:2026-04-19-soxl-understanding-the-setup) — all verified=true. TSM Q1 beat (id:2026-04-27-tsm-tsm-stock-spikes-overnight, MSN+CNBC+timothysykes), 3nm +15% H2 2026 (id:2026-05-27-tsm-taiwan-semi-will-hike-3-nm-price-by-15, SA+IBD), TSMC-Nvidia partnership (id:2026-06-01-tsm-tsmc-stock-tsm-soars-on-teaming-up-with-nvidia, TipRanks+Investing+Benzinga) are indirectly positive for SOX sector; SOXL holds ~30-stock SOX basket — TSM is one component, single-name strength does not materially alter SOXL FV band. SOXL YTD rally direction confirmed (id:2026-06-05-soxl-soxl-stock-surges-over-320, Benzinga+24/7+eciks, verified=true) but exact % is single-source disputed — directional use only.",
+      "catalysts": ["SOX sector recovery on risk-on rotation", "NDX reversal above 30,000", "Semi capex cycle confirmation", "TSM-Nvidia AI partnership spillover into SOX basket (indirect, limited weight — TSM is one of ~30 SOX components)"],
+      "risks": ["Leveraged ETF daily-reset decay in sideways/volatile market — multi-source verified across 4 events (Seeking Alpha + Yahoo Finance + Stock Traders Daily)", "3x downside amplification — SOX -10% → SOXL ~-30%; 2022 SOX -35% → SOXL -90% historical precedent (verified)", "VIX spike erodes NAV carry rapidly", "6/5 -17.24% single-session drawdown on high volume", "EOD $181.46 only 6.7% above hard-stop $170 as of 2026-06-05 — stop-proximity critical; no new session price to update this buffer"],
+      "nextReview": "2026-06-21"
     },
     "TSM": {
       "updated": "2026-06-05",
@@ -296,7 +296,7 @@
       "nextReview": "2026-07-01"
     },
     "TSMU": {
-      "updated": "2026-06-05",
+      "updated": "2026-06-07",
       "agent": "evaluator",
       "fvLow": 67,
       "fvMid": 83,
@@ -304,9 +304,9 @@
       "currentPrice": 70.4,
       "upsideMidPct": 17.90,
       "method": ["NAV-decay-adjusted", "2x-beta-scaling"],
-      "rationale": "Watchlist (not held). 2x leveraged daily-reset ETF on TSM (GraniteShares). DECAY WARNING: daily-reset 2x leverage causes path-dependent NAV erosion — not suitable as long-term hold; volatile markets accelerate decay. FV derived from TSM FV band in repo (fvLow $390 / fvMid $487 / fvHigh $600, updated 2026-06-05). NAV-decay-adjusted: current ratio TSMU/TSM = $70.40/$412.11 = 0.1708 vs theoretical 2x = 0.2000; observed cumulative decay = 14.6% from theoretical. Apply ratio to TSM FV band: fvLow $390×0.1708=$66.6; fvMid $487×0.1708=$83.2; fvHigh $600×0.1708=$102.5. 2x-beta-scaling: TSM move to fvMid from $412.11 = +18.2% → TSMU 2x = +36.4% → $70.40×1.364=$96.0 gross; apply 2.5-4%/30d decay penalty (half of SOXL 3x ~5-8%/30d at VIX 21.51) → 30d decay ~3.5% → $96.0×0.965=$92.6; 60d horizon → 2x decay ~7% → $70.40×1.364×0.93=$89.1. Methods converge: NAV-ratio fvMid $83, beta-scaling 30-60d $89-$93; blended fvMid $83 (conservative, ratio-method anchors lower bound). fvLow $67: TSM at fvLow with further decay. fvHigh $103: TSM at fvHigh $600, minimal decay scenario. At $70.40 (EOD 6/5, single-source nasdaq, -2.03%) stock is 17.9% below fvMid — upside exists but decay clock running. Risk-off context 6/5 (VIX +39.7%) elevates daily decay rate.",
-      "catalysts": ["TSM underlying appreciation toward fvMid $487 (N2 ramp, CoWoS expansion)", "Risk-on rotation in semi sector: NDX recovery from -4.77% selloff", "Taiwan geopolitical tension easing reducing TSM discount"],
-      "risks": ["Daily-reset 2x decay: at VIX 21.51, decay ~3-4%/30d; 90d hold erodes ~10-12% vs underlying", "Leveraged ETF: TSM -10% → TSMU approximately -20% to -22% (with decay)", "Taiwan geopolitical risk — any escalation hits TSM 2x-amplified", "Sector macro risk-off 6/5: VIX +39.7% directly raises daily decay cost; single-source price stamp"],
+      "rationale": "Watchlist (not held). 2026-06-07 early re-evaluation (조기 재평가): TSM Q1 2026 earnings beat (id:2026-04-27-tsm-tsm-stock-spikes-overnight, MSN+CNBC+timothysykes, verified=true), TSM 3nm price +15% H2 2026 (id:2026-05-27-tsm-taiwan-semi-will-hike-3-nm-price-by-15, SA+IBD, verified=true), TSMC-Nvidia AI partnership (id:2026-06-01-tsm-tsmc-stock-tsm-soars-on-teaming-up-with-nvidia, TipRanks+Investing+Benzinga, verified=true) all strengthen TSMU underlying asset thesis. However: no new verified TSM price or revised quantitative fundamental inputs sufficient to revise TSM FV band ($390/$487/$600) — band change requires updated DCF/EV inputs, not news confirmation alone. FV band unchanged. currentPrice $70.40 is provisional, single-source (nasdaq only), as-of 2026-06-05 EOD — not anchored to new session. upsideMidPct 17.90 carried over from 6-05, not recomputed (no new price). 2x daily-reset decay continues to run regardless of thesis strength. NAV-decay-adjusted: TSMU/TSM ratio $70.40/$412.11 = 0.1708 vs theoretical 2x = 0.2000; 14.6% cumulative decay from theoretical. FV band derived from TSM FV × 0.1708 ratio: fvLow $67 / fvMid $83 / fvHigh $103. 2x-beta-scaling: TSM to fvMid +18.2% → TSMU gross +36.4%; 30d decay ~3.5% → $92.6; 60d → $89.1. Methods converge at fvMid $83 (ratio anchors lower bound). fvLow $67: TSM at fvLow with further decay. fvHigh $103: TSM at fvHigh $600, minimal decay scenario.",
+      "catalysts": ["TSM underlying appreciation toward fvMid $487 confirmed by Q1 beat + 3nm pricing power + Nvidia partnership (all verified 2026-04-27 to 2026-06-01)", "Risk-on rotation in semi sector: NDX recovery", "Taiwan geopolitical tension easing reducing TSM discount"],
+      "risks": ["Daily-reset 2x decay: at VIX 21.51, decay ~3-4%/30d; 90d hold erodes ~10-12% vs underlying — decay continues regardless of positive thesis news", "Leveraged ETF: TSM -10% → TSMU approximately -20% to -22% (with decay)", "Taiwan geopolitical risk — any escalation hits TSM 2x-amplified", "No new verified price since 2026-06-05; currentPrice provisional single-source; single-source price stamp risk"],
       "nextReview": "2026-06-20"
     }
   }
