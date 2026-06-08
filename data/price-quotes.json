@@ -1,6 +1,6 @@
 {
   "note": "Owned by refresher agent + GitHub Actions data-refresh workflow. Sources: Stooq.com quote (CSV, no-auth, primary for current price) + NASDAQ public API (no-auth, primary for prevClose/change, assetclass stocks->etf->index fallback) + Yahoo Finance v8 chart (best-effort tertiary; runner-IP rate-limit usually suppresses). Cross-source verify: any 2 of 3 within 0.2% tolerance. Kapture (TradingView) imports merge into perSource.kapture. Macros (VIX/DXY/US10Y/USDKRW/SPX) lack prevClose coverage — change shows as 0% until carry-forward catches up.",
-  "updated": "2026-06-08T14:46:30Z",
+  "updated": "2026-06-08T22:27:37Z",
   "asOfDate": "2026-06-08",
   "agent": "refresher",
   "sources": [
@@ -11,257 +11,256 @@
   "tolerance": 0.002,
   "quotes": {
     "GOOGL": {
-      "price": 361.755,
-      "change": -6.555,
-      "changePct": -1.7798,
-      "prevClose": 368.31,
+      "price": 363,
+      "change": -0.31,
+      "changePct": -0.0853,
+      "prevClose": 363.31,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 361.755
+        "nasdaq": 363
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "CLS": {
-      "price": 385.36,
-      "change": 13.65,
-      "changePct": 3.6722,
-      "prevClose": 371.71,
+      "price": 382.7076,
+      "change": -3.6374,
+      "changePct": -0.9415,
+      "prevClose": 386.345,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 385.36
+        "nasdaq": 382.7076
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "AVGO": {
-      "price": 397.54,
-      "change": 11.81,
-      "changePct": 3.0617,
-      "prevClose": 385.73,
+      "price": 395.8,
+      "change": -0.8,
+      "changePct": -0.2017,
+      "prevClose": 396.6,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 397.54
+        "nasdaq": 395.8
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "MRVL": {
-      "price": 297.53,
-      "change": 34.06,
-      "changePct": 12.9275,
-      "prevClose": 263.47,
+      "price": 286,
+      "change": -2.85,
+      "changePct": -0.9867,
+      "prevClose": 288.85,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 297.53
+        "nasdaq": 286
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "MU": {
-      "price": 940.1604,
-      "change": 76.1504,
-      "changePct": 8.8136,
-      "prevClose": 864.01,
+      "price": 942.883,
+      "change": -6.397,
+      "changePct": -0.6739,
+      "prevClose": 949.28,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 940.1604
+        "nasdaq": 942.883
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "TSM": {
-      "price": 431.01,
-      "change": 15.84,
-      "changePct": 3.8153,
-      "prevClose": 415.17,
+      "price": 426.64,
+      "change": -0.01,
+      "changePct": -0.0023,
+      "prevClose": 426.65,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 431.01
+        "nasdaq": 426.64
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "PLTR": {
-      "price": 136.945,
-      "change": 1.415,
-      "changePct": 1.044,
-      "prevClose": 135.53,
+      "price": 135.67,
+      "change": -0.8,
+      "changePct": -0.5862,
+      "prevClose": 136.47,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 136.945
+        "nasdaq": 135.67
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "TSMU": {
-      "price": 76.65,
-      "change": 4.7916,
-      "changePct": 6.6681,
-      "prevClose": 71.8584,
+      "price": 75.5,
+      "change": -0.2094,
+      "changePct": -0.2766,
+      "prevClose": 75.7094,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 76.65
+        "nasdaq": 75.5
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "NVDA": {
-      "price": 208.26,
-      "change": 3.16,
-      "changePct": 1.5407,
-      "prevClose": 205.1,
+      "price": 207.25,
+      "change": -1.39,
+      "changePct": -0.6662,
+      "prevClose": 208.64,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 208.26
+        "nasdaq": 207.25
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "AMD": {
-      "price": 489.0699,
-      "change": 22.6899,
-      "changePct": 4.8651,
-      "prevClose": 466.38,
+      "price": 488.51,
+      "change": -1.82,
+      "changePct": -0.3712,
+      "prevClose": 490.33,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 489.0699
+        "nasdaq": 488.51
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "ARM": {
-      "price": 352.58,
-      "change": 9.65,
-      "changePct": 2.814,
-      "prevClose": 342.93,
+      "price": 346.08,
+      "change": -0.31,
+      "changePct": -0.0895,
+      "prevClose": 346.39,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 352.58
+        "nasdaq": 346.08
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "AMAT": {
-      "price": 488.895,
-      "change": 35.885,
-      "changePct": 7.9215,
-      "prevClose": 453.01,
+      "price": 489.04,
+      "change": -3.13,
+      "changePct": -0.636,
+      "prevClose": 492.17,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 488.895
+        "nasdaq": 489.04
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "LRCX": {
-      "price": 322.215,
-      "change": 18.935,
-      "changePct": 6.2434,
-      "prevClose": 303.28,
+      "price": 322,
+      "change": -2.45,
+      "changePct": -0.7551,
+      "prevClose": 324.45,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 322.215
+        "nasdaq": 322
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "KLAC": {
-      "price": 2084.01,
-      "change": 154.81,
-      "changePct": 8.0246,
-      "prevClose": 1929.2,
+      "price": 2101.675,
+      "change": -6.385,
+      "changePct": -0.3029,
+      "prevClose": 2108.06,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 2084.01
+        "nasdaq": 2101.675
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "MSFT": {
-      "price": 413.2,
-      "change": -3.47,
-      "changePct": -0.8328,
-      "prevClose": 416.67,
+      "price": 410.4,
+      "change": -1.34,
+      "changePct": -0.3254,
+      "prevClose": 411.74,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 413.2
+        "nasdaq": 410.4
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "META": {
-      "price": 589.355,
-      "change": -3.645,
-      "changePct": -0.6147,
-      "prevClose": 593,
-      "verified": true,
-      "sourceCount": 2,
+      "price": 585.8572,
+      "change": 0.4672,
+      "changePct": 0.0798,
+      "prevClose": 585.39,
+      "verified": false,
+      "sourceCount": 1,
       "perSource": {
-        "yahoo": 589.625,
-        "nasdaq": 589.355
+        "nasdaq": 585.8572
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "TSLA": {
-      "price": 403.28,
-      "change": 12.28,
-      "changePct": 3.1407,
-      "prevClose": 391,
+      "price": 406.6,
+      "change": -2.35,
+      "changePct": -0.5746,
+      "prevClose": 408.95,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 403.28
+        "nasdaq": 406.6
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "ORCL": {
-      "price": 213.81,
-      "change": 0.13,
-      "changePct": 0.0608,
-      "prevClose": 213.68,
+      "price": 211.75,
+      "change": -0.01,
+      "changePct": -0.0047,
+      "prevClose": 211.76,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 213.81
+        "nasdaq": 211.75
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "SNOW": {
-      "price": 243.72,
-      "change": 5.46,
-      "changePct": 2.2916,
-      "prevClose": 238.26,
+      "price": 239.68,
+      "change": -0.59,
+      "changePct": -0.2456,
+      "prevClose": 240.27,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 243.72
+        "nasdaq": 239.68
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "CRWD": {
-      "price": 674.99,
-      "change": 3.97,
-      "changePct": 0.5916,
-      "prevClose": 671.02,
+      "price": 656,
+      "change": -2.79,
+      "changePct": -0.4235,
+      "prevClose": 658.79,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 674.99
+        "nasdaq": 656
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "INTC": {
-      "price": 110.215,
-      "change": 11.045,
-      "changePct": 11.1374,
-      "prevClose": 99.17,
+      "price": 109.024,
+      "change": -1.246,
+      "changePct": -1.13,
+      "prevClose": 110.27,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 110.215
+        "nasdaq": 109.024
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "SPX": {
       "price": 7508.91,
@@ -276,28 +275,28 @@
       "lastUpdated": "2026-06-05T13:51:04Z"
     },
     "NDX": {
-      "price": 29511.1,
-      "change": 553.5,
-      "changePct": 1.9114,
+      "price": 29414.26,
+      "change": 456.66,
+      "changePct": 1.577,
       "prevClose": 28957.6,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 29511.1
+        "nasdaq": 29414.26
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "SOXL": {
-      "price": 213.15,
-      "change": 30.61,
-      "changePct": 16.7689,
-      "prevClose": 182.54,
+      "price": 208.71,
+      "change": -3.05,
+      "changePct": -1.4403,
+      "prevClose": 211.76,
       "verified": false,
       "sourceCount": 1,
       "perSource": {
-        "nasdaq": 213.15
+        "nasdaq": 208.71
       },
-      "lastUpdated": "2026-06-08T14:46:26Z"
+      "lastUpdated": "2026-06-08T22:27:33Z"
     },
     "VIX": {
       "price": 21.51,
@@ -338,22 +337,12 @@
   },
   "failures": [
     {
-      "symbol": "GOOGL",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
       "symbol": "CLS",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
     {
-      "symbol": "TSMU",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
-      "symbol": "NVDA",
+      "symbol": "GOOGL",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
@@ -368,17 +357,7 @@
       "reason": "stooq-quote:http_404"
     },
     {
-      "symbol": "AMD",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
-      "symbol": "ARM",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
-      "symbol": "AMAT",
+      "symbol": "TSMU",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
@@ -393,12 +372,27 @@
       "reason": "stooq-quote:http_404"
     },
     {
-      "symbol": "KLAC",
+      "symbol": "AMD",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "AMAT",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "ARM",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
     {
       "symbol": "LRCX",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "KLAC",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
@@ -413,17 +407,12 @@
       "reason": "stooq-quote:http_404"
     },
     {
-      "symbol": "TSLA",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
-      "symbol": "PLTR",
-      "source": "stooq",
-      "reason": "stooq-quote:http_404"
-    },
-    {
       "symbol": "ORCL",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "TSLA",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
@@ -448,12 +437,22 @@
       "reason": "stooq-quote:http_404"
     },
     {
-      "symbol": "SPX",
+      "symbol": "NVDA",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "PLTR",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
     {
       "symbol": "NDX",
+      "source": "stooq",
+      "reason": "stooq-quote:http_404"
+    },
+    {
+      "symbol": "SPX",
       "source": "stooq",
       "reason": "stooq-quote:http_404"
     },
@@ -478,12 +477,12 @@
       "reason": "yahoo:http_429"
     },
     {
-      "symbol": "TSM",
+      "symbol": "MU",
       "source": "yahoo",
       "reason": "yahoo:http_429"
     },
     {
-      "symbol": "MU",
+      "symbol": "TSM",
       "source": "yahoo",
       "reason": "yahoo:http_429"
     },
@@ -518,17 +517,22 @@
       "reason": "yahoo:http_429"
     },
     {
-      "symbol": "LRCX",
-      "source": "yahoo",
-      "reason": "yahoo:http_429"
-    },
-    {
       "symbol": "KLAC",
       "source": "yahoo",
       "reason": "yahoo:http_429"
     },
     {
+      "symbol": "LRCX",
+      "source": "yahoo",
+      "reason": "yahoo:http_429"
+    },
+    {
       "symbol": "MSFT",
+      "source": "yahoo",
+      "reason": "yahoo:http_429"
+    },
+    {
+      "symbol": "META",
       "source": "yahoo",
       "reason": "yahoo:http_429"
     },
