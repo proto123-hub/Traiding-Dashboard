@@ -1,20 +1,23 @@
 {
   "agent": "comparator",
-  "runAt": "2026-06-15T16:14:48Z",
+  "runAt": "2026-06-15T23:04:00Z",
   "asOfDate": "2026-06-15",
   "tolerance": 0.002,
   "summary": {
-    "verified": 0,
-    "failed": 27,
+    "verified": 1,
+    "failed": 26,
     "total": 27
   },
   "compare": [
     {
       "symbol": "GOOGL",
-      "status": "single-source",
-      "sources": [
-        "nasdaq"
-      ]
+      "status": "verified",
+      "deltaPct": 0.00027,
+      "tolerance": 0.002,
+      "sources": {
+        "yahoo": 369.35,
+        "nasdaq": 369.25
+      }
     },
     {
       "symbol": "CLS",
@@ -74,10 +77,13 @@
     },
     {
       "symbol": "AMD",
-      "status": "single-source",
-      "sources": [
-        "nasdaq"
-      ]
+      "status": "mismatch",
+      "deltaPct": 0.00341,
+      "tolerance": 0.002,
+      "sources": {
+        "yahoo": 547.26,
+        "nasdaq": 545.4
+      }
     },
     {
       "symbol": "ARM",
