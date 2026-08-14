@@ -16,6 +16,9 @@ user edits persist between sessions without requiring a commit.
 | `news-feed.json` | Collected news items with verification state | collector + validator |
 | `sector-map.json` | Ticker → sector bucket → macro theme | architect agent |
 | `price-quotes.json` | Cron-scraped quote table (Yahoo + Saveticker) with cross-source verification | refresher agent + GH Actions |
+| `analyst-targets.json` | Wall Street analyst consensus price targets (low/mean/high, numAnalysts) | validator |
+| `fundamentals.json` | Trailing/forward P/E per ticker; ETFs marked notApplicable | validator (phase 1) / scripts/scrape-fundamentals.mjs (phase 2) |
+| `news-latest.json` | Top 3-5 recent headlines per ticker, sliced from news-feed.json — the ONLY news file index.html fetches | validator |
 
 ## Resolution order at boot
 
@@ -28,16 +31,30 @@ Writes from the manual-entry UI go to `localStorage` only. Committing the
 (see dashboard footer button) — this keeps git history as the audit trail for
 month-over-month changes without noisy commits.
 
-The valuation panel (`index.html` `#valuation-panel`) fetches these four files
-directly at boot via `fetch()`:
-- `data/valuations.json` — FV bands + currentPrice
-- `data/risk-scores.json` — verdict + score (held tickers only)
+The watchlist analytics panel (`index.html` `#analytics-panel`) fetches these
+files directly at boot via `fetch()`, inside `bootValuations()`:
+
+Required (missing/failed ⇒ panel shows a load-error row, matching prior
+behavior):
+- `data/valuations.json`      — FV bands + currentPrice
+- `data/risk-scores.json`     — verdict + score + coverage (all 22 tickers)
 - `data/portfolio-current.json` — held symbol set
-- `data/sector-map.json` — sector label lookup
+- `data/sector-map.json`      — sector label lookup
+- `data/price-quotes.json`    — price + changePct + verified
+- `data/tickers-universe.json` — the 22-ticker universe (name/sector/held/theme)
+
+Optional / progressive enhancement (missing ⇒ that column/detail-block renders
+`—` or `N/A`, the rest of the panel still works):
+- `data/analyst-targets.json` — Wall Street consensus price targets
+- `data/fundamentals.json`    — trailing/forward P/E
+- `data/news-latest.json`     — top 3-5 recent headlines per ticker
+
+`index.html` NEVER fetches `data/news-feed.json` directly (multi-MB) — only
+the derived `data/news-latest.json`. No `localStorage` key is written by this
+panel; expand/collapse UI state is ephemeral (resets on reload).
 
 These reads are non-blocking: the rest of the dashboard renders from `data.js`
-as before; the valuation card populates when the fetches resolve (~50ms local).
-No localStorage key is written by the valuation panel.
+as before; the analytics panel populates when the fetches resolve (~50ms local).
 
 ## Schemas
 
@@ -116,17 +133,20 @@ documents ownership). Held positions + peer-reference tickers may both appear.
 
 ### risk-scores.json
 Per-ticker entries live under a `scores` wrapper, alongside a top-level `note`
-and a `legend` (score bands + verdict vocabulary). Only held positions get a
-risk score — peer-reference tickers stay valuation-only.
+and a `legend` (score bands + verdict vocabulary). Every entry carries a
+mandatory `coverage: "full" | "informational"` field — see the delta note
+below the schema block.
 ```jsonc
 {
-  "note": "Owned by evaluator agent. Score 0-100 (low=safe). Entry zone, target, stop-loss, rrr all required.",
+  "note": "Owned by evaluator agent. coverage:\"full\" (held) requires entryZone/target/stopLoss/rrr/decisionLog as before. coverage:\"informational\" (watch-only) requires ONLY score/verdict/risks[] — no trade-recommendation fields (entryZone/target/stopLoss/rrr/decisionLog are forbidden on informational entries; this is a watchlist observation, not a position management instruction).",
   "legend": {
     "score": { "0-30": "low", "30-60": "medium", "60-100": "high" },
-    "verdict": ["STRONG_BUY", "BUY", "HOLD", "TRIM", "SELL"]
+    "verdict": ["STRONG_BUY", "BUY", "HOLD", "TRIM", "SELL"],
+    "coverage": ["full", "informational"]
   },
   "scores": {
     "GOOGL": {
+      "coverage": "full",                 // NEW field — existing 6 held entries just gain this, nothing else changes
       "updated": "2026-06-05",
       "score": 43,                // 0=low risk, 100=max risk
       "verdict": "HOLD",          // may diverge from score band w/ rationale (e.g. position mgmt)
@@ -142,7 +162,142 @@ risk score — peer-reference tickers stay valuation-only.
         { "date": "2026-04-22", "action": "HOLD", "by": "evaluator", "reason": "At mid-FV" },
         { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "Concentration >40% threshold" }
       ]
+    },
+    "NVDA": {                             // NEW — example watch-only entry
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "score": 38,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "AI chip export restriction overhang" }
+      ]
+      // no entryZone / target / stopLoss / rrr / decisionLog on informational entries
     }
+  }
+}
+```
+`coverage` is additive and **supersedes** the prior "Only held positions get a
+risk score — peer-reference tickers stay valuation-only" rule. Going forward,
+all 22 universe tickers get a `scores` entry; held tickers keep the existing
+full contract (`coverage:"full"`), watch-only tickers get a deliberately
+smaller contract (`coverage:"informational"` — score/verdict/risks[] only, no
+trade-recommendation fields). Backward compatible: the 6 existing held entries
+are untouched except for the one new `coverage:"full"` field.
+
+### analyst-targets.json
+Owner: **validator** (writes after collector drops raw consensus figures to
+`reports/raw/YYYY-MM-DD-<ticker>-analyst.json`; validator cross-checks and
+writes here). Separate from `valuations.json` — this is Wall Street sell-side
+consensus, NOT the evaluator's fundamental FV band. Verified tolerance: 5%
+(0.05) fractional spread between ≥2 sources' `mean` figures — wider than the
+0.2% used for `price-quotes.json` because aggregator consensus means still
+drift more than same-tick price quotes. Leveraged ETFs (SOXL, TSMU) have no
+sell-side coverage — see `notApplicable`.
+```jsonc
+{
+  "note": "Owned by validator agent (collector drops raw consensus figures to reports/raw/, validator cross-checks and writes here). Separate from data/valuations.json — this is Wall Street sell-side consensus, NOT the evaluator's fundamental FV band. Leveraged ETFs (SOXL, TSMU) have no sell-side coverage — see notApplicable.",
+  "updated": "2026-08-14T12:00:00Z",   // ISO timestamp of last validator write
+  "agent": "validator",
+  "tolerance": 0.05,                    // fractional diff on `mean` across sources for verified=true
+  "targets": {
+    "GOOGL": {
+      "updated": "2026-08-14",          // YYYY-MM-DD
+      "agent": "validator",
+      "low": 300,
+      "mean": 410,
+      "high": 480,
+      "numAnalysts": 42,
+      "asOf": "2026-08-10",             // date the consensus figure was published
+      "perSource": {
+        "TipRanks":   { "mean": 415, "numAnalysts": 40 },
+        "MarketBeat": { "mean": 405, "numAnalysts": 44 }
+      },
+      "verified": true,                 // ≥2 perSource.mean within tolerance
+      "verifiedBy": ["validator"],
+      "note": null                      // optional string caveat, e.g. "wide dispersion post-DOJ ruling"
+    },
+    "SOXL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "notApplicable": true,
+      "reason": "Leveraged single-sector ETF — no sell-side analyst price-target coverage"
+    }
+  }
+}
+```
+Single-source entries keep `verified: false` but still populate `low/mean/high`
+(one `perSource` entry) — the UI renders them with a "single-source" note
+rather than hiding the number, matching the existing quote-verification UX.
+
+### fundamentals.json
+Owner: **validator** in phase 1 (same collector→validator pipeline as
+`analyst-targets.json` — PER is collected alongside analyst consensus, no new
+collector output type needed). Phase 2: `scripts/scrape-fundamentals.mjs`
+(deferred) refreshes this file non-interactively via the GH Actions cron, at
+which point `agent: "refresher"` is also a valid value.
+```jsonc
+{
+  "note": "Owned by validator agent (phase 1: from collector raw drops). Phase 2: scripts/scrape-fundamentals.mjs (refresher-style, non-interactive) may also write this file — agent field reflects whichever wrote last. trailingPE = trailing-twelve-month GAAP or non-GAAP EPS as reported by source (see perSource); forwardPE = consensus NTM EPS estimate. ETFs get notApplicable.",
+  "updated": "2026-08-14T12:00:00Z",
+  "agent": "validator",
+  "tolerance": { "trailingPE": 0.03, "forwardPE": 0.05 },
+  "fundamentals": {
+    "GOOGL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 24.8,
+      "forwardPE": 21.3,
+      "asOf": "2026-08-13",
+      "perSource": {
+        "stooq":  { "trailingPE": 24.9, "forwardPE": 21.1 },
+        "nasdaq": { "trailingPE": 24.7, "forwardPE": 21.5 }
+      },
+      "verified": true,                 // both trailingPE and forwardPE within their tolerance across sources
+      "sourceCount": 2,
+      "notApplicable": false
+    },
+    "SOXL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": null,
+      "notApplicable": true,
+      "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)"
+    }
+  }
+}
+```
+Trailing/forward are tracked as separate `verified` conditions internally, but
+the JSON exposes one `verified` boolean = true only if **both** pass their
+respective tolerance.
+
+### news-latest.json
+Owner: **validator**, regenerated (full overwrite, not appended) each cycle by
+slicing `data/news-feed.json`. **`index.html` must never fetch
+`data/news-feed.json` directly** — only this derived file, which stays small
+enough for the browser (3-5 items × 22 tickers ≈ 100 items max).
+```jsonc
+{
+  "note": "Derived by validator agent each cycle from data/news-feed.json (never fetched directly by index.html — that file is multi-MB). Regenerated wholesale, not appended. Selection: up to maxItemsPerTicker items per ticker, verified:true items first (most recent), backfilled with verified:false items if fewer than maxItemsPerTicker verified items exist.",
+  "updated": "2026-08-14T12:00:00Z",
+  "agent": "validator",
+  "sourceFile": "data/news-feed.json",
+  "maxItemsPerTicker": 5,
+  "tickers": {
+    "GOOGL": {
+      "items": [
+        {
+          "id": "2026-08-10-googl-gemini3-ga",     // matches news-feed.json item id
+          "headline": "Google Gemini 3 GA timing teased at Cloud Next",
+          "source": "CNBC",
+          "url": "https://...",
+          "publishedAt": null,                      // nullable — only set if source page states one
+          "collectedAt": "2026-08-10T18:00:00Z",
+          "verified": true
+        }
+      ]
+    },
+    "TSMU": { "items": [] }                          // empty array if no recent items — valid, not an error
   }
 }
 ```

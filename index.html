@@ -350,15 +350,70 @@
   .verdict-TRIM       { background: var(--amber-soft);  color: var(--amber); }
   .verdict-SELL       { background: var(--red-soft);    color: var(--red);   }
 
+  /* ===== Watchlist Analytics (merged) ===== */
+  .wl-row { cursor: pointer; }
+  .wl-row:hover { background: var(--cyan-soft); }
+  .wl-row.expanded { background: var(--panel-2); }
+  .wl-row:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+  .wl-toggle { display: inline-block; color: var(--muted); transition: transform .15s; }
+  .wl-row.expanded .wl-toggle { transform: rotate(90deg); color: var(--cyan-2); }
+
+  .wl-mobile-sub { display: none; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  @media (max-width: 480px) { .wl-mobile-sub { display: block; } }
+
+  .wl-detail-cell { padding: 0 !important; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+  .wl-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 16px; }
+  .wl-detail-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; }
+  .wl-detail-block h4 { margin: 0 0 8px; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+  .wl-stale-banner {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: var(--r-sm);
+    background: var(--amber-soft); color: var(--amber);
+    font-size: 11px; font-weight: 600; font-family: var(--mono);
+  }
+  .wl-stale-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); margin-right: 4px; }
+
+  .trend-cell { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; }
+  .trend-arrow.up { color: var(--green); }
+  .trend-arrow.down { color: var(--red); }
+  .trend-arrow.flat { color: var(--muted); }
+  .trend-band { padding: 1px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: .04em; }
+  .trend-band.under { background: var(--green-soft); color: var(--green); }
+  .trend-band.fair  { background: var(--line-2); color: var(--muted); }
+  .trend-band.over  { background: var(--red-soft); color: var(--red); }
+
+  .analyst-bar-wrap { display: flex; align-items: center; justify-content: center; }
+  .analyst-bar { position: relative; width: 60px; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--line-2), var(--cyan-soft), var(--gold-soft)); }
+  .analyst-bar-marker { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--ink); border-radius: 1px; }
+
+  .news-item { padding: 6px 0; border-bottom: 1px solid var(--line-2); font-size: 11px; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item .headline { color: var(--ink-2); line-height: 1.4; }
+  .news-item .meta { color: var(--faint); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
+  .news-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 4px; }
+  .news-dot.verified { background: var(--green); }
+  .news-dot.unverified { background: var(--faint); }
+
+  .wl-sort-select {
+    padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--panel-2); color: var(--ink-2); font-size: 11px; font-family: var(--mono);
+  }
+
+  @media (max-width: 1024px) {
+    #analytics-table th:nth-child(8), #analytics-table td:nth-child(8) { display: none; }
+  }
   @media (max-width: 768px) {
-    #valuation-table th:nth-child(6),
-    #valuation-table td:nth-child(6) { display: none; }
+    #analytics-table th:nth-child(2), #analytics-table td:nth-child(2),
+    #analytics-table th:nth-child(7), #analytics-table td:nth-child(7) { display: none; }
   }
   @media (max-width: 480px) {
-    #valuation-table th:nth-child(4),
-    #valuation-table td:nth-child(4),
-    #valuation-table th:nth-child(8),
-    #valuation-table td:nth-child(8) { display: none; }
+    #analytics-table th:nth-child(3), #analytics-table td:nth-child(3),
+    #analytics-table th:nth-child(4), #analytics-table td:nth-child(4) { display: none; }
+  }
+  @media (max-width: 380px) {
+    #analytics-table th:nth-child(6), #analytics-table td:nth-child(6) { display: none; }
   }
 </style>
 </head>
@@ -378,9 +433,8 @@
 
     <div class="side-section"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
     <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
-    <div class="side-link" data-scroll="watchlist-body"><span class="dot"></span><span class="ko">워치리스트</span><span class="en">Watchlist (22)</span></div>
+    <div class="side-link" data-scroll="analytics-panel"><span class="dot"></span><span class="ko">워치리스트 분석</span><span class="en">Watchlist Analytics</span></div>
     <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
-    <div class="side-link" data-scroll="valuation-panel"><span class="dot"></span><span class="ko">밸류에이션 FV</span><span class="en">Valuations FV</span></div>
 
     <div class="side-section"><span class="ko">인사이트</span><span class="en">Insights</span></div>
     <div class="side-link" data-scroll="whales"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
@@ -524,62 +578,43 @@
       </div>
     </div>
 
-    <!-- Watchlist -->
-    <div class="card" style="margin-bottom: 16px;">
+    <!-- Watchlist Analytics -->
+    <div class="card" id="analytics-panel" style="margin-bottom: 16px;">
       <div class="card-head">
-        <h3><span class="ko">워치리스트 — 22 종목</span><span class="en">Watchlist — 22 Tickers</span></h3>
-        <span class="sub">CLAUDE.md authoritative · 2-source verified</span>
+        <h3><span class="ko">워치리스트 분석 — 22 종목</span><span class="en">Watchlist Analytics — 22 Tickers</span></h3>
+        <span class="sub" id="wl-updated">data/valuations.json + risk-scores.json + analyst-targets.json</span>
         <span class="spacer"></span>
-        <span class="pill live"><span class="blob"></span>SYNCED</span>
-      </div>
-      <div class="card-body flush">
-        <table class="watchlist">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Sector</th>
-              <th style="text-align:right">Price</th>
-              <th style="text-align:right">Chg %</th>
-              <th>Theme</th>
-            </tr>
-          </thead>
-          <tbody id="watchlist-body">
-            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Valuations -->
-    <div class="card" id="valuation-panel" style="margin-bottom: 16px;">
-      <div class="card-head">
-        <h3><span class="ko">밸류에이션 — FV 밴드</span><span class="en">Valuations — FV Bands</span></h3>
-        <span class="sub" id="val-updated">data/valuations.json · 2026-06-05</span>
-        <span class="spacer"></span>
-        <div class="lang-toggle" id="val-filter-held">
-          <button data-val-filter="all" class="active">전체</button>
-          <button data-val-filter="held">보유</button>
-          <button data-val-filter="watch">워치</button>
+        <div class="lang-toggle" id="wl-filter">
+          <button data-wl-filter="all" class="active">전체</button>
+          <button data-wl-filter="held">보유</button>
+          <button data-wl-filter="watch">워치</button>
         </div>
-        <button id="val-sort-upside" class="val-sort-btn active" data-sort="desc">Upside ↓</button>
+        <select id="wl-sort-field" class="wl-sort-select">
+          <option value="fvUpside" selected>FV Upside</option>
+          <option value="analystUpside">Analyst Upside</option>
+          <option value="riskScore">Risk Score</option>
+          <option value="changePct">Chg %</option>
+        </select>
+        <button id="wl-sort-dir" class="val-sort-btn active" data-sort="desc">↓</button>
         <span class="pill live"><span class="blob"></span>SYNCED</span>
       </div>
       <div class="card-body flush">
-        <table class="watchlist" id="valuation-table">
+        <table class="watchlist" id="analytics-table">
           <thead>
             <tr>
-              <th>Ticker</th>
-              <th>Sector</th>
-              <th style="text-align:right">Price</th>
-              <th style="text-align:center">FV Band (Low — Mid — High)</th>
-              <th style="text-align:right">Upside</th>
-              <th style="text-align:center">Band Pos</th>
-              <th style="text-align:center">Verdict</th>
-              <th style="text-align:right">Next Review</th>
+              <th><span class="ko">종목</span><span class="en">Ticker</span></th>
+              <th><span class="ko">섹터</span><span class="en">Sector</span></th>
+              <th style="text-align:right"><span class="ko">가격/등락</span><span class="en">Price/Chg</span></th>
+              <th style="text-align:center"><span class="ko">추세</span><span class="en">Trend</span></th>
+              <th style="text-align:center"><span class="ko">리스크</span><span class="en">Risk</span></th>
+              <th style="text-align:right"><span class="ko">FV 업사이드</span><span class="en">FV Upside</span></th>
+              <th style="text-align:right"><span class="ko">애널리스트</span><span class="en">Analyst</span></th>
+              <th style="text-align:right">PER</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody id="valuation-body">
-            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
+          <tbody id="analytics-body">
+            <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
           </tbody>
         </table>
       </div>
@@ -798,35 +833,14 @@
       .replace(/'/g, '&#39;');
   }
 
-  // ===== Watchlist =====
-  function renderWatchlist() {
-    if (!v3.watchlistRows.length) return;
-    document.getElementById('watchlist-body').innerHTML = v3.watchlistRows.map(buildWatchRow).join('');
-  }
-
-  function buildWatchRow(r) {
-    const cls = r.changePct > 0 ? 'up' : r.changePct < 0 ? 'down' : 'flat';
-    const sign = r.changePct > 0 ? '+' : '';
-    const priceFmt = r.price != null ? '$' + r.price.toFixed(2) : '—';
-    const chgFmt = r.changePct != null ? sign + r.changePct.toFixed(2) + '%' : '—';
-    const themeFmt = r.themes.slice(0, 2).map(escapeHtml).join(' · ');
-    const heldBadge = r.held
-      ? '<span class="pill live" style="font-size:9px;padding:1px 5px">보유</span>'
-      : '';
-    const verifiedDot = r.verified
-      ? '<span class="blob" style="background:var(--green)"></span>'
-      : '';
-    return `<tr>
-      <td>
-        <div class="sym">${escapeHtml(r.sym)}</div>
-        <div class="name">${escapeHtml(r.name)}</div>
-        ${heldBadge}
-      </td>
-      <td><span class="sector-tag" style="background:var(--line-2);color:var(--ink-2)">${escapeHtml(r.sector)}</span></td>
-      <td class="price">${verifiedDot}${priceFmt}</td>
-      <td class="chg-cell ${cls}">${chgFmt}</td>
-      <td style="color:var(--muted);font-size:11px">${themeFmt}</td>
-    </tr>`;
+  // fetchJsonSafe: used for the 3 optional analytics files — null on 404/network
+  // error (never throws), so a missing file degrades a column, not the page.
+  async function fetchJsonSafe(url) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) { return null; }
   }
 
   // ===== Whales =====
@@ -941,17 +955,19 @@
     document.getElementById('next-tick').textContent = countdown + 's';
   }, 1000);
 
-  // ===== Valuation FV Panel =====
+  // ===== Watchlist Analytics (merged watchlist + valuation panel) =====
   let v3 = window.v3 || {}; window.v3 = v3;
-  v3.valuationRows = [];
-  v3.watchlistRows = [];
-  v3.valFilter = 'all';
-  v3.valSort = 'desc';
+  v3.analyticsRows = [];
+  v3.wlFilter = 'all';
+  v3.wlSortField = 'fvUpside';
+  v3.wlSortDir = 'desc';
   v3.tickerSector = {};
+  v3.expandedRows = new Set();
 
   async function bootValuations() {
+    let valData, riskData, portData, sectorData, quotesData, universeData;
     try {
-      const [valData, riskData, portData, sectorData, quotesData, universeData] = await Promise.all([
+      [valData, riskData, portData, sectorData, quotesData, universeData] = await Promise.all([
         fetch('data/valuations.json').then(r => r.json()),
         fetch('data/risk-scores.json').then(r => r.json()),
         fetch('data/portfolio-current.json').then(r => r.json()),
@@ -959,150 +975,349 @@
         fetch('data/price-quotes.json').then(r => r.json()),
         fetch('data/tickers-universe.json').then(r => r.json()),
       ]);
-
-      // Build inverted sector map: ticker → sector name
-      Object.entries(sectorData.sectors).forEach(([sec, obj]) => {
-        obj.tickers.forEach(t => { v3.tickerSector[t] = sec; });
-      });
-
-      const heldSymbols = new Set(portData.positions.map(p => p.symbol));
-
-      v3.valuationRows = Object.entries(valData.valuations).map(([sym, v]) => {
-        const risk = riskData.scores[sym] || null;
-        return {
-          sym,
-          held: heldSymbols.has(sym),
-          fvLow:      v.fvLow,
-          fvMid:      v.fvMid,
-          fvHigh:     v.fvHigh,
-          price:      v.currentPrice,
-          upside:     v.upsideMidPct,
-          method:     v.method,
-          verdict:    risk ? risk.verdict : null,
-          score:      risk ? risk.score : null,
-          nextReview: v.nextReview,
-        };
-      });
-
-      v3.watchlistRows = universeData.tickers.map(t => {
-        const q = quotesData.quotes[t.symbol] || null;
-        return {
-          sym:       t.symbol,
-          name:      t.name,
-          sector:    t.sector,
-          themes:    t.theme,
-          held:      heldSymbols.has(t.symbol),
-          price:     q ? q.price : null,
-          changePct: q ? q.changePct : null,
-          verified:  q ? q.verified : false,
-        };
-      });
-
-      renderValuations();
-      renderWatchlist();
     } catch (e) {
-      document.getElementById('valuation-body').innerHTML =
-        '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--red)">밸류에이션 데이터 로드 실패 — data/valuations.json을 확인하세요.</td></tr>';
-      document.getElementById('watchlist-body').innerHTML =
-        '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--red)">워치리스트 데이터 로드 실패 — data/price-quotes.json·tickers-universe.json을 확인하세요.</td></tr>';
-    }
-  }
-
-  function renderValuations() {
-    let rows = v3.valuationRows;
-    if (v3.valFilter === 'held')  rows = rows.filter(r => r.held);
-    if (v3.valFilter === 'watch') rows = rows.filter(r => !r.held);
-    if (v3.valSort !== 'none') {
-      rows = [...rows].sort((a, b) =>
-        v3.valSort === 'desc' ? b.upside - a.upside : a.upside - b.upside
-      );
-    }
-    document.getElementById('valuation-body').innerHTML = rows.map(buildValRow).join('');
-  }
-
-  function verdictClass(v) {
-    const allowed = new Set(['STRONG_BUY', 'BUY', 'HOLD', 'TRIM', 'SELL']);
-    return allowed.has(v) ? v : 'UNKNOWN';
-  }
-
-  function buildValRow(r) {
-    const sector = v3.tickerSector[r.sym] || '—';
-
-    // Column 3: price
-    const priceFmt = '$' + r.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    // Column 5: upside color and sign
-    const upsideColor = r.upside > 5 ? 'var(--green)' : r.upside > 0 ? 'var(--amber)' : 'var(--red)';
-    const upsideSign = r.upside >= 0 ? '+' : '';
-    const upsideFmt = upsideSign + r.upside.toFixed(2) + '%';
-
-    // Column 6: FV bar marker position clamped to [0, 60px]
-    const range = r.fvHigh - r.fvLow;
-    const pct = range > 0 ? Math.max(0, Math.min(1, (r.price - r.fvLow) / range)) : 0;
-    const markerLeft = (pct * 60).toFixed(1);
-
-    // Column 7: verdict pill
-    let verdictHtml;
-    if (r.verdict) {
-      verdictHtml = '<span class="verdict-pill verdict-' + verdictClass(r.verdict) + '">' + escapeHtml(r.verdict.replace('_', ' ')) + '</span>';
-    } else {
-      verdictHtml = '<span style="color:var(--faint)">—</span>';
+      document.getElementById('analytics-body').innerHTML =
+        '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--red)">분석 데이터 로드 실패 — data/valuations.json 등 필수 파일을 확인하세요.</td></tr>';
+      return;
     }
 
-    // Column 1: ticker + held badge
+    // Build inverted sector map: ticker → sector name (kept for parity with prior wiring)
+    Object.entries(sectorData.sectors).forEach(([sec, obj]) => {
+      obj.tickers.forEach(t => { v3.tickerSector[t] = sec; });
+    });
+
+    const heldSymbols = new Set(portData.positions.map(p => p.symbol));
+
+    // Optional, independently soft-failing — null on 404/error, never blanks the table.
+    const [analystData, fundData, newsData] = await Promise.all([
+      fetchJsonSafe('data/analyst-targets.json'),
+      fetchJsonSafe('data/fundamentals.json'),
+      fetchJsonSafe('data/news-latest.json'),
+    ]);
+
+    v3.analyticsRows = universeData.tickers.map(t => {
+      const sym = t.symbol;
+      const q = quotesData.quotes[sym] || null;
+      const v = valData.valuations[sym] || null;
+      const risk = riskData.scores[sym] || null;
+      const at = (analystData && analystData.targets && analystData.targets[sym]) || null;
+      const fu = (fundData && fundData.fundamentals && fundData.fundamentals[sym]) || null;
+      const nw = (newsData && newsData.tickers && newsData.tickers[sym] && newsData.tickers[sym].items) || [];
+
+      const price = q ? q.price : null;
+      // Summary-column upside: only shown when analyst consensus is verified (§2 col 7).
+      const analystUpside = (at && at.verified && at.mean != null && price != null)
+        ? (at.mean / price - 1) * 100 : null;
+
+      return {
+        sym, name: t.name, sector: t.sector, themes: t.theme,
+        held: heldSymbols.has(sym),
+        price, changePct: q ? q.changePct : null, verified: q ? q.verified : false,
+        fvLow: v && v.fvLow, fvMid: v && v.fvMid, fvHigh: v && v.fvHigh,
+        fvCurrentPrice: v && v.currentPrice,
+        fvUpside: v && v.upsideMidPct, fvMethod: v && v.method, fvRationale: v && v.rationale,
+        fvCatalysts: v && v.catalysts, fvRisks: v && v.risks,
+        fvUpdated: v && v.updated, nextReview: v && v.nextReview,
+        riskScore: risk && risk.score, riskVerdict: risk && risk.verdict,
+        riskCoverage: risk && risk.coverage,           // 'full' | 'informational' | undefined
+        riskEntryZone: risk && risk.entryZone, riskTarget: risk && risk.target,
+        riskStopLoss: risk && risk.stopLoss, riskRrr: risk && risk.rrr,
+        riskRisks: risk && risk.risks, riskDecisionLog: risk && risk.decisionLog,
+        analystLow: at && at.low, analystMean: at && at.mean, analystHigh: at && at.high,
+        analystNumAnalysts: at && at.numAnalysts, analystAsOf: at && at.asOf,
+        analystVerified: at && at.verified, analystNA: !!(at && at.notApplicable), analystReason: at && at.reason,
+        analystUpside,
+        trailingPE: fu && fu.trailingPE, forwardPE: fu && fu.forwardPE,
+        peVerified: fu && fu.verified, peNA: !!(fu && fu.notApplicable), peReason: fu && fu.reason,
+        newsItems: nw,
+        trend: deriveTrend(q && q.changePct, v),
+        stale: deriveStale(v && v.nextReview),
+      };
+    });
+
+    renderAnalytics();
+  }
+
+  // ===== Trend (phase 1) + staleness — see design doc §5/§6 =====
+  function deriveTrend(changePct, v) {
+    if (changePct == null) return { dayCls: 'flat', dayArrow: '—', bandTag: null };
+    const dayCls = changePct > 0.1 ? 'up' : changePct < -0.1 ? 'down' : 'flat';
+    const dayArrow = dayCls === 'up' ? '▲' : dayCls === 'down' ? '▼' : '–';
+    let bandTag = null;
+    if (v && v.fvLow != null && v.fvHigh != null && v.currentPrice != null) {
+      bandTag = v.currentPrice < v.fvLow ? 'under' : v.currentPrice > v.fvHigh ? 'over' : 'fair';
+    }
+    return { dayCls, dayArrow, bandTag };
+  }
+
+  function deriveStale(nextReview) {
+    if (!nextReview) return { isStale: false };
+    const today = new Date().toISOString().slice(0, 10);
+    return { isStale: nextReview < today, nextReview };
+  }
+
+  // ===== Small formatting helpers =====
+  function fmtUpside(pct) {
+    if (pct == null) return '<span style="color:var(--faint)">—</span>';
+    const color = pct > 5 ? 'var(--green)' : pct > 0 ? 'var(--amber)' : 'var(--red)';
+    const sign = pct >= 0 ? '+' : '';
+    return '<span style="font-family:var(--mono);font-weight:700;color:' + color + '">' + sign + pct.toFixed(2) + '%</span>';
+  }
+
+  function verdictPillHtml(v) {
+    if (!v) return '<span style="color:var(--faint)">—</span>';
+    const known = new Set(['STRONG_BUY', 'BUY', 'HOLD', 'TRIM', 'SELL']);
+    const cls = known.has(v) ? v : 'HOLD';
+    return '<span class="verdict-pill verdict-' + cls + '">' + escapeHtml(v.replace('_', ' ')) + '</span>';
+  }
+
+  function newsItemHtml(item) {
+    const dotCls = item.verified ? 'verified' : 'unverified';
+    const date = (item.publishedAt || item.collectedAt || '').slice(0, 10);
+    return '<div class="news-item">' +
+      '<div class="headline"><a href="' + escapeHtml(item.url || '#') + '" target="_blank" rel="noopener">' + escapeHtml(item.headline) + '</a></div>' +
+      '<div class="meta"><span class="news-dot ' + dotCls + '"></span>' + escapeHtml(item.source) + ' · ' + escapeHtml(date) + '</div>' +
+    '</div>';
+  }
+
+  // ===== Render =====
+  function renderAnalytics() {
+    if (!v3.analyticsRows.length) return;
+    let rows = v3.analyticsRows;
+    if (v3.wlFilter === 'held')  rows = rows.filter(r => r.held);
+    if (v3.wlFilter === 'watch') rows = rows.filter(r => !r.held);
+    if (v3.wlSortDir !== 'none') {
+      const f = v3.wlSortField;
+      rows = [...rows].sort((a, b) => {
+        if (a[f] == null) return 1;
+        if (b[f] == null) return -1;
+        return v3.wlSortDir === 'desc' ? b[f] - a[f] : a[f] - b[f];
+      });
+    }
+    document.getElementById('analytics-body').innerHTML = rows.map(r => {
+      let html = buildAnalyticsRow(r);
+      if (v3.expandedRows.has(r.sym)) html += buildAnalyticsDetail(r);
+      return html;
+    }).join('');
+  }
+
+  function buildAnalyticsRow(r) {
+    const isExpanded = v3.expandedRows.has(r.sym);
     const heldBadge = r.held
       ? ' <span class="pill live" style="font-size:9px;padding:1px 5px">보유</span>'
       : '';
+    const priceFmt = r.price != null ? '$' + r.price.toFixed(2) : '—';
+    const chgCls = r.changePct > 0 ? 'up' : r.changePct < 0 ? 'down' : 'flat';
+    const chgSign = r.changePct > 0 ? '+' : '';
+    const chgFmt = r.changePct != null ? chgSign + r.changePct.toFixed(2) + '%' : '—';
 
-    return '<tr>' +
-      '<td><div class="sym">' + escapeHtml(r.sym) + '</div>' + heldBadge + '</td>' +
-      '<td><span class="sector-tag" style="background:var(--line-2);color:var(--ink-2)">' + escapeHtml(sector) + '</span></td>' +
-      '<td style="text-align:right;font-family:var(--mono);font-size:12px">' + priceFmt + '</td>' +
-      '<td class="fv-band">' +
-        '<span class="fv-low">$' + r.fvLow.toLocaleString() + '</span>' +
-        '<span class="fv-sep"> — </span>' +
-        '<span class="fv-mid">$' + r.fvMid.toLocaleString() + '</span>' +
-        '<span class="fv-sep"> — </span>' +
-        '<span class="fv-high">$' + r.fvHigh.toLocaleString() + '</span>' +
-      '</td>' +
-      '<td style="text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;color:' + upsideColor + '">' + upsideFmt + '</td>' +
+    const trendHtml = '<span class="trend-cell">' +
+      '<span class="trend-arrow ' + r.trend.dayCls + '">' + r.trend.dayArrow + '</span>' +
+      (r.trend.bandTag ? '<span class="trend-band ' + r.trend.bandTag + '">' + r.trend.bandTag.toUpperCase() + '</span>' : '') +
+    '</span>';
+
+    const riskIsInfo = r.riskCoverage === 'informational';
+    const riskScoreFmt = r.riskScore != null ? r.riskScore + (riskIsInfo ? '*' : '') : '—';
+    const riskCellStyle = riskIsInfo ? ' style="opacity:.7"' : '';
+
+    const staleDot = r.stale.isStale ? '<span class="wl-stale-dot"></span>' : '';
+
+    const analystUpsideFmt = r.analystNA
+      ? '<span style="color:var(--faint)">N/A</span>'
+      : fmtUpside(r.analystUpside);
+
+    const perFmt = r.peNA
+      ? '<span style="color:var(--faint)">N/A</span>'
+      : (r.trailingPE != null && r.forwardPE != null
+          ? r.trailingPE.toFixed(1) + ' / ' + r.forwardPE.toFixed(1)
+          : '<span style="color:var(--faint)">—</span>');
+
+    return '<tr class="wl-row' + (isExpanded ? ' expanded' : '') + '" data-sym="' + escapeHtml(r.sym) + '" ' +
+        'tabindex="0" role="button" aria-expanded="' + (isExpanded ? 'true' : 'false') + '">' +
       '<td>' +
-        '<div class="fv-bar-wrap">' +
-          '<div class="fv-bar">' +
-            '<div class="fv-bar-marker" style="left:' + markerLeft + 'px"></div>' +
-          '</div>' +
-        '</div>' +
+        '<div class="sym">' + escapeHtml(r.sym) + '</div>' +
+        '<div class="name">' + escapeHtml(r.name) + '</div>' +
+        heldBadge +
+        '<div class="wl-mobile-sub">' + priceFmt + ' <span class="' + chgCls + '">' + chgFmt + '</span></div>' +
       '</td>' +
-      '<td style="text-align:center">' + verdictHtml + '</td>' +
-      '<td style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">' + escapeHtml(r.nextReview || '—') + '</td>' +
-      '</tr>';
+      '<td><span class="sector-tag" style="background:var(--line-2);color:var(--ink-2)">' + escapeHtml(r.sector) + '</span></td>' +
+      '<td style="text-align:right">' +
+        '<div class="price">' + priceFmt + '</div>' +
+        '<div class="chg-cell ' + chgCls + '">' + chgFmt + '</div>' +
+      '</td>' +
+      '<td style="text-align:center">' + trendHtml + '</td>' +
+      '<td style="text-align:center"><span style="font-family:var(--mono)"' + riskCellStyle + '>' + riskScoreFmt + '</span> ' + verdictPillHtml(r.riskVerdict) + '</td>' +
+      '<td style="text-align:right">' + staleDot + fmtUpside(r.fvUpside) + '</td>' +
+      '<td style="text-align:right">' + analystUpsideFmt + '</td>' +
+      '<td style="text-align:right;font-family:var(--mono)">' + perFmt + '</td>' +
+      '<td style="text-align:center"><span class="wl-toggle">▸</span></td>' +
+    '</tr>';
   }
 
-  // Filter buttons
-  document.getElementById('val-filter-held').addEventListener('click', function(e) {
-    const btn = e.target.closest('[data-val-filter]');
-    if (!btn) return;
-    v3.valFilter = btn.dataset.valFilter;
-    this.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
-    renderValuations();
+  function buildAnalyticsDetail(r) {
+    const staleBanner = r.stale.isStale
+      ? '<div class="wl-stale-banner">⚠ STALE — evaluator last updated ' + escapeHtml(r.fvUpdated || '—') + ' · nextReview ' + escapeHtml(r.nextReview || '—') + ' (passed)</div>'
+      : '';
+
+    // --- FV Band block ---
+    let fvBody;
+    if (r.fvLow != null && r.fvMid != null && r.fvHigh != null) {
+      const range = r.fvHigh - r.fvLow;
+      const refPrice = r.fvCurrentPrice != null ? r.fvCurrentPrice : r.price;
+      const pct = (range > 0 && refPrice != null) ? Math.max(0, Math.min(1, (refPrice - r.fvLow) / range)) : 0;
+      const markerLeft = (pct * 60).toFixed(1);
+      const methods = (r.fvMethod || []).map(escapeHtml).join(', ') || '—';
+      const catalysts = (r.fvCatalysts || []).map(escapeHtml).join(', ') || '—';
+      fvBody =
+        '<div class="fv-band">' +
+          '<span class="fv-low">$' + r.fvLow.toLocaleString() + '</span>' +
+          '<span class="fv-sep"> — </span>' +
+          '<span class="fv-mid">$' + r.fvMid.toLocaleString() + '</span>' +
+          '<span class="fv-sep"> — </span>' +
+          '<span class="fv-high">$' + r.fvHigh.toLocaleString() + '</span>' +
+        '</div>' +
+        '<div class="fv-bar-wrap"><div class="fv-bar"><div class="fv-bar-marker" style="left:' + markerLeft + 'px"></div></div></div>' +
+        '<div style="margin-top:6px">Upside: ' + fmtUpside(r.fvUpside) + '</div>' +
+        '<div style="margin-top:4px;color:var(--muted);font-size:11px">Methods: ' + methods + '</div>' +
+        '<div style="margin-top:4px;color:var(--muted);font-size:11px">Catalysts: ' + catalysts + '</div>' +
+        '<div style="margin-top:8px;color:var(--faint);font-size:10px">Phase-1 approximation: daily price direction + position vs. FV band. Not a multi-day trend — that requires a price-history store (deferred, see design doc §8).</div>';
+    } else {
+      fvBody = '<span style="color:var(--faint)">No valuation data</span>';
+    }
+    const fvBlock = '<div class="wl-detail-block"><h4>FV Band</h4>' + fvBody + '</div>';
+
+    // --- Risk block ---
+    const riskListHtml = list => (list || []).map(x => escapeHtml(x.tag) + '(' + escapeHtml(x.severity) + '): ' + escapeHtml(x.note)).join('<br>') || '—';
+    let riskBody;
+    if (r.riskCoverage === 'informational') {
+      riskBody = '<div>Score ' + (r.riskScore != null ? r.riskScore : '—') + ' · ' + verdictPillHtml(r.riskVerdict) + '</div>' +
+        '<div style="margin-top:6px;color:var(--muted);font-size:11px">Risks: ' + riskListHtml(r.riskRisks) + '</div>';
+    } else if (r.riskScore != null || r.riskVerdict != null) {
+      const ez = r.riskEntryZone ? ('$' + r.riskEntryZone.low + '-' + r.riskEntryZone.high) : '—';
+      const tg = r.riskTarget ? ('base $' + r.riskTarget.base + '/bull $' + r.riskTarget.bull + '/bear $' + r.riskTarget.bear) : '—';
+      const log = (r.riskDecisionLog || []).map(x => escapeHtml(x.date) + ' ' + escapeHtml(x.action) + ' — ' + escapeHtml(x.reason)).join('<br>') || '—';
+      riskBody = '<div>Score ' + (r.riskScore != null ? r.riskScore : '—') + ' · ' + verdictPillHtml(r.riskVerdict) + '</div>' +
+        '<div style="margin-top:6px;font-size:11px">Entry ' + ez + '</div>' +
+        '<div style="margin-top:2px;font-size:11px">Target ' + tg + '</div>' +
+        '<div style="margin-top:2px;font-size:11px">Stop $' + (r.riskStopLoss != null ? r.riskStopLoss : '—') + ' · RRR ' + (r.riskRrr != null ? r.riskRrr : '—') + '</div>' +
+        '<div style="margin-top:6px;color:var(--muted);font-size:11px">Risks: ' + riskListHtml(r.riskRisks) + '</div>' +
+        '<div style="margin-top:6px;color:var(--muted);font-size:11px">decisionLog: ' + log + '</div>';
+    } else {
+      riskBody = '<span style="color:var(--faint)">No risk coverage yet</span>';
+    }
+    const coverageLabel = r.riskCoverage ? r.riskCoverage : (r.riskScore != null ? 'full' : '—');
+    const riskBlock = '<div class="wl-detail-block"><h4>Risk (coverage: ' + escapeHtml(coverageLabel) + ')</h4>' + riskBody + '</div>';
+
+    // --- Analyst Consensus block ---
+    let analystBody;
+    if (r.analystNA) {
+      analystBody = '<span style="color:var(--faint)">N/A — ' + escapeHtml(r.analystReason || '') + '</span>';
+    } else if (r.analystMean != null) {
+      const lowV = r.analystLow, highV = r.analystHigh, meanV = r.analystMean;
+      const range = (highV != null && lowV != null) ? highV - lowV : 0;
+      const pct = (range > 0) ? Math.max(0, Math.min(1, (meanV - lowV) / range)) : 0.5;
+      const markerLeft = (pct * 60).toFixed(1);
+      const upsideToMean = (r.price != null) ? (meanV / r.price - 1) * 100 : null;
+      const singleSrcNote = r.analystVerified === false ? ' <span style="color:var(--faint)">(single-source)</span>' : '';
+      analystBody =
+        '<div class="fv-band">' +
+          (lowV != null ? '<span class="fv-low">$' + lowV.toLocaleString() + '</span><span class="fv-sep"> — </span>' : '') +
+          '<span class="fv-mid">$' + meanV.toLocaleString() + '</span>' +
+          (highV != null ? '<span class="fv-sep"> — </span><span class="fv-high">$' + highV.toLocaleString() + '</span>' : '') +
+        '</div>' +
+        '<div class="analyst-bar-wrap"><div class="analyst-bar"><div class="analyst-bar-marker" style="left:' + markerLeft + 'px"></div></div></div>' +
+        '<div style="margin-top:6px;color:var(--muted);font-size:11px">' +
+          (r.analystNumAnalysts != null ? r.analystNumAnalysts + ' analysts' : '') +
+          (r.analystAsOf ? ' · ' + escapeHtml(r.analystAsOf) : '') + singleSrcNote +
+        '</div>' +
+        '<div style="margin-top:6px">Upside to mean: ' + (upsideToMean != null ? fmtUpside(upsideToMean) : '<span style="color:var(--faint)">—</span>') + '</div>';
+    } else {
+      analystBody = '<span style="color:var(--faint)">—</span>';
+    }
+    const analystBlock = '<div class="wl-detail-block"><h4>Analyst Consensus</h4>' + analystBody + '</div>';
+
+    // --- PER block ---
+    let perBody;
+    if (r.peNA) {
+      perBody = '<span style="color:var(--faint)">N/A — ' + escapeHtml(r.peReason || '') + '</span>';
+    } else if (r.trailingPE != null || r.forwardPE != null) {
+      const verifiedNote = r.peVerified === false
+        ? '<div style="margin-top:4px;color:var(--faint);font-size:10px">single-source</div>'
+        : (r.peVerified ? '<div style="margin-top:4px;color:var(--green);font-size:10px">verified</div>' : '');
+      perBody = '<div style="font-family:var(--mono)">Trail ' + (r.trailingPE != null ? r.trailingPE.toFixed(1) : '—') + '</div>' +
+        '<div style="font-family:var(--mono)">Fwd&nbsp;&nbsp;' + (r.forwardPE != null ? r.forwardPE.toFixed(1) : '—') + '</div>' +
+        verifiedNote;
+    } else {
+      perBody = '<span style="color:var(--faint)">—</span>';
+    }
+    const perBlock = '<div class="wl-detail-block"><h4>PER</h4>' + perBody + '</div>';
+
+    // --- News block ---
+    const newsBody = r.newsItems.length
+      ? r.newsItems.slice(0, 5).map(newsItemHtml).join('')
+      : '<span style="color:var(--faint)">최근 뉴스 없음 · No recent news</span>';
+    const newsBlock = '<div class="wl-detail-block"><h4>Recent News (' + r.newsItems.length + ')</h4>' + newsBody + '</div>';
+
+    return '<tr class="wl-detail" data-sym="' + escapeHtml(r.sym) + '"><td colspan="9" class="wl-detail-cell"><div class="wl-detail-grid">' +
+      staleBanner + fvBlock + riskBlock + analystBlock + perBlock + newsBlock +
+    '</div></td></tr>';
+  }
+
+  // Expand/collapse — single delegated listener on the tbody, survives re-renders.
+  // Mouse click and keyboard (Enter/Space, per role="button" on .wl-row) both toggle.
+  function toggleRowExpand(sym) {
+    if (v3.expandedRows.has(sym)) v3.expandedRows.delete(sym);
+    else v3.expandedRows.add(sym);
+    renderAnalytics();
+  }
+  document.getElementById('analytics-body').addEventListener('click', e => {
+    const row = e.target.closest('.wl-row');
+    if (!row) return;
+    toggleRowExpand(row.dataset.sym);
+  });
+  document.getElementById('analytics-body').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const row = e.target.closest('.wl-row');
+    if (!row) return;
+    e.preventDefault();
+    toggleRowExpand(row.dataset.sym);
   });
 
-  // Sort button: desc → asc → none → desc
-  document.getElementById('val-sort-upside').addEventListener('click', function() {
-    if (v3.valSort === 'desc') {
-      v3.valSort = 'asc';
-      this.textContent = 'Upside ↑';
+  // Filter buttons
+  document.getElementById('wl-filter').addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-wl-filter]');
+    if (!btn) return;
+    v3.wlFilter = btn.dataset.wlFilter;
+    this.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    renderAnalytics();
+  });
+
+  // Sort field select — resets direction to desc on field change.
+  document.getElementById('wl-sort-field').addEventListener('change', function() {
+    v3.wlSortField = this.value;
+    v3.wlSortDir = 'desc';
+    const dirBtn = document.getElementById('wl-sort-dir');
+    dirBtn.textContent = '↓';
+    dirBtn.classList.add('active');
+    renderAnalytics();
+  });
+
+  // Sort direction button: desc → asc → none → desc
+  document.getElementById('wl-sort-dir').addEventListener('click', function() {
+    if (v3.wlSortDir === 'desc') {
+      v3.wlSortDir = 'asc';
+      this.textContent = '↑';
       this.classList.add('active');
-    } else if (v3.valSort === 'asc') {
-      v3.valSort = 'none';
-      this.textContent = 'Upside —';
+    } else if (v3.wlSortDir === 'asc') {
+      v3.wlSortDir = 'none';
+      this.textContent = '—';
       this.classList.remove('active');
     } else {
-      v3.valSort = 'desc';
-      this.textContent = 'Upside ↓';
+      v3.wlSortDir = 'desc';
+      this.textContent = '↓';
       this.classList.add('active');
     }
-    renderValuations();
+    renderAnalytics();
   });
 
   document.addEventListener('DOMContentLoaded', bootValuations);
