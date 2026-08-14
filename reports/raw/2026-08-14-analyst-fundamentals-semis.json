@@ -1,0 +1,445 @@
+{
+  "agent": "collector",
+  "collectedAt": "2026-08-14T09:00:00Z",
+  "purpose": "analyst targets + PER for watchlist analytics view (phase 1)",
+  "collectionMethod": "WebFetch was EGRESS_BLOCKED by the session's network proxy for every candidate financial-data domain attempted (stockanalysis.com, tipranks.com, marketbeat.com, finance.yahoo.com, zacks.com, benzinga.com, cnn.com, nasdaq.com, marketwatch.com, investing.com, wallstreetzen.com, macrotrends.net, gurufocus.com, sec.gov, reuters.com, wsj.com). Per proxy policy these are org-level denials, not retried. All figures below were instead obtained via the WebSearch tool with `allowed_domains` restricted to a single named source per call, which returns a model-summarized snapshot of that page's content rather than raw HTML. This is a materially weaker provenance chain than a direct fetch/parse -- numbers should be treated as 'reported by search snapshot of <source>, 2026-08-14' and the validator should independently re-attempt direct fetches if/when the egress policy allows, or manually spot-check before stamping verified:true. Where a source displayed only a mean price target and a %-upside/downside figure (no explicit dollar current price), the 'price' field was arithmetically derived (price = target / (1 + pct)) and is flagged with a note; these derivations cross-checked consistently against the low AND high target where all three were available.",
+  "tickers": {
+    "TSM": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/tsm/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 430,
+          "targetMean": 540.2,
+          "targetHigh": 700,
+          "numAnalysts": 19,
+          "trailingPE": 29.70,
+          "forwardPE": 19.27,
+          "price": 418.05,
+          "asOf": null,
+          "note": "Consensus attributed by the page to 'S&P Global' analyst poll. Price derived from displayed upside %; cross-checked via low (+2.86%) and high (+67.44%) targets, both resolve to ~418.05. Trailing/forward PE from stockanalysis.com/stocks/tsm/statistics/. A separate WebSearch pass (not domain-restricted) surfaced an alternate stockanalysis.com-esque snapshot of 18 analysts / mean 547.09 / low 431.5 / high 700 -- likely a different cache/timestamp of the same page; not used here in favor of the more internally-consistent figure."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NYSE/TSM/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 524.25,
+          "targetHigh": null,
+          "numAnalysts": 16,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "MarketBeat's headline 'consensus price target' figure; low/high table and PE not captured in the retrieved snapshot. Consensus rating 'Buy'."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/tsm/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 430,
+          "targetMean": 525.00,
+          "targetHigh": 650,
+          "numAnalysts": 7,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 403.41,
+          "asOf": null,
+          "note": "numAnalysts = 6 Buy + 1 Hold per the retrieved snapshot ('Strong Buy' rating); this is lower than the analyst count on other sources, TipRanks often narrows to a recent/top-analyst cohort -- flag for validator. Last price explicitly stated as $403.41."
+        },
+        {
+          "name": "wallstreetzen.com",
+          "url": "https://www.wallstreetzen.com/stocks/us/nyse/tsm/stock-forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 544.00,
+          "targetHigh": null,
+          "numAnalysts": 5,
+          "trailingPE": 37.57,
+          "forwardPE": null,
+          "price": 392.31,
+          "asOf": null,
+          "note": "1Y price target labeled for a ~mid-2027 horizon. Site also cites an alternate trailing PE of 35.59x ('good value vs industry avg 51.24x') alongside the 37.57x figure ('vs industry avg 53.81x') -- both reported here, not reconciled. Consensus rating 'Strong Buy' from 5 analysts."
+        }
+      ]
+    },
+    "NVDA": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/nvda/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 180,
+          "targetMean": 302.83,
+          "targetHigh": 500,
+          "numAnalysts": 61,
+          "trailingPE": 34.32,
+          "forwardPE": 22.49,
+          "price": 225.06,
+          "asOf": null,
+          "note": "Consensus attributed to 'S&P Global' poll. Price derived from upside %; cross-checked via low (-20.02%) and high (+122.17%), both resolve to ~225.06. PE from stockanalysis.com/stocks/nvda/statistics/."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/NVDA/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 305.94,
+          "targetHigh": null,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Snapshot mentioned '~48 analysts Buy, 2-3 Hold' but no single clean total count was stated; left null rather than guess. Consensus rating 'Buy'."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/nvda/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 250,
+          "targetMean": 309.94,
+          "targetHigh": 500,
+          "numAnalysts": 37,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 206.86,
+          "asOf": null,
+          "note": "'Based on 37 Wall Street analysts offering 12-month price targets in the last 3 months.' Separately the page states '40 of 42 analysts rate Buy' (a different, larger cohort/window) -- numAnalysts here uses the 37 tied to the actual price-target stat. Price derived from stated 49.84% upside."
+        }
+      ]
+    },
+    "AMD": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/amd/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 365,
+          "targetMean": 612.84,
+          "targetHigh": 1250,
+          "numAnalysts": 52,
+          "trailingPE": 123.37,
+          "forwardPE": 43.52,
+          "price": 483.0,
+          "asOf": null,
+          "note": "Consensus attributed to 'S&P Global' poll. Price derived from upside %; cross-checked via low (-24.43%) and high (+158.79%), both resolve to ~483.0. PE from stockanalysis.com/stocks/amd/statistics/."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/AMD/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 546.87,
+          "targetHigh": null,
+          "numAnalysts": 32,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Moderate Buy' from thirty-two brokerages."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/amd/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 465,
+          "targetMean": 640.82,
+          "targetHigh": 1250,
+          "numAnalysts": 36,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 521.95,
+          "asOf": null,
+          "note": "'Strong Buy' consensus based on 28 Buys + 8 Holds over past 3 months (=36). Last price explicitly stated as $521.95."
+        }
+      ]
+    },
+    "ARM": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/arm/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 125,
+          "targetMean": 295.95,
+          "targetHigh": 500,
+          "numAnalysts": 40,
+          "trailingPE": 288.43,
+          "forwardPE": 118.43,
+          "price": 354.6,
+          "asOf": "2026-06-24",
+          "note": "Page states data 'last updated on June 24, 2026' (S&P Global poll) -- notably stale relative to collection date; validator should treat with caution / seek a fresher pull. Mean target is BELOW current price (-16.53%), i.e. average analyst view implies downside. Price derived from that %, cross-checked via low (-64.75%) and high (+41.02%), both resolve to ~354.6. PE from stockanalysis.com/stocks/arm/statistics/."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/ARM/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 285.33,
+          "targetHigh": null,
+          "numAnalysts": 27,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Moderate Buy' from twenty-seven analysts. Snapshot noted wide individual dispersion (Goldman Sachs $150 target w/ Sell rating vs Rosenblatt $250 w/ Buy on the same recent dates), consistent with the wide low/high band seen on other sources."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/arm/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 150,
+          "targetMean": 301.06,
+          "targetHigh": 500,
+          "numAnalysts": 20,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 260.01,
+          "asOf": null,
+          "note": "Snapshot text states 'based on the ratings of 20 Wall Street Analysts' but also cites a '26 Buy / 12 Hold / 0 Sell' breakdown (=38) for 'the current month' -- these two counts conflict and are both reported as-is; numAnalysts uses the explicit '20 analysts' framing. Reported ARM earnings Jul 29 2026 beat EPS estimate ($0.45 vs $0.402) with targets cut post-earnings despite the beat."
+        }
+      ]
+    },
+    "AMAT": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/amat/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 358,
+          "targetMean": 629.06,
+          "targetHigh": 900,
+          "numAnalysts": 39,
+          "trailingPE": 46.09,
+          "forwardPE": 33.45,
+          "price": 522.05,
+          "asOf": null,
+          "note": "Consensus attributed to 'S&P Global' poll. Page explicitly notes 'EPS and Forward PE are based on non-GAAP adjusted numbers.' Price derived from upside %; cross-checked via low (-31.43%) and high (+72.37%), both resolve to ~522.05. PE from stockanalysis.com/stocks/amat/statistics/."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/AMAT/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 603.23,
+          "targetHigh": null,
+          "numAnalysts": 35,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Moderate Buy' from thirty-five research firms. Q3 FY2026 earnings beat noted ($3.50 actual vs $3.40 consensus), reported around 2026-08-13."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/amat/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 500,
+          "targetMean": 639.75,
+          "targetHigh": 900,
+          "numAnalysts": 28,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "'Strong Buy' rating based on 25 Buy + 3 Hold (=28). Retrieved snapshot ALSO separately cited a conflicting headline figure of '$667.46 average target, 20.58% upside' elsewhere on the same page/session -- both numbers reported here verbatim, not reconciled; low/high ($500/$900) were only given alongside the $639.75 figure so that is the mean paired with them."
+        }
+      ]
+    },
+    "LRCX": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/lrcx/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 290,
+          "targetMean": 368.13,
+          "targetHigh": 500,
+          "numAnalysts": 35,
+          "trailingPE": 51.64,
+          "forwardPE": 36.55,
+          "price": 294.44,
+          "asOf": null,
+          "note": "Consensus rating 'Strong Buy'; snapshot did not explicitly attribute the poll to S&P Global this time (unlike other tickers) -- just '35 analysts'. Price derived from upside %; cross-checked via low (-1.51%) and high (+69.82%), both resolve to ~294.44. PE from stockanalysis.com/stocks/lrcx/statistics/."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/LRCX/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 358.47,
+          "targetHigh": null,
+          "numAnalysts": 34,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Moderate Buy' from thirty-four brokerages. Individual recent targets cited range $358-$480 (BofA $480, Mizuho $400, Morgan Stanley $367, Needham $390)."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/lrcx/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 379.02,
+          "targetHigh": null,
+          "numAnalysts": 26,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 305.25,
+          "asOf": null,
+          "note": "'Strong Buy' rating based on 23 Buy + 3 Hold (=26). Low/high band not captured in this snapshot. Price derived from stated 24.18% upside."
+        }
+      ]
+    },
+    "KLAC": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/klac/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 165,
+          "targetMean": 230.85,
+          "targetHigh": 325,
+          "numAnalysts": 29,
+          "trailingPE": 57.57,
+          "forwardPE": 42.34,
+          "price": 197.68,
+          "asOf": null,
+          "note": "Consensus attributed to 'S&P Global' poll, rating 'Buy'. Price derived from upside %; cross-checked via low (-16.53%) and high (+64.41%), both resolve to ~197.68. PE from stockanalysis.com/stocks/klac/statistics/. IMPORTANT for validator: a TipRanks headline surfaced separately referenced a 'ten-for-one forward stock split approval' for KLA -- if that split has since occurred, price/target figures across sources here may sit on different pre/post-split bases and need reconciliation."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/KLAC/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 223.70,
+          "targetHigh": null,
+          "numAnalysts": 30,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Moderate Buy' from thirty ratings firms."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/klac/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 241.30,
+          "targetHigh": null,
+          "numAnalysts": 22,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 210.5,
+          "asOf": null,
+          "note": "'Moderate Buy' rating based on 16 Buy + 6 Hold (=22). Low/high not captured in this snapshot; individual recent targets cited range $230-$325 (Goldman $230 Neutral, BofA $260 Buy, Stifel $250 Buy, Cantor $325 Overweight). Price derived from stated 14.62% upside."
+        }
+      ]
+    },
+    "INTC": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/intc/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": 75,
+          "targetMean": 114.88,
+          "targetHigh": 200,
+          "numAnalysts": 48,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 100.95,
+          "asOf": null,
+          "note": "Consensus attributed to 'S&P Global' poll, rating 'Hold'. Price derived from upside %; cross-checked via low (-25.71%) and high (+98.12%), both resolve to ~100.95. Trailing PE explicitly NOT shown on stockanalysis.com/stocks/intc/statistics/ per retrieved snapshot -- company is unprofitable TTM (loss per share -$2.30, TTM revenue $57.03B, net loss -$11.29B); a second search pass on this same page returned a slightly different mean ($115.27 / +14.29%) likely a different cache snapshot, not used here in favor of the low/high-complete figure. Forward PE also not captured for the NASDAQ:INTC listing (only a European-listing ETR:INL figure of 1,038.48 surfaced, treated as not comparable/unreliable and excluded)."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/INTC/forecast/",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 107.85,
+          "targetHigh": null,
+          "numAnalysts": 49,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "note": "Consensus rating 'Hold' from forty-nine research firms. Stock up 3.6% intraday as of 2026-08-13 per a cited instant-alert headline."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/intc/forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 119.11,
+          "targetHigh": null,
+          "numAnalysts": 63,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 92.32,
+          "asOf": null,
+          "note": "'Hold' consensus; current-month breakdown cited as 12 Buy / 47 Hold / 4 Sell (=63) -- used as numAnalysts but this rating-breakdown count may not exactly equal the cohort used for the price-target average (not stated explicitly). Low/high not captured. Price derived from stated 29.02% upside. Notable dispersion: BofA $145 Buy, Citi $130 Buy, KeyBanc $155 Buy vs Rosenblatt $65 Sell -- all cited as recent."
+        },
+        {
+          "name": "wallstreetzen.com",
+          "url": "https://www.wallstreetzen.com/stocks/us/nasdaq/intc/stock-forecast",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": 96.61,
+          "targetHigh": null,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 97.52,
+          "asOf": "2026-08-11",
+          "note": "Price explicitly stated: 'Intel stock last closed at $97.52, down 4.06%... as of August 11, 2026.' Trailing PE not meaningful -- page states INTC is unprofitable with current EPS -$0.63 (TTM). 1Y price target dated to a ~mid-2027 horizon. Forecast EPS for FY2026 cited elsewhere on the site as $1.10 (return-to-profitability expectation), which is inconsistent with the $0.48 FY2026 consensus EPS a different source (Seeking Alpha, via search snippet only, not fetched as a full source here) implied -- flagging the spread for validator, not reconciling."
+        },
+        {
+          "name": "gurufocus.com",
+          "url": "https://www.gurufocus.com/term/forward-pe-ratio/INTC",
+          "retrievedAt": "2026-08-14T09:00:00Z",
+          "targetLow": null,
+          "targetMean": null,
+          "targetHigh": null,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": 76.86,
+          "price": null,
+          "asOf": "2026-08-11",
+          "note": "Forward PE only (no price-target data on this page). Page also computes a 'GF Value' of $31.48 tagged 'Significantly Overvalued' and states Semiconductors industry median forward PE is 30.32 (INTC +153.5% above). Other uncollected sources surfaced conflicting forward-PE figures in the same search pass (valueinvesting.io 71.42 as of 2026-08-09, ycharts 138.89) -- not recorded as full sources here since only WSJ/tipranks/marketbeat/stockanalysis/wallstreetzen were the intended candidate list; noted for the validator's awareness of how wide forward-PE estimates disperse for a currently-unprofitable name."
+        }
+      ]
+    }
+  },
+  "failures": [
+    {
+      "status": "fetch-failed",
+      "reason": "EGRESS_BLOCKED",
+      "attemptedUrls": [
+        "https://stockanalysis.com/stocks/TSM/",
+        "https://stockanalysis.com/stocks/TSM/forecast/",
+        "https://www.tipranks.com/stocks/tsm/forecast",
+        "https://www.marketbeat.com/stocks/NYSE/TSM/price-target/",
+        "https://www.wsj.com/market-data/quotes/TSM",
+        "https://finance.yahoo.com/quote/TSM/",
+        "https://www.zacks.com/stock/quote/TSM",
+        "https://www.benzinga.com/quote/TSM",
+        "https://www.cnn.com/markets/stocks/TSM",
+        "https://www.marketwatch.com/investing/stock/tsm",
+        "https://www.nasdaq.com/market-activity/stocks/tsm/price-target",
+        "https://www.wallstreetzen.com/stocks/us/nyse/tsm/stock-forecast",
+        "https://www.macrotrends.net/stocks/charts/TSM/taiwan-semiconductor-manufacturing/pe-ratio",
+        "https://www.gurufocus.com/term/forward-pe-ratio/TSM",
+        "https://www.investing.com/equities/taiwan-semicond.manufacturing-co-consensus-estimates",
+        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=taiwan+semiconductor&type=6-K",
+        "https://www.reuters.com/markets/companies/TSM.N"
+      ],
+      "note": "WebFetch (direct tool-side fetch) blocked for every candidate domain by the session's egress proxy policy. This is a session/environment-level block, not source-specific -- it applies equally to all 8 tickers, not just TSM (TSM used here as the representative probe set). Worked around via WebSearch with allowed_domains restriction per source (see collectionMethod note and per-ticker sources above); WSJ additionally could not be searched via WebSearch (API error: 'wsj.com not accessible to our user agent'), so WSJ was dropped entirely as a candidate source for all 8 tickers.",
+      "retriedAt": "2026-08-14T09:00:00Z"
+    }
+  ]
+}
