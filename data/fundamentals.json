@@ -1,0 +1,409 @@
+{
+  "note": "Owned by validator agent (phase 1: from collector raw drops). Phase 2: scripts/scrape-fundamentals.mjs (refresher-style, non-interactive) may also write this file — agent field reflects whichever wrote last. trailingPE = trailing-twelve-month GAAP or non-GAAP EPS as reported by source (see perSource); forwardPE = consensus NTM EPS estimate. ETFs get notApplicable.",
+  "updated": "2026-08-14T12:00:00Z",
+  "agent": "validator",
+  "tolerance": {
+    "trailingPE": 0.03,
+    "forwardPE": 0.05
+  },
+  "collectionMethod": "Collector's WebFetch was EGRESS_BLOCKED for every candidate financial-data domain this session (confirmed org-level, not source-specific, via a control test against example.com). All raw figures were obtained instead via the WebSearch tool with allowed_domains restricted per source, which returns an AI-generated synthesis of that domain's indexed snippets rather than raw parsed HTML/JSON. This is a materially weaker provenance chain than a direct fetch — numbers are 'as reported by a search snapshot of <source>', not independently parsed. The validator performed a second round of targeted WebSearch re-checks (same tool/limitation) on the highest-priority disagreements (held tickers + the worst cross-source gaps); these re-checks corroborate or contradict the collector's original figures but share the same fundamental weakness (search-snapshot synthesis, not direct page parsing). Treat all 'verified:true' stamps in this file as 'agreement between ≥2 independently-queried search snapshots', not as ground-truth confirmation from primary filings.",
+  "fundamentals": {
+    "GOOGL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 17.95,
+      "forwardPE": 26.91,
+      "asOf": "2026-08-13",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 17.94,
+          "forwardPE": 26.91
+        },
+        "tipranks.com": {
+          "trailingPE": 27.8,
+          "forwardPE": null,
+          "excluded": true,
+          "excludedReason": "Outlier not corroborated by independent recheck — see note."
+        },
+        "GuruFocus (validator recheck, 2026-08-10)": {
+          "trailingPE": 17.96
+        }
+      },
+      "verified": false,
+      "sourceCount": 3,
+      "notApplicable": false,
+      "note": "KNOWN FLAG ADJUDICATED: stockanalysis.com's trailingPE (17.94) vs TipRanks' (27.8) differ by 55% — far outside 3% tolerance. Validator ran an independent WebSearch recheck (GuruFocus/MacroTrends): GuruFocus TTM PE = 17.37 as of 2026-08-13 and 17.96 as of 2026-08-10, both clustering tightly with stockanalysis.com (17.94) and NOT with TipRanks (27.8). trailingPE is treated as effectively cross-verified at ~17.95 (TipRanks' 27.8 rejected as an outlier/stale/different-EPS-basis figure); forwardPE remains single-source (stockanalysis.com only, 26.91) so the schema's combined verified boolean stays false (requires both legs to pass)."
+    },
+    "CLS": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 51.65,
+      "forwardPE": 37.61,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 51.65,
+          "forwardPE": 37.61
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — TipRanks/MarketBeat returned no numeric PE for CLS in this collection pass."
+    },
+    "AVGO": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 69.25,
+      "forwardPE": 26.4,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 69.25,
+          "forwardPE": 26.4
+        },
+        "tipranks.com": {
+          "trailingPE": 62.23,
+          "forwardPE": 83,
+          "forwardPENote": "reported only as an approximate '~83x'"
+        }
+      },
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "note": "trailingPE 69.25 vs 62.23 differ 10.1% (outside 3% tolerance); forwardPE 26.4 vs ~83 differ ~3.1x (outside 5% tolerance). Not reconciled this session — plausibly a GAAP vs. non-GAAP/adjusted EPS basis difference (Broadcom's GAAP EPS runs well below adjusted EPS due to VMware-related purchase-intangible amortization, which would explain a much higher GAAP-basis PE), but this is a hypothesis, not confirmed. Both legs unverified; stockanalysis.com figures reported as primary/headline values."
+    },
+    "MRVL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 60.45,
+      "forwardPE": 38.54,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 60.45,
+          "forwardPE": 38.54
+        },
+        "tipranks.com": {
+          "trailingPE": null,
+          "forwardPE": 48.5
+        }
+      },
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "note": "trailingPE single-source (stockanalysis.com only). forwardPE 38.54 vs 48.5 differ 20.5% (outside 5% tolerance) — not reconciled; TipRanks explicitly frames 48.5x as 'low end of past-year historical range,' suggesting it is a genuine, differently-timed consensus read rather than an error."
+    },
+    "MU": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 19.43,
+      "forwardPE": 5.99,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 19.43,
+          "forwardPE": 5.99
+        },
+        "tipranks.com": {
+          "trailingPE": null,
+          "forwardPE": 11.1
+        }
+      },
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "note": "trailingPE single-source (stockanalysis.com only). forwardPE 5.99 vs 11.1 differ 46% (outside 5% tolerance) — not reconciled; MU is a highly cyclical memory name where small forward-EPS-estimate differences produce large PE swings; likely differing consensus fiscal-year windows or EPS basis, not confirmed."
+    },
+    "TSM": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 29.7,
+      "forwardPE": 19.27,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 29.7,
+          "forwardPE": 19.27
+        },
+        "wallstreetzen.com": {
+          "trailingPE": 37.57,
+          "trailingPEAlt": 35.59
+        }
+      },
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "note": "trailingPE 29.70 vs 37.57 differ 21% (outside 3% tolerance) — not reconciled. WallStreetZen itself cited two different trailing-PE figures (37.57 vs 35.59) in the same pull, underscoring the metric's instability across vendors for TSM's ADR listing. forwardPE single-source (stockanalysis.com only)."
+    },
+    "PLTR": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 153.1,
+      "forwardPE": 94.05,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 153.1,
+          "forwardPE": 94.05
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for PLTR."
+    },
+    "TSMU": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": null,
+      "notApplicable": true,
+      "reason": "Leveraged single-stock ETF (2x daily-reset TSM exposure) — P/E not meaningful, no issuer earnings"
+    },
+    "NVDA": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 34.32,
+      "forwardPE": 22.49,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 34.32,
+          "forwardPE": 22.49
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for NVDA."
+    },
+    "AMD": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 123.37,
+      "forwardPE": 43.52,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 123.37,
+          "forwardPE": 43.52
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for AMD."
+    },
+    "ARM": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": null,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 288.43,
+          "forwardPE": 118.43,
+          "excluded": true,
+          "excludedReason": "Same stale June-2026 page excluded above — not trusted as current."
+        }
+      },
+      "verified": false,
+      "sourceCount": 0,
+      "notApplicable": false,
+      "note": "The only source with numeric PE for ARM (stockanalysis.com, 288.43 trailing / 118.43 forward) is the same page excluded above for being >30 days stale. No other source reported numeric ARM PE. trailingPE/forwardPE reported as null rather than passing along an unverified stale figure — evaluator should treat ARM PE as unavailable this cycle."
+    },
+    "AMAT": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 46.09,
+      "forwardPE": 33.45,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 46.09,
+          "forwardPE": 33.45,
+          "basisNote": "non-GAAP adjusted, per source"
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for AMAT."
+    },
+    "LRCX": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 51.64,
+      "forwardPE": 36.55,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 51.64,
+          "forwardPE": 36.55
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for LRCX."
+    },
+    "KLAC": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 57.57,
+      "forwardPE": 42.34,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 57.57,
+          "forwardPE": 42.34
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for KLAC. (Post-split basis, consistent with the verified target data above.)"
+    },
+    "MSFT": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 28.07,
+      "forwardPE": 25.57,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 28.07,
+          "forwardPE": 25.57
+        },
+        "marketbeat.com": {
+          "trailingPE": 38.75,
+          "excluded": true,
+          "excludedReason": "Collector itself flagged this figure as ambiguous — MarketBeat's snippet did not label it trailing vs. forward; recorded as trailingPE only by the collector's default assumption. 27.6% off stockanalysis.com's trailingPE — not reconciled."
+        }
+      },
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "note": "trailingPE not verified — the only second data point (MarketBeat 38.75) carries acknowledged metric-definition ambiguity from the collector itself, so it is not treated as a genuine cross-check. forwardPE single-source (stockanalysis.com only)."
+    },
+    "META": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 21.81,
+      "forwardPE": 18.07,
+      "asOf": "2026-08-13",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 21.81,
+          "forwardPE": 18.07
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for META."
+    },
+    "TSLA": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 339.86,
+      "forwardPE": 169.43,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 339.86,
+          "forwardPE": 169.43
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for TSLA."
+    },
+    "ORCL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": 24.77,
+      "forwardPE": 17.93,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": 24.77,
+          "forwardPE": 17.93
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "Single-source only — no other source returned numeric PE for ORCL."
+    },
+    "SNOW": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": null,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": null,
+          "forwardPE": null,
+          "note": "TTM GAAP loss — trailing PE not meaningful; forward PE not captured in this source's own snippet."
+        }
+      },
+      "verified": false,
+      "sourceCount": 0,
+      "notApplicable": false,
+      "note": "SNOW is GAAP loss-making TTM — trailing PE is genuinely not meaningful (consistent with all sources showing no numeric trailing PE). No source in this collection pass returned a structured numeric forward PE; the collector's raw note mentions an informal secondary range (~169-172, GuruFocus/Investing.com/Yahoo, not independently captured as a structured perSource entry) — not usable for verification, flagged for a future collection pass."
+    },
+    "CRWD": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": 181.82,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "trailingPE": null,
+          "forwardPE": null,
+          "note": "GAAP loss TTM — not meaningful."
+        },
+        "Yahoo Finance": {
+          "forwardPE": 181.82,
+          "note": "Trailing P/E shown as '--' (not meaningful) per source; forward PE explicitly attributed to Yahoo Finance."
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "CRWD is GAAP loss-making TTM — trailing PE genuinely not meaningful. forwardPE is single-source (Yahoo Finance, 181.82) — unverified pending a second source."
+    },
+    "INTC": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": 76.86,
+      "asOf": "2026-08-11",
+      "perSource": {
+        "GuruFocus": {
+          "forwardPE": 76.86,
+          "asOf": "2026-08-11",
+          "note": "Reconfirmed via an independent validator recheck — identical value returned both times."
+        }
+      },
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
+      "note": "KNOWN FLAG ADJUDICATED: trailingPE is null across ALL sources (stockanalysis.com, MarketBeat, TipRanks, WallStreetZen) — consistent, since INTC is TTM GAAP-loss-making (not meaningful). forwardPE: collector's raw notes cited three conflicting figures (76.86 GuruFocus / 71.42 valueinvesting.io / 138.89 ycharts), but only GuruFocus was captured as a structured, attributable source; the validator's independent WebSearch recheck reproduced GuruFocus's 76.86 exactly (dated 2026-08-11 both times) — high-confidence but still technically single-source since the other two figures were never captured as full perSource entries. Do NOT treat INTC's forward PE as reliable for evaluation — it is a currently-loss-making/turnaround name with a small forward-EPS denominator, which the wide informal dispersion (71-139) itself demonstrates."
+    },
+    "SOXL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "trailingPE": null,
+      "forwardPE": null,
+      "notApplicable": true,
+      "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)"
+    }
+  }
+}

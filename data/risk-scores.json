@@ -1,114 +1,320 @@
 {
-  "note": "Owned by evaluator agent. Score 0-100 (low=safe). Entry zone, target (base/bull/bear), stop-loss, risk/reward ratio all required.",
+  "note": "Owned by evaluator agent. Score 0-100 (low=safe). coverage:\"full\" (held) requires entryZone/target/stopLoss/rrr/decisionLog as before. coverage:\"informational\" (watch-only) requires ONLY score/verdict/risks[] — trade-recommendation fields (entryZone/target/stopLoss/rrr/decisionLog) are not populated for informational entries; this is a watchlist observation, not a position management instruction.",
   "legend": {
     "score": { "0-30": "low", "30-60": "medium", "60-100": "high" },
-    "verdict": ["STRONG_BUY", "BUY", "HOLD", "TRIM", "SELL"]
+    "verdict": ["STRONG_BUY", "BUY", "HOLD", "TRIM", "SELL"],
+    "coverage": ["full", "informational"]
   },
   "scores": {
     "GOOGL": {
-      "updated": "2026-06-05",
-      "score": 43,
+      "coverage": "full",
+      "updated": "2026-08-14",
+      "score": 35,
       "verdict": "HOLD",
-      "entryZone": { "low": 345, "high": 360 },
-      "target": { "base": 400, "bull": 445, "bear": 320 },
-      "stopLoss": 340,
-      "rrr": 1.35,
+      "entryZone": { "low": 335, "high": 355 },
+      "target": { "base": 400, "bull": 460, "bear": 333 },
+      "stopLoss": 325,
+      "rrr": 2.51,
       "risks": [
-        { "tag": "concentration", "severity": "high", "note": "40.9% of book at EOD market values — >40% +25 pts (crossed threshold from >20% +15 at 13:51Z 39.85%)" },
-        { "tag": "regulatory", "severity": "high", "note": "DOJ Chrome/ad-tech divest ruling pending Q4 — active overhang +10 pts" },
-        { "tag": "macro", "severity": "medium", "note": "AI chip export restriction / sector risk-off overhang +8 pts" }
+        { "tag": "concentration", "severity": "high", "note": "41.2% of book at EOD market values (240sh × $346.35) — crossed >40% threshold, +25 pts" },
+        { "tag": "regulatory", "severity": "high", "note": "DOJ Chrome/ad-tech divest ruling pending Q4 — active overhang, +10 pts" },
+        { "tag": "data-quality", "severity": "medium", "note": "currentPrice single-source (nasdaq only) — stooq 404'd + yahoo 429'd universe-wide 2026-08-13; treat trading levels as provisional pending 2-source confirmation" }
       ],
       "decisionLog": [
         { "date": "2026-04-22", "action": "HOLD", "by": "evaluator", "reason": "At mid-FV; catalyst heavy Q3" },
-        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "EOD $365.51 above entry zone $345-360; concentration crossed >40% (score 43); not in add range; hold existing" }
+        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "EOD $365.51 above entry zone $345-360; concentration crossed >40% (score 43); not in add range; hold existing" },
+        { "date": "2026-08-14", "action": "HOLD", "by": "evaluator", "reason": "Verified consensus ($425 mean) + Q2 Cloud-margin beat lift fvMid to $400; 41.2% concentration + DOJ overhang cap upside; stop reset $325." }
       ]
     },
     "AVGO": {
-      "updated": "2026-06-05",
+      "coverage": "full",
+      "updated": "2026-08-14",
       "score": 16,
       "verdict": "BUY",
-      "entryZone": { "low": 370, "high": 390 },
-      "target": { "base": 450, "bull": 490, "bear": 360 },
-      "stopLoss": 355,
-      "rrr": 2.02,
+      "entryZone": { "low": 395, "high": 425 },
+      "target": { "base": 458, "bull": 555, "bear": 375 },
+      "stopLoss": 390,
+      "rrr": 1.31,
       "risks": [
-        { "tag": "customer-concentration", "severity": "medium", "note": "Google TPU ~30% of AI rev — single customer >25% +8 pts" },
-        { "tag": "macro", "severity": "medium", "note": "AI chip export restriction overhang — sector macro risk +8 pts" }
+        { "tag": "customer-concentration", "severity": "medium", "note": "Google TPU ~30% of AI rev — single customer >25%, +8 pts" },
+        { "tag": "macro", "severity": "medium", "note": "AI chip export ban overhang, +8 pts" },
+        { "tag": "insider-selling", "severity": "medium", "note": "Co-founder quarterly stake sales >$720M (Stocktwits 8/11) — qualitative caution flag" }
       ],
       "decisionLog": [
         { "date": "2026-04-22", "action": "HOLD", "by": "evaluator", "reason": "Strong custom-wins but limited near-term upside vs FV-mid" },
-        { "date": "2026-06-05", "action": "BUY", "by": "evaluator", "reason": "EOD $386.50 in entry zone $370-390; 9.7% upside to fvMid $424; score 16 (low); RRR 2.02; add on further weakness" }
+        { "date": "2026-06-05", "action": "BUY", "by": "evaluator", "reason": "EOD $386.50 in entry zone $370-390; 9.7% upside to fvMid $424; score 16 (low); RRR 2.02; add on further weakness" },
+        { "date": "2026-08-14", "action": "BUY", "by": "evaluator", "reason": "Price +8.5% since 6/5; verified consensus $522 supports BUY, but insider selling >$720M tempers conviction; stop raised to $390." }
       ]
     },
     "CLS": {
-      "updated": "2026-06-05",
-      "score": 23,
-      "verdict": "HOLD",
-      "entryZone": { "low": 355, "high": 375 },
-      "target": { "base": 435, "bull": 470, "bear": 310 },
-      "stopLoss": 355,
-      "rrr": 4.14,
+      "coverage": "full",
+      "updated": "2026-08-14",
+      "score": 15,
+      "verdict": "BUY",
+      "entryZone": { "low": 340, "high": 365 },
+      "target": { "base": 424, "bull": 495, "bear": 340 },
+      "stopLoss": 325,
+      "rrr": 3.05,
       "risks": [
-        { "tag": "cyclical", "severity": "medium", "note": "Cyclical peak margins risk on hyperscaler ODM mix — +7 pts" },
-        { "tag": "macro", "severity": "medium", "note": "Server/rack tariff risk — sector macro +8 pts" },
-        { "tag": "technical", "severity": "high", "note": "EOD $370.58 tested prior stop $370 — breakdown in progress; prior stop revised to $355 (structural support); +8 pts breakdown" }
+        { "tag": "cyclical", "severity": "medium", "note": "Cyclical peak margins risk on hyperscaler ODM mix, +7 pts" },
+        { "tag": "macro", "severity": "medium", "note": "Server/rack tariff sector macro risk, +8 pts" },
+        { "tag": "data-quality", "severity": "medium", "note": "currentPrice $349.44 (single-source nasdaq) marginally tested prior stop $355 (-1.6%) — unconfirmed breach; stop reset to $325 pending 2-source verification" }
       ],
       "decisionLog": [
         { "date": "2026-04-22", "action": "TRIM-1/3", "by": "evaluator", "reason": "Pre-earnings risk management, unfavorable RRR" },
-        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "EOD $370.58 tested prior $370 stop; stop revised to $355; 7.7% upside to fvMid; score 23 low; hold with tight stop" }
+        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "EOD $370.58 tested prior $370 stop; stop revised to $355; 7.7% upside to fvMid; score 23 low; hold with tight stop" },
+        { "date": "2026-08-14", "action": "BUY", "by": "evaluator", "reason": "Verified analyst mean $453 + 7% pop justify BUY; stop-test on unverified quote flagged, reset $325 for structural buffer, not a breach." }
       ]
     },
     "MRVL": {
-      "updated": "2026-06-05",
-      "score": 31,
-      "verdict": "TRIM",
-      "entryZone": { "low": 260, "high": 280 },
-      "target": { "base": 330, "bull": 380, "bear": 240 },
-      "stopLoss": 255,
-      "rrr": 2.33,
+      "coverage": "full",
+      "updated": "2026-08-14",
+      "score": 26,
+      "verdict": "HOLD",
+      "entryZone": { "low": 210, "high": 235 },
+      "target": { "base": 295, "bull": 370, "bear": 235 },
+      "stopLoss": 205,
+      "rrr": 3.64,
       "risks": [
-        { "tag": "concentration", "severity": "medium", "note": "22.2% of book at EOD market values — >20% +15 pts" },
-        { "tag": "macro", "severity": "medium", "note": "AI chip export restriction / sector de-rate risk +8 pts" },
-        { "tag": "technical", "severity": "medium", "note": "6/5 -7.26% closed below prior support on volume — technical breakdown +8 pts" }
+        { "tag": "macro", "severity": "medium", "note": "AI chip export restrictions curbing datacenter rev, +8 pts" },
+        { "tag": "technical", "severity": "high", "note": "currentPrice $224.39 (single-source) is 12% below June stop $255 — unconfirmed breach; +8 pts pending verification" },
+        { "tag": "event", "severity": "medium", "note": "Earnings apparently imminent per news framing ('quick bounce before earnings,' Barchart 8/12) — binary risk, exact date unconfirmed, +10 pts" }
       ],
       "decisionLog": [
-        { "date": "2026-06-05", "action": "TRIM", "by": "evaluator", "reason": "+112% unrealized gain from $130.85 avg cost; EOD $277.50; concentration 22%; partial trim protects outsized gain" }
+        { "date": "2026-06-05", "action": "TRIM", "by": "evaluator", "reason": "+112% unrealized gain from $130.85 avg cost; EOD $277.50; concentration 22%; partial trim protects outsized gain" },
+        { "date": "2026-08-14", "action": "HOLD", "by": "evaluator", "reason": "Stop $255 breached -12% on unverified single-source quote ahead of earnings; urgent 2-source verification needed. Reset stop $205, HOLD pending confirmation." }
       ]
     },
     "MU": {
-      "updated": "2026-06-05",
-      "score": 23,
-      "verdict": "HOLD",
-      "entryZone": { "low": 800, "high": 860 },
-      "target": { "base": 960, "bull": 1100, "bear": 680 },
-      "stopLoss": 820,
-      "rrr": 1.54,
+      "coverage": "full",
+      "updated": "2026-08-14",
+      "score": 15,
+      "verdict": "BUY",
+      "entryZone": { "low": 920, "high": 980 },
+      "target": { "base": 1196, "bull": 1490, "bear": 800 },
+      "stopLoss": 850,
+      "rrr": 2.09,
       "risks": [
-        { "tag": "cyclical", "severity": "high", "note": "HBM cycle peak margins — memory cyclical mean reversion risk +7 pts" },
-        { "tag": "macro", "severity": "medium", "note": "Export restrictions HBM/AI chips to China +8 pts" },
-        { "tag": "technical", "severity": "medium", "note": "6/5 -6.83% closed below prevClose — technical breakdown on volume +8 pts" }
+        { "tag": "cyclical", "severity": "high", "note": "HBM cycle peak margins — memory cyclical mean-reversion risk, +7 pts" },
+        { "tag": "macro", "severity": "medium", "note": "Export restrictions on HBM/AI chips to China, +8 pts" },
+        { "tag": "short-seller", "severity": "medium", "note": "Michael Burry disclosed new MU short (Yahoo Finance 8/12) — notable cyclical-top bear signal, qualitative" }
       ],
       "decisionLog": [
-        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "+82% unrealized gain from $481.54 avg cost; EOD $875.07 essentially at fvMid $868 (-0.8%); RRR 1.54 improved from 0.30; hold, no add" }
+        { "date": "2026-06-05", "action": "HOLD", "by": "evaluator", "reason": "+82% unrealized gain from $481.54 avg cost; EOD $875.07 essentially at fvMid $868 (-0.8%); RRR 1.54 improved from 0.30; hold, no add" },
+        { "date": "2026-08-14", "action": "BUY", "by": "evaluator", "reason": "Verified consensus $1,536 (77% above prior fvMid) + buyback catalyst; risk score fell to 15; upgrade HOLD→BUY despite Burry's new short." }
       ]
     },
     "SOXL": {
-      "updated": "2026-06-07",
+      "coverage": "full",
+      "updated": "2026-08-14",
       "score": 31,
-      "verdict": "TRIM",
-      "entryZone": { "low": 185, "high": 210 },
-      "target": { "base": 270, "bull": 310, "bear": 155 },
-      "stopLoss": 170,
-      "rrr": 7.73,
+      "verdict": "SELL",
+      "entryZone": { "low": 130, "high": 150 },
+      "target": { "base": 205, "bull": 260, "bear": 125 },
+      "stopLoss": 130,
+      "rrr": 3.61,
       "risks": [
-        { "tag": "leveraged-etf", "severity": "high", "note": "3x leveraged ETF daily-reset decay — rubric +15 pts; decay risk re-confirmed across 4 verified news events (SA+Yahoo+STD, 2025-09-24 through 2026-04-19)" },
-        { "tag": "technical", "severity": "high", "note": "6/5 -17.24% single-session drawdown — sector breakdown +8 pts; no new session to reassess" },
-        { "tag": "stop-proximity", "severity": "critical", "note": "EOD $181.46 (provisional, single-source, as-of 2026-06-05) only 6.7% above hard-stop $170; no new verified price to update buffer" },
-        { "tag": "macro", "severity": "medium", "note": "SOX sector macro risk (tariff/export ban) +8 pts" }
+        { "tag": "leveraged-etf", "severity": "high", "note": "3x daily-reset decay realized this cycle: SOXL -19.4% vs a broadly-positive underlying basket since 6/5, +15 pts" },
+        { "tag": "technical", "severity": "high", "note": "currentPrice $146.28 (single-source) is 14% below June hard stop $170 — largest breach of any held ticker, thesis-consistent, +8 pts" },
+        { "tag": "macro", "severity": "medium", "note": "SOX sector macro risk (tariff/export ban), +8 pts" },
+        { "tag": "position-size", "severity": "low", "note": "De minimis position (0.36% of book, ~$731) — low cost to exit cleanly" }
       ],
       "decisionLog": [
         { "date": "2026-06-05", "action": "TRIM", "by": "evaluator", "reason": "EOD $181.46 only 6.7% above hard-stop $170; 3x decay + further drawdown risk; reduce to preserve capital; stop proximity critical" },
-        { "date": "2026-06-07", "action": "TRIM", "by": "evaluator", "reason": "Early re-eval: no new verified price; decay risk re-confirmed multi-source; score 31 unchanged; TRIM maintained" }
+        { "date": "2026-06-07", "action": "TRIM", "by": "evaluator", "reason": "Early re-eval: no new verified price; decay risk re-confirmed multi-source; score 31 unchanged; TRIM maintained" },
+        { "date": "2026-08-14", "action": "SELL", "by": "evaluator", "reason": "Hard stop $170 breached -14%, thesis-consistent with realized 3x decay vs a broadly-positive sector; de minimis position; upgrade TRIM→SELL, exit." }
+      ]
+    },
+    "TSM": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 16,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "geopolitical", "severity": "medium", "note": "Taiwan geopolitical risk premium — persistent macro overhang" },
+        { "tag": "macro", "severity": "medium", "note": "Export controls on advanced nodes to China" },
+        { "tag": "customer-concentration", "severity": "low", "note": "Apple/NVDA capex concentration in foundry demand" }
+      ]
+    },
+    "PLTR": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 15,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "valuation", "severity": "high", "note": "Extreme historical multiple (P/S well above SaaS peers) even as price sits near verified analyst mean $193.10" },
+        { "tag": "policy", "severity": "medium", "note": "Government budget / DOGE spending-cut dependency for USG contracts" },
+        { "tag": "sentiment", "severity": "medium", "note": "Mixed post-earnings reaction (Jefferies caution vs 'otherworldly quarter' bulls, 8/12-13)" }
+      ]
+    },
+    "TSMU": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 23,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "leveraged-etf", "severity": "high", "note": "2x daily-reset decay visible: TSMU +1.8% vs underlying TSM +5.1% since 6/5" },
+        { "tag": "geopolitical", "severity": "medium", "note": "Taiwan geopolitical risk 2x-amplified" },
+        { "tag": "no-coverage", "severity": "low", "note": "No sell-side analyst coverage exists (notApplicable) — no independent valuation anchor" }
+      ]
+    },
+    "NVDA": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "Export ban extension risk on H20/B20 derivatives to China" },
+        { "tag": "concentration", "severity": "low", "note": "Hyperscaler capex concentration in demand base" },
+        { "tag": "valuation", "severity": "low", "note": "Premium compression risk if AI monetization pace slows" }
+      ]
+    },
+    "AMD": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "Export ban exposure on AI accelerators to China" },
+        { "tag": "competitive", "severity": "medium", "note": "SpaceX reportedly going exclusive with Nvidia — customer-loss signal (24/7 Wall St 8/13)" },
+        { "tag": "volatility", "severity": "medium", "note": "'Can halve or nearly double' framing (Yahoo Finance 8/13) signals elevated outcome dispersion" }
+      ]
+    },
+    "ARM": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 25,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "data-quality", "severity": "medium", "note": "Analyst consensus NOT verified this cycle — best-available TipRanks $301.06 vs MarketBeat $285.33, 5.22% spread just outside tolerance; lean conservative" },
+        { "tag": "valuation", "severity": "high", "note": "'Great company, full price' headline (24/7 Wall St 8/13) — extreme historical fwd-PE multiple" },
+        { "tag": "competitive", "severity": "low", "note": "RISC-V open-source alternative — long-term royalty erosion risk" }
+      ]
+    },
+    "AMAT": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "Active BIS export restrictions on semiconductor equipment to China" },
+        { "tag": "cyclical", "severity": "medium", "note": "WFE recovery cycle timing could slip to 2027" },
+        { "tag": "concentration", "severity": "low", "note": "Customer capex concentration (Samsung/TSMC/Intel ~60% of WFE spend)" }
+      ]
+    },
+    "LRCX": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "Export restrictions on etch equipment to China (>25% China rev exposure)" },
+        { "tag": "cyclical", "severity": "medium", "note": "NAND oversupply risk if Samsung delays capex recovery" },
+        { "tag": "concentration", "severity": "low", "note": "Customer capex concentration in Samsung/SK Hynix/Micron memory cycles" }
+      ]
+    },
+    "KLAC": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "macro", "severity": "medium", "note": "Export restrictions on metrology/inspection equipment to China" },
+        { "tag": "insider-selling", "severity": "low", "note": "CEO 10b5-1 sales totaling ~$17.4M + 87,568 shares (Stock Titan/MarketBeat 8/12) — routine but notable cluster" },
+        { "tag": "technical", "severity": "low", "note": "'KLA drops 9% in a month' headline (TradingView 8/13) — modest recent weakness" }
+      ]
+    },
+    "MSFT": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 5,
+      "verdict": "BUY",
+      "risks": [
+        { "tag": "capex", "severity": "low", "note": "AI capex overhang could compress near-term FCF" },
+        { "tag": "valuation", "severity": "low", "note": "Mega-cap crowding — multiple compression risk if AI narrative rotates" },
+        { "tag": "competitive", "severity": "low", "note": "Azure/Copilot competitive intensity vs AWS/GCP" }
+      ]
+    },
+    "META": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 18,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "regulatory", "severity": "high", "note": "$1.4 trillion FTC antitrust trial reportedly opened (Yahoo Finance 8/12) — active, material legal overhang" },
+        { "tag": "data-quality", "severity": "medium", "note": "Analyst consensus NOT verified this cycle — 3-way pairwise disagreement up to 17.0%; best-available stockanalysis.com $754.14 used with caution, lean conservative" },
+        { "tag": "capex", "severity": "medium", "note": "AI capex uncertainty per Seeking Alpha 8/13 ('strong core, capex uncertainties')" }
+      ]
+    },
+    "TSLA": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "volatility", "severity": "high", "note": "'Deepest fall was worse than its worst market crash' headline (Trefis 8/10) — extreme drawdown framing" },
+        { "tag": "key-person", "severity": "medium", "note": "Musk political/brand-distraction risk — recurring theme" },
+        { "tag": "regulatory", "severity": "medium", "note": "FSD regulatory gating — NHTSA/state approval timeline" }
+      ]
+    },
+    "ORCL": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 18,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "data-quality", "severity": "high", "note": "Analyst consensus NOT verified — huge unreconciled 30-40% gap vs stale MarketBeat/TipRanks; validator's best-available $247.17 used with caution, lean conservative" },
+        { "tag": "short-seller", "severity": "medium", "note": "Michael Burry disclosed new ORCL short alongside NBIS/MU (TradingView/Stocktwits 8/12-13)" },
+        { "tag": "concentration", "severity": "medium", "note": "OpenAI infrastructure-deal revenue dependency; layoffs reports (IBD/TradingView 8/12) signal cost pressure" }
+      ]
+    },
+    "SNOW": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 15,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "data-quality", "severity": "medium", "note": "Analyst consensus NOT verified — TipRanks excluded as stale, only 1 usable source (stockanalysis.com $302.29); lean conservative" },
+        { "tag": "insider-selling", "severity": "medium", "note": "Cluster of 3 insider sales this week (Northside Capital, Michael Speiser, EVP Kleinerman — MarketBeat/Stock Titan 8/11-12)" },
+        { "tag": "technical", "severity": "low", "note": "Recent 52-week high (Yahoo Finance 8/13) — price already above the unverified analyst mean $302.29" }
+      ]
+    },
+    "CRWD": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 20,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "data-quality", "severity": "high", "note": "MAJOR validator correction: true consensus range is $103-250/mean $195.39 (stockanalysis.com), NOT the stale $295-613 MarketBeat/Benzinga figures — do not cite the old range" },
+        { "tag": "valuation", "severity": "medium", "note": "currentPrice $225.65 sits ~15.5% ABOVE the corrected mean $195.39, near the top of the corrected range — stretched, not cheap" },
+        { "tag": "event", "severity": "medium", "note": "Stock sank 13% after-hours on 'modest guidance' post-Q1 beat (Stocktwits 8/11) — guidance-sensitivity risk" }
+      ]
+    },
+    "INTC": {
+      "coverage": "informational",
+      "updated": "2026-08-14",
+      "agent": "evaluator",
+      "score": 8,
+      "verdict": "HOLD",
+      "risks": [
+        { "tag": "dilution", "severity": "medium", "note": "$15B stock offering (Barron's 8/10) — active equity dilution" },
+        { "tag": "execution", "severity": "medium", "note": "18A foundry yield/timeline turnaround risk (persistent)" },
+        { "tag": "valuation", "severity": "low", "note": "'Looks above fair value after a very large run' (Yahoo Finance 8/12) despite still trading below verified analyst mean $117" }
       ]
     }
   }
