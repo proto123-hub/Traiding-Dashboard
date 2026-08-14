@@ -1,0 +1,707 @@
+{
+  "note": "Owned by validator agent (collector drops raw consensus figures to reports/raw/, validator cross-checks and writes here). Separate from data/valuations.json — this is Wall Street sell-side consensus, NOT the evaluator's fundamental FV band. Leveraged ETFs (SOXL, TSMU) have no sell-side coverage — see notApplicable.",
+  "updated": "2026-08-14T12:00:00Z",
+  "agent": "validator",
+  "tolerance": 0.05,
+  "collectionMethod": "Collector's WebFetch was EGRESS_BLOCKED for every candidate financial-data domain this session (confirmed org-level, not source-specific, via a control test against example.com). All raw figures were obtained instead via the WebSearch tool with allowed_domains restricted per source, which returns an AI-generated synthesis of that domain's indexed snippets rather than raw parsed HTML/JSON. This is a materially weaker provenance chain than a direct fetch — numbers are 'as reported by a search snapshot of <source>', not independently parsed. The validator performed a second round of targeted WebSearch re-checks (same tool/limitation) on the highest-priority disagreements (held tickers + the worst cross-source gaps); these re-checks corroborate or contradict the collector's original figures but share the same fundamental weakness (search-snapshot synthesis, not direct page parsing). Treat all 'verified:true' stamps in this file as 'agreement between ≥2 independently-queried search snapshots', not as ground-truth confirmation from primary filings.",
+  "targets": {
+    "GOOGL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 345,
+      "mean": 425.32,
+      "high": 490,
+      "numAnalysts": 64,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 428.04,
+          "numAnalysts": 64,
+          "low": 340,
+          "high": 515
+        },
+        "tipranks.com": {
+          "mean": 422.59,
+          "numAnalysts": 30,
+          "low": 350,
+          "high": 465
+        },
+        "marketbeat.com": {
+          "mean": 419.86,
+          "numAnalysts": 38
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (1.29% mean spread, within 5% tolerance)",
+      "note": "MarketBeat's mean-only $419.86 corroborates within tolerance of both. TipRanks' page context showed a stale 'last price' ($319.74 vs live $346.35, -7.7%) — the absolute-dollar target figures were still used since they don't depend on the price basis, but this is flagged as a freshness caveat."
+    },
+    "CLS": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 383,
+      "mean": 453.06,
+      "high": 525,
+      "numAnalysts": 21,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 444.11,
+          "numAnalysts": 21,
+          "low": 360,
+          "high": 550
+        },
+        "tipranks.com": {
+          "mean": 462,
+          "numAnalysts": 13,
+          "low": 406,
+          "high": 500
+        },
+        "marketbeat.com": {
+          "mean": 427.42,
+          "numAnalysts": null
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (4.03% mean spread, within 5% tolerance)",
+      "note": "MarketBeat's low/high are individual analyst quotes (Susquehanna $375 / JPMorgan $485), not an official consensus range per its own collector note — mean $427.42 still corroborates within tolerance. TipRanks' price context ($305.28) sits ~12.6% below the live price ($349.44), suggesting a somewhat dated snapshot; not excluded since its dollar target still cross-validates against stockanalysis.com."
+    },
+    "AVGO": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 215.88,
+      "mean": 522.1,
+      "high": 652.5,
+      "numAnalysts": 48,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 527.88,
+          "numAnalysts": 48,
+          "low": 215.88,
+          "high": 675
+        },
+        "tipranks.com": {
+          "mean": 516.32,
+          "numAnalysts": 26,
+          "low": 390,
+          "high": 630
+        },
+        "marketbeat.com": {
+          "mean": 493.24,
+          "numAnalysts": 33
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (2.19% mean spread, within tolerance); low taken from stockanalysis.com only",
+      "note": "KNOWN FLAG ADJUDICATED: stockanalysis.com's targetLow of $215.88 (-48% vs current price) is an anomalous outlier vs. the otherwise bullish mean/high. Validator independently re-ran the WebSearch query and got the IDENTICAL figure ($215.88 low / $527.88 mean / $675 high) — this is a reproducible figure being served by the source, not a one-off scraping fluke, but it is still very likely a stale/unadjusted individual analyst target still counted in the S&P Global aggregate (per stockanalysis.com's own methodology). TipRanks' low ($390) is far more representative of the bullish consensus. Reported low=$215.88 as-is (from the winning/fullest source) but flagged — do NOT treat it as a realistic downside case without cross-checking TipRanks' $390. MarketBeat's mean ($493.24) is a mild outlier below the SA/TR pairing (4.5-6.6%) but roughly corroborating."
+    },
+    "MRVL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 153,
+      "mean": 258.06,
+      "high": 400,
+      "numAnalysts": 43,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 256.91,
+          "numAnalysts": 43,
+          "low": 126,
+          "high": 400
+        },
+        "tipranks.com": {
+          "mean": 271.33,
+          "numAnalysts": 29,
+          "low": 180,
+          "high": 400
+        },
+        "marketbeat.com": {
+          "mean": 245.94,
+          "numAnalysts": null
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + marketbeat.com agree within tolerance (4.27%); mean/low averaged across all 3 available means for robustness",
+      "note": "CAUTION: the preferred fullest-source pairing (stockanalysis.com vs tipranks.com) narrowly MISSES the 5% tolerance (5.32% spread) — verified status rests on the SA+MarketBeat pairing (4.27%) instead. All three sources show notably stale price context (13-15% below the live price of $224.39), consistent with an analyst-target-lag after a recent MRVL rally rather than a data error. High target ($400) is an exact match across stockanalysis.com and TipRanks — strong corroboration on the upper bound."
+    },
+    "MU": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 730.5,
+      "mean": 1535.54,
+      "high": 2200,
+      "numAnalysts": 46,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 1502,
+          "numAnalysts": 46,
+          "low": 361,
+          "high": 2200
+        },
+        "tipranks.com": {
+          "mean": 1569.07,
+          "numAnalysts": 30,
+          "low": 1100,
+          "high": 2200
+        },
+        "marketbeat.com": {
+          "mean": 1260.31,
+          "numAnalysts": 37,
+          "excluded": true,
+          "excludedReason": "Outlier, likely blends stale individual targets — see note."
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (4.27% mean spread, within tolerance); MarketBeat excluded from consensus",
+      "note": "KNOWN FLAG ADJUDICATED: MarketBeat's mean ($1,260.31) is 16-20% below the SA/TipRanks pairing. Validator independently re-ran the WebSearch query and got the IDENTICAL MarketBeat figure ($1,260.31, this time attributed to '37 brokerages') — reproducible, not a scraping fluke, but MarketBeat's own snippet cites individual constituent targets (Mizuho $800, Citigroup $425, Bernstein $330) that are explicitly described as reflecting 'different report dates over the past year rather than the current consensus.' This is strong evidence MarketBeat's blended mean has not fully refreshed for MU's 2026 rally. Excluded from the averaged low/mean/high; high target ($2,200) is an EXACT match between stockanalysis.com and TipRanks — strong corroboration. Low shows wide dispersion ($361 vs $1,100) between the two full sources — reported as their average with this caveat, not a tight estimate."
+    },
+    "TSM": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 430,
+      "mean": 533.36,
+      "high": 675,
+      "numAnalysts": 19,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 540.2,
+          "numAnalysts": 19,
+          "low": 430,
+          "high": 700
+        },
+        "marketbeat.com": {
+          "mean": 524.25,
+          "numAnalysts": 16
+        },
+        "tipranks.com": {
+          "mean": 525,
+          "numAnalysts": 7,
+          "low": 430,
+          "high": 650
+        },
+        "wallstreetzen.com": {
+          "mean": 544,
+          "numAnalysts": 5
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "4-way average — all sources agree tightly (max pairwise spread 3.63%)",
+      "note": "Strong cross-source agreement despite all 4 sources showing a somewhat stale price context (3.5-9.4% below the live price of $433.00) — dollar-denominated mean targets still cluster tightly, giving confidence. Low target ($430) is an exact match between stockanalysis.com and TipRanks. TipRanks' analyst count (7) is notably narrower than the other sources (16-19) — likely a different/narrower cohort window per its own methodology, not an error."
+    },
+    "PLTR": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 80,
+      "mean": 193.1,
+      "high": 255,
+      "numAnalysts": 32,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 189.9,
+          "numAnalysts": 32,
+          "low": 80,
+          "high": 255
+        },
+        "marketbeat.com": {
+          "mean": 192.19,
+          "numAnalysts": 35
+        },
+        "tipranks.com": {
+          "mean": 197.21,
+          "numAnalysts": 22,
+          "low": 80,
+          "high": 255
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "3-way average — tight agreement (max pairwise spread 3.71%)",
+      "note": "Low ($80) and high ($255) are exact matches between stockanalysis.com and TipRanks — strong corroboration. Price context fresh across sources (all within ~2% of live price)."
+    },
+    "TSMU": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "notApplicable": true,
+      "reason": "Leveraged single-stock ETF (2x TSM daily) — no sell-side analyst price-target coverage"
+    },
+    "NVDA": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 215,
+      "mean": 306.24,
+      "high": 500,
+      "numAnalysts": 61,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 302.83,
+          "numAnalysts": 61,
+          "low": 180,
+          "high": 500
+        },
+        "marketbeat.com": {
+          "mean": 305.94,
+          "numAnalysts": null
+        },
+        "tipranks.com": {
+          "mean": 309.94,
+          "numAnalysts": 37,
+          "low": 250,
+          "high": 500
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "3-way average — tight agreement (max pairwise spread 2.29%)",
+      "note": "High target ($500) is an exact match between stockanalysis.com and TipRanks. TipRanks' price context ($206.86) sits 8.3% below the live price ($225.60) — noted but not disqualifying since the dollar mean target still cross-validates."
+    },
+    "AMD": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 415,
+      "mean": 626.83,
+      "high": 1250,
+      "numAnalysts": 52,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 612.84,
+          "numAnalysts": 52,
+          "low": 365,
+          "high": 1250
+        },
+        "marketbeat.com": {
+          "mean": 546.87,
+          "numAnalysts": 32,
+          "excluded": true,
+          "excludedReason": "Outlier vs the SA/TipRanks pairing (10.8%/14.7% below) — not used in the average."
+        },
+        "tipranks.com": {
+          "mean": 640.82,
+          "numAnalysts": 36,
+          "low": 465,
+          "high": 1250
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (4.37% mean spread, within tolerance); MarketBeat excluded as outlier",
+      "note": "High target ($1,250) is an exact match between stockanalysis.com and TipRanks — strong corroboration of the Street-high figure. TipRanks' price context ($521.95) sits ~7.6% ABOVE the live price ($485.18) — flagged as unusual (opposite direction from most other tickers' staleness pattern) but not disqualifying since the mean already cross-validates."
+    },
+    "ARM": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 150,
+      "mean": 301.06,
+      "high": 500,
+      "numAnalysts": 20,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 295.95,
+          "numAnalysts": 40,
+          "low": 125,
+          "high": 500,
+          "excluded": true,
+          "excludedReason": "Source page self-dated 2026-06-24 — 51 days stale relative to 2026-08-14 collection, exceeds the 30-day staleness threshold."
+        },
+        "tipranks.com": {
+          "mean": 301.06,
+          "numAnalysts": 20,
+          "low": 150,
+          "high": 500
+        },
+        "marketbeat.com": {
+          "mean": 285.33,
+          "numAnalysts": 27
+        }
+      },
+      "verified": false,
+      "verifiedBy": [],
+      "basis": "stockanalysis.com excluded as stale; remaining 2 sources (TipRanks, MarketBeat) used, TipRanks (fuller) reported as best-available",
+      "note": "KNOWN FLAG ADJUDICATED: stockanalysis.com's own page states data 'last updated on June 24, 2026' — excluded per the stale-source rule (>30 days old), especially since TipRanks separately notes ARM's Jul 29 2026 earnings triggered post-earnings target cuts that the stale June page cannot reflect. After exclusion, only 2 sources remain: TipRanks ($301.06) vs MarketBeat ($285.33), a 5.22% spread — marginally OUTSIDE the 5% tolerance. NOT VERIFIED. TipRanks (fuller data — has low/high) reported as the best-available figure."
+    },
+    "AMAT": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 429,
+      "mean": 634.41,
+      "high": 900,
+      "numAnalysts": 39,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 629.06,
+          "numAnalysts": 39,
+          "low": 358,
+          "high": 900
+        },
+        "marketbeat.com": {
+          "mean": 603.23,
+          "numAnalysts": 35
+        },
+        "tipranks.com": {
+          "mean": 639.75,
+          "numAnalysts": 28,
+          "low": 500,
+          "high": 900
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (1.67% mean spread, within tolerance)",
+      "note": "High target ($900) is an exact match between stockanalysis.com and TipRanks. MarketBeat's mean ($603.23) corroborates within tolerance of stockanalysis.com (4.11%). stockanalysis.com explicitly notes its EPS/forward-PE figures use non-GAAP adjusted numbers."
+    },
+    "LRCX": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 290,
+      "mean": 373.58,
+      "high": 500,
+      "numAnalysts": 35,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 368.13,
+          "numAnalysts": 35,
+          "low": 290,
+          "high": 500
+        },
+        "marketbeat.com": {
+          "mean": 358.47,
+          "numAnalysts": 34
+        },
+        "tipranks.com": {
+          "mean": 379.02,
+          "numAnalysts": 26
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (2.87% mean spread, within tolerance); low/high from stockanalysis.com only (only source providing them)",
+      "note": "MarketBeat's mean ($358.47) corroborates within tolerance of stockanalysis.com (2.62%). TipRanks did not report low/high in this pull."
+    },
+    "KLAC": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 165,
+      "mean": 231.95,
+      "high": 325,
+      "numAnalysts": 29,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 230.85,
+          "numAnalysts": 29,
+          "low": 165,
+          "high": 325
+        },
+        "marketbeat.com": {
+          "mean": 223.7,
+          "numAnalysts": 30
+        },
+        "tipranks.com": {
+          "mean": 241.3,
+          "numAnalysts": 22
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "3-way average — agreement within tolerance (max pairwise 4.33%, SA-MB 3.10%, SA-TR 4.33%, MB-TR 7.29% is the one narrowly-failing pair)",
+      "note": "KNOWN FLAG ADJUDICATED: KLA Corporation DID execute a real 10-for-1 forward stock split, effective 2026-06-11 (validator confirmed via WebSearch of KLA's official press release / 8-K, record date 2026-06-04, split-adjusted trading began 2026-06-12). This predates the collection date by 2+ months, so all three sources' price context (~$197-210) and target figures (~$165-325) are consistently on the POST-split basis — internally consistent with the live post-split price ($209.55). No basis mismatch found; the split does NOT invalidate this data."
+    },
+    "MSFT": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 400,
+      "mean": 566.02,
+      "high": 870,
+      "numAnalysts": 56,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 569.56,
+          "numAnalysts": 56,
+          "low": 400,
+          "high": 870
+        },
+        "marketbeat.com": {
+          "mean": 534.14,
+          "numAnalysts": 44
+        },
+        "tipranks.com": {
+          "mean": 562.48,
+          "numAnalysts": 35,
+          "high": 700,
+          "highNote": "cited as Wells Fargo's individual 'Street-high' target, not an explicit consensus-high — excluded from the consensus high field."
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (1.24% mean spread, within tolerance); high from stockanalysis.com only (TipRanks' $700 is an individual target, not consensus)",
+      "note": "MarketBeat's mean ($534.14) is a mild outlier below the SA/TR pairing (6.2%/5.0%, both just over 5%) but roughly corroborating in direction. Price context fresh across all 3 sources (<1.5% off live price)."
+    },
+    "META": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 580,
+      "mean": 754.14,
+      "high": 1000,
+      "numAnalysts": 62,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 754.14,
+          "numAnalysts": 62,
+          "low": 580,
+          "high": 1000
+        },
+        "marketbeat.com": {
+          "mean": 701.05,
+          "numAnalysts": 44,
+          "low": 525,
+          "high": 935
+        },
+        "tipranks.com": {
+          "mean": 844.06,
+          "numAnalysts": 42,
+          "low": 655.15,
+          "high": 1117
+        }
+      },
+      "verified": false,
+      "verifiedBy": [],
+      "basis": "No 2 sources agree within tolerance — stockanalysis.com reported as best-available (most price-consistent with live quote)",
+      "note": "All three sources disagree pairwise beyond the 5% tolerance (SA-MB 7.0%, SA-TR 10.7%, MB-TR 17.0% — largest unreconciled 3-way spread found this session besides ORCL/CRWD). MarketBeat ($643.24) and TipRanks ($637.71) both show a price context 7.6-8.5% ABOVE the live price ($592.89), while stockanalysis.com's implied price ($578.85) is only 2.4% off — suggesting MarketBeat/TipRanks reflect an earlier/higher-price-era snapshot. stockanalysis.com's range (low $580/mean $754.14/high $1000) is reported as the best-available figure, but NOT verified — evaluator should treat with caution pending a fresher independent source."
+    },
+    "TSLA": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 125,
+      "mean": 389.58,
+      "high": 600,
+      "numAnalysts": 47,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 396.62,
+          "numAnalysts": 47,
+          "low": 125,
+          "high": 600
+        },
+        "marketbeat.com": {
+          "mean": 382.54,
+          "numAnalysts": 34,
+          "low": 19.05,
+          "high": 600
+        },
+        "tipranks.com": {
+          "mean": 382.54,
+          "numAnalysts": 34,
+          "low": 19.05,
+          "high": 600,
+          "notes": "Byte-identical to MarketBeat's figures — likely both citing the same underlying vendor snapshot, not fully independent."
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com vs MarketBeat/TipRanks-combined average (3.55% mean spread, within tolerance)",
+      "note": "MarketBeat and TipRanks returned IDENTICAL figures (382.54/600/19.05/34 analysts), indicating shared underlying vendor data rather than two fully independent reads — treated as effectively one data point for independence purposes, cross-checked against stockanalysis.com's differently-sourced 396.62 (3.55% spread, passes). The $19.05 low is very likely a stale/unadjusted pre-Tesla-split individual target still counted in the aggregate (Tesla executed a 3-for-1 split in 2022 and 5-for-1 in 2020) — excluded from the reported low in favor of stockanalysis.com's $125. High ($600) is an exact match across all sources — strong corroboration. FLAG (from collector): TipRanks' stated 'last price' ($429.52) is inconsistent with the live TSLA price (~$341.87) the same day — used with caution, does not affect the dollar target figures."
+    },
+    "ORCL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 110,
+      "mean": 247.17,
+      "high": 400,
+      "numAnalysts": 44,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 247.17,
+          "numAnalysts": 44,
+          "low": 110,
+          "high": 400
+        },
+        "marketbeat.com": {
+          "mean": 346.63,
+          "numAnalysts": 38,
+          "low": 175,
+          "high": 415,
+          "excluded": true,
+          "excludedReason": "~40% above stockanalysis.com and inconsistent with the live price — see note."
+        },
+        "tipranks.com": {
+          "mean": 354.13,
+          "numAnalysts": 36,
+          "low": 175,
+          "high": 415,
+          "excluded": true,
+          "excludedReason": "Identical low/high to MarketBeat (shared vendor data); stale 'last price' context — see note."
+        }
+      },
+      "verified": false,
+      "verifiedBy": [],
+      "basis": "MarketBeat/TipRanks excluded as stale; stockanalysis.com reported as best-available (independently re-confirmed)",
+      "note": "MAJOR UNRECONCILED DISCREPANCY (not in the original known-flags list, found during validation): stockanalysis.com's mean ($247.17) vs. MarketBeat/TipRanks (~$346-354) differ by ~30-40% — far outside tolerance. Validator re-ran a WebSearch query and got the SAME stockanalysis.com figure ($247.17, 44 analysts, low $110/high $400) reproduced independently, plus a corroborating alternate citation ('$248.15, 77.24% upside' → implied price ~$140, matching stockanalysis.com's price basis). MarketBeat and TipRanks show IDENTICAL low/high ($175/$415, shared vendor data, not independent), and TipRanks' 'last price' ($257.85) is confirmed stale vs. both stockanalysis.com's implied price ($147.02) and the live quote (~$156.10/$156.40) the same day. Working hypothesis: MarketBeat/TipRanks reflect an earlier, higher-price-era Oracle analyst-target regime (Oracle's 2025 AI/OCI-driven rally reached much higher levels before the 2026 pullback implied by the current ~$150-160 price) that has not been refreshed. stockanalysis.com's figures — which match the live price context closely — are treated as the current, best-available reading. NOT VERIFIED (only 1 reliable current source after excluding the stale pair)."
+    },
+    "SNOW": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 110,
+      "mean": 302.29,
+      "high": 500,
+      "numAnalysts": 51,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 302.29,
+          "numAnalysts": 51,
+          "low": 110,
+          "high": 500
+        },
+        "tipranks.com": {
+          "mean": 270.94,
+          "numAnalysts": 34,
+          "low": 221,
+          "high": 325,
+          "excluded": true,
+          "excludedReason": "Price context 18.9% below live price — treated as a substantially dated snapshot per the stale-source rule."
+        },
+        "marketbeat.com": {
+          "mean": null,
+          "numAnalysts": 40,
+          "note": "PARTIAL/WEAK per collector — no consolidated low/mean/high captured; not usable."
+        }
+      },
+      "verified": false,
+      "verifiedBy": [],
+      "basis": "TipRanks excluded as stale; MarketBeat too partial to use; stockanalysis.com reported as sole usable source",
+      "note": "TipRanks' price context ($274.88) sits 18.9% below the live price ($338.80) — well beyond ordinary daily noise, treated as a stale/dated snapshot and excluded from the consensus per the stale-source rule. MarketBeat's snippet lacked a consolidated low/mean/high (collector's own note: 'not counted toward the 2-source minimum'). That leaves only stockanalysis.com — single source, NOT VERIFIED despite a directionally-consistent price context (its implied price $330.53 is within 1.5% of a separately-queried live quote of $335.35)."
+    },
+    "CRWD": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 103.25,
+      "mean": 195.39,
+      "high": 250,
+      "numAnalysts": 52,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 195.39,
+          "numAnalysts": 52,
+          "low": 103.25,
+          "high": 250
+        },
+        "marketbeat.com": {
+          "mean": 494.95,
+          "numAnalysts": 48,
+          "low": 295,
+          "high": 600,
+          "excluded": true,
+          "excludedReason": "Source itself dated Oct 2025 — >30 days stale (in fact ~10 months)."
+        },
+        "Benzinga": {
+          "mean": 510.52,
+          "numAnalysts": 44,
+          "low": 368,
+          "high": 613,
+          "excluded": true,
+          "excludedReason": "Confirmed via recheck to likely reflect a pre-decline CRWD price/target regime — see note."
+        },
+        "Yahoo Finance": {
+          "forwardPE": 181.82
+        }
+      },
+      "verified": false,
+      "verifiedBy": [],
+      "basis": "MarketBeat + Benzinga excluded as stale; stockanalysis.com reported as best-available (independently re-confirmed, consistent with the live price)",
+      "note": "KNOWN FLAG ADJUDICATED — largest correction of this session. Original collector flag: stockanalysis.com's range ($103-250, mean $195) vs MarketBeat/Benzinga ($295-613, mean ~$495-511) — a huge gap. MarketBeat is explicitly dated Oct 2025 (stale). Validator re-ran the WebSearch query for Benzinga/stockanalysis and found: (1) Benzinga's $510.52/44-analysts figure reproduces identically (real, not a fluke); (2) but a second citation surfaced in the same recheck shows CrowdStrike's Street-high target was cut from $805 (Scotiabank, 2026-06-04) to a LOW of $169 (Barclays, 2026-07-06) within a single month, and that CRWD 'trades around $450 as of April 2026' — implying CRWD underwent a large (~50%) price decline between roughly April and August 2026 (live price now $225.65). This strongly indicates MarketBeat's and Benzinga's mean targets (~$495-511) reflect the OLDER, pre-decline price/target regime, not the current one, while stockanalysis.com's figures (mean $195.39, consistent with the live price to within 2%) reflect the CURRENT, post-decline consensus. stockanalysis.com is treated as the sole reliable current source — NOT VERIFIED (only 1 trustworthy source), but this is the highest-confidence 'best available' correction in this file; evaluator should treat the $103-250/mean $195 range as the operative current figure, NOT the $295-613 range."
+    },
+    "INTC": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "low": 75,
+      "mean": 117,
+      "high": 200,
+      "numAnalysts": 48,
+      "asOf": "2026-08-14",
+      "perSource": {
+        "stockanalysis.com": {
+          "mean": 114.88,
+          "numAnalysts": 48,
+          "low": 75,
+          "high": 200
+        },
+        "marketbeat.com": {
+          "mean": 107.85,
+          "numAnalysts": 49,
+          "excluded": true,
+          "excludedReason": "6.1% spread vs stockanalysis.com — just outside 5% tolerance."
+        },
+        "tipranks.com": {
+          "mean": 119.11,
+          "numAnalysts": 63
+        },
+        "wallstreetzen.com": {
+          "mean": 96.61,
+          "numAnalysts": null,
+          "asOf": "2026-08-11",
+          "excluded": true,
+          "excludedReason": "Genuinely lower reading (not stale — dated 2026-08-11, only 3 days old); a real outlier in view, not a data error. Not averaged in."
+        }
+      },
+      "verified": true,
+      "verifiedBy": [
+        "validator"
+      ],
+      "basis": "stockanalysis.com + tipranks.com average (3.55% mean spread, within tolerance) — the only pairing that passes",
+      "note": "Of 4 sources, only the stockanalysis.com/TipRanks pairing agrees within the 5% tolerance; MarketBeat (6.12%) and WallStreetZen (15.9%) both fall outside it. WallStreetZen's figure is NOT treated as stale (it carries an explicit, recent 2026-08-11 date and a directionally-consistent price, just genuinely more bearish) — flagged for evaluator awareness as a documented minority view, not excluded for data-quality reasons."
+    },
+    "SOXL": {
+      "updated": "2026-08-14",
+      "agent": "validator",
+      "notApplicable": true,
+      "reason": "Leveraged single-sector ETF (3x NYSE Semiconductor Index) — no sell-side analyst price-target coverage"
+    }
+  }
+}
