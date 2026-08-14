@@ -1,0 +1,289 @@
+{
+  "agent": "collector",
+  "collectedAt": "2026-08-14T09:07:03Z",
+  "purpose": "analyst targets + PER for watchlist analytics view (phase 1)",
+  "collectionMethod": "WebFetch was unavailable for every candidate financial-data domain in this session (stockanalysis.com, tipranks.com, marketbeat.com, finance.yahoo.com, www.wsj.com, www.zacks.com, www.benzinga.com, www.cnn.com, www.marketwatch.com, www.nasdaq.com, www.tradingview.com, www.investing.com, www.wallstreetzen.com, 247wallst.com, www.gurufocus.com, www.sec.gov, www.cnbc.com all returned EGRESS_BLOCKED or unreachable, confirmed even against example.com). All figures below were instead retrieved via the WebSearch tool with allowed_domains restricted to the named source, which returns an AI-generated synthesis of that domain's indexed snippets plus the exact source URLs. Figures are transcribed as reported by each search; where a source's page shows a % upside/downside instead of a raw current price, the implied price was back-calculated from that percentage and is flagged 'implied: true'. No cross-source reconciliation was performed (validator's job). Explicit 'as of' page-timestamp text was not retrievable via search snippets for most sources; retrievedAt reflects this collection session, not a source-stamped date.",
+  "tickers": {
+    "GOOGL": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/googl/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 340,
+          "targetMean": 428.04,
+          "targetHigh": 515,
+          "numAnalysts": 64,
+          "trailingPE": 17.94,
+          "forwardPE": 26.91,
+          "price": 344.0,
+          "priceNote": "implied: true — back-calculated from stated upside percentages (avg +24.44%, low -1.16%, high +49.72%), all three agree to ~$344.00; PE figures sourced from companion page https://stockanalysis.com/stocks/googl/statistics/",
+          "asOf": null,
+          "rawExcerpt": "According to 64 analysts polled by S&P Global, Alphabet stock has a consensus rating of 'Strong Buy' and an average price target of $428.04... the lowest is $340 (-1.16%) and the highest is $515 (+49.72%). Trailing PE ratio is 17.94 and the forward PE ratio is 26.91."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/googl/forecast",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 350,
+          "targetMean": 422.59,
+          "targetHigh": 465,
+          "numAnalysts": 30,
+          "trailingPE": 27.8,
+          "forwardPE": null,
+          "price": 319.74,
+          "asOf": "12-month price targets issued in the past 3 months (rolling window, no fixed date given)",
+          "rawExcerpt": "Alphabet Inc. Class A's analyst rating consensus is a Strong Buy...average price target is $422.59 with a high forecast of $465.00 and a low forecast of $350.00...represents 32.17% Increase from the current price of $319.74. Current PE Ratio of Alphabet Class A is 27.8."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/GOOGL/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": null,
+          "targetHigh": null,
+          "targetMean": 419.86,
+          "numAnalysts": 38,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "notes": "Official consensus low/high not captured (page fetch blocked, only search snippet available). Individual recent analyst targets observed: Truist $415, Goldman Sachs $450. numAnalysts is the count of 'ratings firms' cited (38), which may not exactly equal the price-target analyst count.",
+          "rawExcerpt": "GOOGL's current price target is $419.86...Alphabet Inc. (NASDAQ:GOOG) has been assigned an average rating of 'Buy' from the thirty-eight ratings firms that are covering the stock."
+        }
+      ]
+    },
+    "CLS": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/cls/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 360,
+          "targetMean": 444.11,
+          "targetHigh": 550,
+          "numAnalysts": 21,
+          "trailingPE": 51.65,
+          "forwardPE": 37.61,
+          "price": 359.86,
+          "priceNote": "implied: true — back-calculated from stated upside percentages (avg +23.42%, low +0.04%, high +52.84%); PE from companion page https://stockanalysis.com/stocks/cls/statistics/. Note this is the NYSE (USD) listing; a separate TSX (CAD) listing shows different absolute figures (avg C$677.87).",
+          "asOf": null,
+          "rawExcerpt": "According to 21 analysts polled by S&P Global, Celestica stock has a consensus rating of 'Strong Buy' and an average price target of $444.11. The lowest price target is $360 (+0.04%) and the highest is $550 (+52.84%). Trailing PE ratio: 51.65, Forward PE ratio: 37.61."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/cls/forecast",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 406,
+          "targetMean": 462.0,
+          "targetHigh": 500,
+          "numAnalysts": 13,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 305.28,
+          "asOf": "12-month price targets issued in the past 3 months (rolling window, no fixed date given)",
+          "notes": "TipRanks statistics page only yielded a qualitative 'high P/E, may be overvalued' comment in search snippets, no numeric trailing/forward PE.",
+          "rawExcerpt": "Current Price: $305.28. Average Price Target: $462.00, with a high forecast of $500.00 and a low forecast of $406.00. Number of Analysts: 13 Wall Street analysts... 51.34% upside potential."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NYSE/CLS/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 375,
+          "targetHigh": 485,
+          "targetMean": 427.42,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "notes": "targetLow/targetHigh here are the lowest ($375, Susquehanna) and highest ($485, JPMorgan Chase) individual analyst targets observed in recent-alert search snippets, NOT confirmed as MarketBeat's official displayed consensus range — full page fetch was blocked.",
+          "rawExcerpt": "CLS's current price target is $427.42. JPMorgan Chase raised their target price on Celestica from $445.00 to $485.00...Susquehanna set a price target of $375.00 for Celestica."
+        }
+      ]
+    },
+    "AVGO": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/avgo/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 215.88,
+          "targetMean": 527.88,
+          "targetHigh": 675,
+          "numAnalysts": 48,
+          "trailingPE": 69.25,
+          "forwardPE": 26.4,
+          "price": 418.89,
+          "priceNote": "implied: true — back-calculated from stated upside percentages (avg +26.03%, low -48.46%, high +61.15%); PE from companion page https://stockanalysis.com/stocks/avgo/statistics/",
+          "asOf": null,
+          "notes": "targetLow of $215.88 is anomalously far below targetMean/targetHigh (48.46% below current implied price vs. an otherwise bullish set) — possibly a stale/unadjusted outlier target still counted in the S&P Global aggregate. Recorded as-is; not reconciled.",
+          "rawExcerpt": "Number of Analysts: 48 analysts polled by S&P Global. Average Price Target: $527.88. Highest: $675 (+61.15%). Lowest: $215.88 (-48.46%). Trailing PE ratio is 69.25 and the forward PE ratio is 26.40."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/avgo/forecast",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 390,
+          "targetMean": 516.32,
+          "targetHigh": 630,
+          "numAnalysts": 26,
+          "trailingPE": 62.23,
+          "forwardPE": 83,
+          "price": 381.92,
+          "asOf": "12-month price targets issued in the past 3 months (rolling window, no fixed date given)",
+          "notes": "forwardPE reported by source only as an approximate '~83x'.",
+          "rawExcerpt": "The current price is $381.92, and the trailing P/E ratio stands at 62.23...forward P/E ratio of approximately 83x. Based on 26 Wall Street analysts...average price target is $516.32 with a high forecast of $630.00 and a low forecast of $390.00."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/AVGO/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": null,
+          "targetHigh": null,
+          "targetMean": 493.24,
+          "numAnalysts": 33,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "notes": "Official low/high not captured (page fetch blocked). numAnalysts is count of 'research firms' with a rating (33), may not exactly equal price-target analyst count. Individual target seen: JPMorgan $580.",
+          "rawExcerpt": "AVGO's current price target is $493.24. Broadcom Inc. (NASDAQ:AVGO) has received an average rating of 'Buy' from thirty-three research firms that are currently covering the stock."
+        }
+      ]
+    },
+    "MRVL": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/mrvl/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 126,
+          "targetMean": 256.91,
+          "targetHigh": 400,
+          "numAnalysts": 43,
+          "trailingPE": 60.45,
+          "forwardPE": 38.54,
+          "price": 190.5,
+          "priceNote": "implied: true — back-calculated from stated upside percentages (avg +34.86%, low -33.86%, high +109.97%), all agree to ~$190.50; PE from companion page https://stockanalysis.com/stocks/mrvl/statistics/",
+          "asOf": null,
+          "notes": "Search summary also produced a conflicting, internally-inconsistent '46.89% higher than current price' statement elsewhere in the same result; the 34.86% figure was used since it is the only one consistent with the stated low/high percentages.",
+          "rawExcerpt": "According to 43 analysts polled by S&P Global...consensus rating of 'Strong Buy' and an average price target of $256.91. The lowest price target is $126 (-33.86%) and the highest is $400 (+109.97%)."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/mrvl/forecast",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 180,
+          "targetMean": 271.33,
+          "targetHigh": 400,
+          "numAnalysts": 29,
+          "trailingPE": null,
+          "forwardPE": 48.5,
+          "price": 194.23,
+          "asOf": "12-month price targets issued in the past 3 months (rolling window, no fixed date given)",
+          "notes": "Search snippets also contained stale news-article price mentions ($217.08 close, $188.60, $206.38) that were NOT used for the 'price' field; $194.23 was used because it is the figure that is arithmetically consistent with the stated targetMean and its quoted 39.70% upside (271.33/1.3970=194.22).",
+          "rawExcerpt": "The average price target is $271.33 with a high forecast of $400.00 and a low forecast of $180.00. The average price target represents a 39.70% change from the last price of $194.23...29 Wall Street analysts... At 48.5 times forward P/E, MRVL stock is trading at the low end of its past-year historical range."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/MRVL/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": null,
+          "targetHigh": null,
+          "targetMean": 245.94,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "notes": "Official low/high not captured (page fetch blocked). Individual targets seen in search snippets (Barclays $150, Stifel $130, Needham $118, Morgan Stanley $95, Goldman Sachs $80) look stale/pre-rally relative to the ~$190-217 implied current-price range from the other two sources — not used as low/high, recorded only as context.",
+          "rawExcerpt": "MRVL's current price target is $245.94...Barclays with an 'overweight' rating and $150.00 price target...Goldman Sachs Group with a 'neutral' rating and $80.00 price target."
+        }
+      ]
+    },
+    "MU": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/mu/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 361,
+          "targetMean": 1502,
+          "targetHigh": 2200,
+          "numAnalysts": 46,
+          "trailingPE": 19.43,
+          "forwardPE": 5.99,
+          "price": 868.63,
+          "priceNote": "implied: true — back-calculated from stated upside percentages (avg +72.94%, low -58.44%, high +153.30%); PE from companion page https://stockanalysis.com/stocks/mu/statistics/. A second query against the same domain returned a slightly different mean ($1,501.98) and upside (+74.45%, implying price ~$861.10) — within rounding/cache-timing noise of the figures used here.",
+          "asOf": null,
+          "rawExcerpt": "According to 46 analysts polled by S&P Global, Micron Technology stock has a consensus rating of 'Strong Buy' and an average price target of $1,502...the lowest is $361 (-58.44%) and the highest is $2,200 (+153.30%). Trailing PE ratio is 19.43 and the forward PE ratio is 5.99."
+        },
+        {
+          "name": "tipranks.com",
+          "url": "https://www.tipranks.com/stocks/mu/forecast",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": 1100,
+          "targetMean": 1569.07,
+          "targetHigh": 2200,
+          "numAnalysts": 30,
+          "trailingPE": null,
+          "forwardPE": 11.1,
+          "price": 920.95,
+          "asOf": "12-month price targets issued in the past 3 months (rolling window, no fixed date given)",
+          "rawExcerpt": "The average price target is $1,569.07 with a high forecast of $2,200.00 and a low forecast of $1,100.00...represents a 70.38% change from the last price of $920.95...30 Wall Street analysts...forward P/E ratio of just 11.1x."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/MU/forecast/",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "targetLow": null,
+          "targetHigh": null,
+          "targetMean": 1260.31,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": null,
+          "notes": "Official low/high not captured (page fetch blocked). MarketBeat's own consensus mean ($1,260.31) is notably lower than both stockanalysis.com (~$1,502) and TipRanks (~$1,569) — recorded as-is, not reconciled. Individual targets seen span a wide range (Mizuho $800, Citigroup $425, Sanford C. Bernstein $330), reflecting different report dates over the past year rather than the current consensus.",
+          "rawExcerpt": "Micron Technology (MU) Stock Forecast and Price Target 2026 $MU...Current Price Target: MU's current price target is $1,260.31."
+        }
+      ]
+    },
+    "SOXL": {
+      "notApplicable": true,
+      "reason": "leveraged ETF (3x NYSE Semiconductor Index)",
+      "notes": "Direxion Daily Semiconductor Bull 3X Shares. Seeks 300% of the daily performance of the NYSE Semiconductor Index (rules-based, modified float-adjusted market-cap-weighted index of the 30 largest US-listed semiconductor companies). Gross expense ratio 0.75%; net expense ratio 0.71% excluding Acquired Fund Fees and Expenses. No analyst price targets or meaningful P/E apply to a leveraged index ETF.",
+      "sources": [
+        {
+          "name": "Direxion (fund sponsor)",
+          "url": "https://www.direxion.com/product/daily-semiconductor-bull-bear-3x-etfs",
+          "retrievedAt": "2026-08-14T09:07:03Z",
+          "expenseRatioPct": 0.75,
+          "netExpenseRatioPct": 0.71,
+          "underlyingIndex": "NYSE Semiconductor Index",
+          "rawExcerpt": "The expense ratio for SOXL is 0.75%. If Acquired Fund Fees and Expenses were excluded, the Net Expense Ratio would be 0.71%...seek daily investment results, before fees and expenses, of 300%...of the performance of the NYSE Semiconductor Index...tracks the performance of the thirty largest U.S. listed semiconductor companies."
+        }
+      ]
+    }
+  },
+  "failures": [
+    { "domain": "stockanalysis.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.marketbeat.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.tipranks.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "finance.yahoo.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.wsj.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "unable to fetch (also rejected by WebSearch allowed_domains: 'not accessible to our user agent')" },
+    { "domain": "www.zacks.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.benzinga.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.cnn.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.marketwatch.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "unable to fetch" },
+    { "domain": "www.nasdaq.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.tradingview.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.investing.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.wallstreetzen.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "247wallst.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.gurufocus.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.sec.gov", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "www.cnbc.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy" },
+    { "domain": "example.com", "tool": "WebFetch", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy (control test confirming WebFetch is blocked network-wide in this session, not source-specific)" }
+  ]
+}
