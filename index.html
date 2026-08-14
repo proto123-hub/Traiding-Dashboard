@@ -167,6 +167,14 @@
     .sectors { grid-template-columns: repeat(4, 1fr) !important; }
     .whales { grid-template-columns: repeat(3, 1fr) !important; }
   }
+  /* Sidebar collapses on mobile — pre-existing clipping fix (2026-08-14). Off-canvas nav deferred to phase 2. */
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
+    .sidebar { display: none; }
+    .row.r-2, .row.r-3, .row.r-4 { grid-template-columns: 1fr; }
+    .sectors { grid-template-columns: repeat(2, 1fr) !important; }
+    .whales { grid-template-columns: repeat(2, 1fr) !important; }
+  }
 
   .card {
     background: var(--panel);
