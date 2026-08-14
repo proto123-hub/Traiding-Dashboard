@@ -1,0 +1,401 @@
+{
+  "agent": "collector",
+  "collectedAt": "2026-08-14T12:00:00Z",
+  "purpose": "analyst targets + PER for watchlist analytics view (phase 1)",
+  "collectionMethod": "Direct WebFetch to every candidate source (stockanalysis.com, finance.yahoo.com, TipRanks, MarketBeat, Zacks, WSJ, Benzinga, CNN Markets, MarketScreener, GuruFocus, Macrotrends, Investing.com, SimplyWall.st) was blocked by the session's egress proxy (EGRESS_BLOCKED on every finance domain tested). All figures below were therefore obtained via WebSearch using site-restricted queries (e.g. 'site:stockanalysis.com TICKER forecast price target analysts'), which the search backend was able to answer with synthesized snippets naming the source explicitly. Numbers are recorded as returned in those snippets, not reconciled. Where a source's snippet stated a percent-upside/downside instead of a literal price, the implied current price was back-calculated from that percentage (noted per field as 'derived').",
+  "tickers": {
+    "PLTR": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/pltr/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 80,
+          "targetMean": 189.9,
+          "targetHigh": 255,
+          "numAnalysts": 32,
+          "trailingPE": 153.10,
+          "forwardPE": 94.05,
+          "price": 174.95,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed by the page to '32 analysts polled by S&P Global'. Price is derived from the displayed 1-year forecast deltas (mean +8.55%, low -54.27%, high +45.76% all imply ~$174.94-174.96); trailingPE/forwardPE pulled from the site's separate /statistics/ subpage (same domain, same retrieval pass)."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/PLTR/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": null,
+          "targetMean": 192.19,
+          "targetHigh": null,
+          "numAnalysts": 35,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "Snippet gave consensus mean ('Moderate Buy', 35 analysts) but not a consolidated low/high/PE/price; individual analyst target citations in the same snippet ranged ~$50-$225 (Rosenblatt $225, Loop Capital $220, Phillip Securities $202, RBC $50)."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/pltr/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 80,
+          "targetMean": 197.21,
+          "targetHigh": 255,
+          "numAnalysts": 22,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 178.47,
+          "asOf": "2026-08-14",
+          "note": "numAnalysts derived from stated rating breakdown (16 Buy + 4 Hold + 2 Sell, 'past 3 months' window) which may undercount vs. TipRanks' full coverage list."
+        }
+      ]
+    },
+    "MSFT": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/msft/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 400,
+          "targetMean": 569.56,
+          "targetHigh": 870,
+          "numAnalysts": 56,
+          "trailingPE": 28.07,
+          "forwardPE": 25.57,
+          "price": 496.89,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed to '56 analysts polled by S&P Global'. Price derived from displayed deltas (mean +14.63%, low -19.50%, high +75.09%, all consistent at ~$496.89). PE from same domain's /statistics/ subpage."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/MSFT/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": null,
+          "targetMean": 534.14,
+          "targetHigh": null,
+          "numAnalysts": 44,
+          "trailingPE": 38.75,
+          "forwardPE": null,
+          "price": 503.42,
+          "asOf": "2026-08-14",
+          "note": "Consensus rating 'Moderate Buy' from 44 brokerages; mean price target stated as 6.12% upside, price derived from that. PE (38.75) explicitly attributed to MarketBeat in a separate query but not labeled trailing vs. forward in the snippet -- recorded as trailingPE since that is MarketBeat's default 'P/E Ratio' metric."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/msft/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": null,
+          "targetMean": 562.48,
+          "targetHigh": 700,
+          "numAnalysts": 35,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 492.58,
+          "asOf": "2026-08-14",
+          "note": "numAnalysts from stated breakdown (34 Buy + 1 Hold, 'past 3 months'). targetHigh ($700) was cited as Wells Fargo's 'Street-high' individual target rather than an explicit consensus-high field -- treat as approximate. Price derived from stated +14.19% upside."
+        }
+      ]
+    },
+    "META": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/meta/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 580,
+          "targetMean": 754.14,
+          "targetHigh": 1000,
+          "numAnalysts": 62,
+          "trailingPE": 21.81,
+          "forwardPE": 18.07,
+          "price": 578.85,
+          "asOf": "2026-08-14 (PE line item snippet itself dated 2026-08-13)",
+          "note": "Consensus attributed to '62 analysts polled by S&P Global'. Price derived from displayed deltas (mean +30.28%, low +0.20%, high +72.76%, consistent at ~$578.85)."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/nasdaq/meta/price-target",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 525,
+          "targetMean": 701.05,
+          "targetHigh": 935,
+          "numAnalysts": 44,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 643.24,
+          "asOf": "2026-08-14",
+          "note": "Rating breakdown: 37 Buy, 2 Strong Buy, 4 Hold, 1 Sell = 44. Price derived from stated +8.99% upside."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/meta/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 655.15,
+          "targetMean": 844.06,
+          "targetHigh": 1117,
+          "numAnalysts": 42,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 637.71,
+          "asOf": "2026-08-14 (past-3-month analyst window)",
+          "note": "Rating breakdown 33 Buy + 8 Hold + 1 Sell = 42. Last price stated directly in snippet ($637.71); mean target is +32.36% vs that price."
+        }
+      ]
+    },
+    "TSLA": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/tsla/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 125,
+          "targetMean": 396.62,
+          "targetHigh": 600,
+          "numAnalysts": 47,
+          "trailingPE": 339.86,
+          "forwardPE": 169.43,
+          "price": 339.96,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed to '47 analysts polled by S&P Global' (page also notes individual analyst data sourced from TipRanks). Price is a directly-observed live quote from a separate confirmation search (matches internally-derived ~$340.02 from the displayed deltas within $0.10)."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/TSLA/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 19.05,
+          "targetMean": 382.54,
+          "targetHigh": 600,
+          "numAnalysts": 34,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "These exact figures (382.54/600/19.05/34 analysts) also surfaced under a separate site:tipranks.com query -- likely both sites are citing the same underlying analyst-estimate vendor snapshot that day. Recorded once per source per collector rules (no dedup across sources)."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/tsla/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 19.05,
+          "targetMean": 382.54,
+          "targetHigh": 600,
+          "numAnalysts": 34,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 429.52,
+          "asOf": "2026-08-14 (past-3-month analyst window)",
+          "note": "FLAG FOR VALIDATOR: 'last price' of $429.52 shown in this snippet is inconsistent with the directly-queried live TSLA price (~$339.96, same day) -- likely a stale cached TipRanks snippet. Recorded as-is, not corrected."
+        }
+      ]
+    },
+    "ORCL": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/orcl/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 110,
+          "targetMean": 247.17,
+          "targetHigh": 400,
+          "numAnalysts": 44,
+          "trailingPE": 24.77,
+          "forwardPE": 17.93,
+          "price": 147.02,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed to '44 analysts polled by S&P Global'. Price derived from displayed deltas (mean +68.12%, low -25.18%, high +172.07%, consistent at ~$147.02). FLAG FOR VALIDATOR: a separate direct live-quote check the same session found ORCL trading at $156.10 intraday 2026-08-14 -- the two snapshots differ by ~6%, likely different times of day or search-cache staleness."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NYSE/ORCL/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 175,
+          "targetMean": 346.63,
+          "targetHigh": 415,
+          "numAnalysts": 38,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "Consensus rating 'Moderate Buy' from 38 research firms."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/orcl/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 175,
+          "targetMean": 354.13,
+          "targetHigh": 415,
+          "numAnalysts": 36,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 257.85,
+          "asOf": "2026-08-14 (past-3-month analyst window)",
+          "note": "FLAG FOR VALIDATOR: 'last price' of $257.85 is inconsistent with both the stockanalysis.com-derived price (~$147) and a directly-queried live quote (~$156.10) the same day -- likely a stale cached TipRanks snippet. Recorded as-is."
+        }
+      ]
+    },
+    "SNOW": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/snow/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 110,
+          "targetMean": 302.29,
+          "targetHigh": 500,
+          "numAnalysts": 51,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 330.53,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed to '51 analysts polled by S&P Global'. Price derived from displayed deltas (mean -8.53% i.e. target below price, low -66.72%, high +51.29%, consistent at ~$330.5) -- matches a directly-queried live quote of $335.35 (2026-08-13) within ~1.5%. PE: trailing is not meaningful (SNOW is GAAP loss-making TTM); forward PE was not captured from this source's own snippet. Cross-source (non-attributable-to-this-source) figures seen elsewhere: trailing ~-76 to -81, forward PE ~169-172 (GuruFocus, Investing.com, Yahoo Finance)."
+        },
+        {
+          "name": "TipRanks",
+          "url": "https://www.tipranks.com/stocks/snow/forecast",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 221,
+          "targetMean": 270.94,
+          "targetHigh": 325,
+          "numAnalysts": 34,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 274.88,
+          "asOf": "2026-08-14",
+          "note": "Consensus rating 'Strong Buy' (31 Buy, 3 Hold, 0 Sell, past 3 months). Last price stated directly in snippet as $274.88, mean target -1.43% vs that price."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NYSE/SNOW/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": null,
+          "targetMean": null,
+          "targetHigh": null,
+          "numAnalysts": 40,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "PARTIAL/WEAK -- snippet only returned consensus rating ('Moderate Buy', 40 firms) and individual analyst actions (Citigroup $320, Needham $330, Cantor Fitzgerald $225); no consolidated low/mean/high captured. Not counted toward the 2-source minimum; stockanalysis.com + TipRanks already satisfy it."
+        }
+      ]
+    },
+    "CRWD": {
+      "sources": [
+        {
+          "name": "stockanalysis.com",
+          "url": "https://stockanalysis.com/stocks/crwd/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 103.25,
+          "targetMean": 195.39,
+          "targetHigh": 250,
+          "numAnalysts": 52,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": 221.09,
+          "asOf": "2026-08-14",
+          "note": "Consensus attributed to '52 analysts polled by S&P Global'. Price derived from displayed deltas (low -53.30%, high +13.07%, consistent at ~$221.09) -- matches directly-queried live quotes of $221.97-$225.22 the same day. PE not captured from this source's own snippet. FLAG FOR VALIDATOR: this target range ($103-$250, mean $195, i.e. below current price) is far below the ranges reported by MarketBeat/Benzinga below ($295-$613) -- large cross-source disagreement, not reconciled here."
+        },
+        {
+          "name": "marketbeat.com",
+          "url": "https://www.marketbeat.com/stocks/NASDAQ/CRWD/forecast/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 295,
+          "targetMean": 494.95,
+          "targetHigh": 600,
+          "numAnalysts": 48,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2025-10 (per snippet -- 'the data shown is from October 2025 on MarketBeat'); likely stale relative to 2026-08-14 collection date",
+          "note": "Rating breakdown 28 Buy + 1 Strong Buy + 17 Hold + 2 Sell = 48. Explicitly flagged by the search snippet itself as an October 2025 data point -- recorded as-is for validator review, not refreshed."
+        },
+        {
+          "name": "Benzinga",
+          "url": "https://www.benzinga.com/quote/CRWD/analyst-ratings",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": 368,
+          "targetMean": 510.52,
+          "targetHigh": 613,
+          "numAnalysts": 44,
+          "trailingPE": null,
+          "forwardPE": null,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "Low ($368, Bernstein) / high ($613, Scotiabank) pairing came from the same passage as the $510.52/44-analyst mean. A separate, apparently more recent passage in the same search cited a mean of $561.66 on 41 analysts with no low/high given -- recorded in this note rather than as a separate field since low/high for that specific snapshot were not returned."
+        },
+        {
+          "name": "Yahoo Finance",
+          "url": "https://finance.yahoo.com/quote/CRWD/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "targetLow": null,
+          "targetMean": null,
+          "targetHigh": null,
+          "numAnalysts": null,
+          "trailingPE": null,
+          "forwardPE": 181.82,
+          "price": null,
+          "asOf": "2026-08-14",
+          "note": "PE-only record. Yahoo Finance's trailing P/E for CRWD is shown as '--' (not meaningful, GAAP net loss TTM) per the search snippet; forward PE 181.82 explicitly attributed to Yahoo Finance. Price target not queried for this source/ticker pair in this pass."
+        }
+      ]
+    },
+    "TSMU": {
+      "notApplicable": true,
+      "reason": "leveraged single-stock ETF (2x TSM)",
+      "notes": "GraniteShares 2x Long TSM Daily ETF. Expense ratio 1.50%, issuer GraniteShares, per graniteshares.com product page and confirmed by a secondary aggregator (bestetf.net). No analyst price targets or meaningful P/E apply to a daily-reset leveraged single-stock ETF. FLAG: data/tickers-universe.json currently labels TSMU 'T-Rex 2X Long TSMC' but every source found in this search names the issuer as GraniteShares, not T-Rex Shares -- worth a data-hygiene check by the validator/architect, not corrected here.",
+      "sources": [
+        {
+          "name": "GraniteShares (issuer site)",
+          "url": "https://graniteshares.com/institutional/us/en-us/etfs/tsmu/",
+          "retrievedAt": "2026-08-14T12:00:00Z",
+          "expenseRatio": 0.0150,
+          "issuer": "GraniteShares",
+          "underlying": "TSM (Taiwan Semiconductor Manufacturing Co Ltd), 2x daily leveraged"
+        }
+      ]
+    }
+  },
+  "failures": [
+    {
+      "attempted": "Direct WebFetch to stockanalysis.com (forecast + overview pages, all 7 equity tickers)",
+      "status": "fetch-failed",
+      "reason": "EGRESS_BLOCKED by session network proxy"
+    },
+    {
+      "attempted": "Direct WebFetch to finance.yahoo.com (quote pages, all 7 equity tickers)",
+      "status": "fetch-failed",
+      "reason": "EGRESS_BLOCKED by session network proxy"
+    },
+    {
+      "attempted": "Direct WebFetch to www.tipranks.com, www.marketbeat.com, www.benzinga.com, www.zacks.com, www.cnn.com",
+      "status": "fetch-failed",
+      "reason": "EGRESS_BLOCKED by session network proxy"
+    },
+    {
+      "attempted": "Direct WebFetch to www.wsj.com/market-data/quotes/PLTR",
+      "status": "fetch-failed",
+      "reason": "Claude Code was unable to fetch (non-proxy error)"
+    },
+    {
+      "attempted": "Direct WebFetch to www.marketscreener.com, www.gurufocus.com, www.macrotrends.net, tickernerd.com, www.investing.com, simplywall.st",
+      "status": "fetch-failed",
+      "reason": "EGRESS_BLOCKED by session network proxy"
+    },
+    {
+      "attempted": "site:tipranks.com CRWD CrowdStrike PE ratio price target forecast",
+      "status": "unusable-result",
+      "reason": "Search snippet returned two internally inconsistent price-target figures ($190.92 and $705.64) for the same query without a way to tell which reflected the current page -- skipped rather than guess which was current."
+    },
+    {
+      "attempted": "site:marketbeat.com PE ratio queries for PLTR, META, ORCL, TSLA, SNOW, CRWD",
+      "status": "no-data",
+      "reason": "Search results resolved to third-party PE aggregator sites (fullratio.com, financecharts.com, etc.) instead of MarketBeat's own PE figure; only the MSFT query successfully returned a MarketBeat-attributed PE value."
+    },
+    {
+      "attempted": "site:stockanalysis.com SNOW/CRWD statistics PE ratio trailing forward",
+      "status": "no-data",
+      "reason": "Search snippets described the statistics page existing but did not surface the literal trailing/forward PE numbers from it; recorded as null on those source entries per instructions rather than substituting a differently-sourced number."
+    }
+  ]
+}
