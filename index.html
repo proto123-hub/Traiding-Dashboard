@@ -1037,6 +1037,10 @@
         analystUpside,
         trailingPE: fu && fu.trailingPE, forwardPE: fu && fu.forwardPE,
         peVerified: fu && fu.verified, peNA: !!(fu && fu.notApplicable), peReason: fu && fu.reason,
+        // Per-metric flags: trailing can be verified while forward is not, since
+        // forward P/E only verifies against another source on the SAME EPS basis.
+        peTrailingVerified: fu && fu.trailingVerified, peForwardVerified: fu && fu.forwardVerified,
+        peForwardBasis: fu && fu.forwardPEBasis,
         newsItems: nw,
         trend: deriveTrend(q && q.changePct, v),
         stale: deriveStale(v && v.nextReview),
@@ -1134,10 +1138,15 @@
       ? '<span style="color:var(--faint)">N/A</span>'
       : fmtUpside(r.analystUpside);
 
+    // Unverified figures stay visible as directional context but are dimmed, so
+    // a cross-verified P/E never looks identical to a single-source one.
+    const peCell = (val, ok) => val == null
+      ? '<span style="color:var(--faint)">—</span>'
+      : (ok ? val.toFixed(1) : '<span style="color:var(--faint)">' + val.toFixed(1) + '</span>');
     const perFmt = r.peNA
       ? '<span style="color:var(--faint)">N/A</span>'
-      : (r.trailingPE != null && r.forwardPE != null
-          ? r.trailingPE.toFixed(1) + ' / ' + r.forwardPE.toFixed(1)
+      : (r.trailingPE != null || r.forwardPE != null
+          ? peCell(r.trailingPE, r.peTrailingVerified) + ' / ' + peCell(r.forwardPE, r.peForwardVerified)
           : '<span style="color:var(--faint)">—</span>');
 
     return '<tr class="wl-row' + (isExpanded ? ' expanded' : '') + '" data-sym="' + escapeHtml(r.sym) + '" ' +
@@ -1249,12 +1258,14 @@
     if (r.peNA) {
       perBody = '<span style="color:var(--faint)">N/A — ' + escapeHtml(r.peReason || '') + '</span>';
     } else if (r.trailingPE != null || r.forwardPE != null) {
-      const verifiedNote = r.peVerified === false
-        ? '<div style="margin-top:4px;color:var(--faint);font-size:10px">single-source</div>'
-        : (r.peVerified ? '<div style="margin-top:4px;color:var(--green);font-size:10px">verified</div>' : '');
-      perBody = '<div style="font-family:var(--mono)">Trail ' + (r.trailingPE != null ? r.trailingPE.toFixed(1) : '—') + '</div>' +
-        '<div style="font-family:var(--mono)">Fwd&nbsp;&nbsp;' + (r.forwardPE != null ? r.forwardPE.toFixed(1) : '—') + '</div>' +
-        verifiedNote;
+      const tag = ok => ok
+        ? '<span style="color:var(--green);font-size:10px"> verified</span>'
+        : '<span style="color:var(--faint);font-size:10px"> unverified</span>';
+      const basis = r.peForwardBasis ? ' <span style="color:var(--muted);font-size:10px">(' + escapeHtml(r.peForwardBasis) + ')</span>' : '';
+      perBody = '<div style="font-family:var(--mono)">Trail ' + (r.trailingPE != null ? r.trailingPE.toFixed(1) : '—') +
+          (r.trailingPE != null ? tag(r.peTrailingVerified) : '') + '</div>' +
+        '<div style="font-family:var(--mono)">Fwd&nbsp;&nbsp;' + (r.forwardPE != null ? r.forwardPE.toFixed(1) : '—') + basis +
+          (r.forwardPE != null ? tag(r.peForwardVerified) : '') + '</div>';
     } else {
       perBody = '<span style="color:var(--faint)">—</span>';
     }
