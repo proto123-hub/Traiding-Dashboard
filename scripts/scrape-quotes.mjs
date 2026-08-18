@@ -123,12 +123,17 @@ function extractCboeSession(sym, j) {
     const d = j?.data;
     if (!d || d.close == null) throw new Error('cboe:no_close');
     let price = d.close;
-    let prevClose = d.prev_day_close ?? null;
+    // price_change belongs to the session `close` came from. d.prev_day_close is
+    // NOT usable as a prior close: on a pre-market request it repeats that same
+    // session's close, which would zero out every change.
+    let change = d.price_change ?? null;
     if (sym === 'US10Y') {
         price = normalizeCboeYield(price);
-        prevClose = prevClose != null ? normalizeCboeYield(prevClose) : null;
+        change = change != null ? normalizeCboeYield(change) : null;
     }
-    const change = prevClose != null ? +(price - prevClose).toFixed(4) : null;
+    const prevClose = change != null ? +(price - change).toFixed(4) : null;
+    // Self-derive the percentage: Cboe's own price_change_percent divides by the
+    // new close rather than the prior one, so it disagrees with every other source.
     const changePct = (prevClose != null && prevClose !== 0)
         ? +((change / prevClose) * 100).toFixed(4) : null;
     return {
@@ -209,9 +214,15 @@ function extractNasdaqSession(j) {
     const sd = j?.data?.secondaryData;
     const pd = j?.data?.primaryData;
 
+    // secondaryData.netChange/percentageChange describe the regular session's own
+    // move, so prevClose derives as price - change. Do NOT use any source's
+    // `prev_day_close` for this: on a pre-market run it names the SAME session we
+    // just published, which would report every symbol as unchanged.
     const regular = (sd?.lastSalePrice != null) ? {
         price: parseNum(sd.lastSalePrice),
-        prevClose: null, // secondaryData carries no paired prevClose — resolved from Cboe/CNBC in the merge step
+        change: parseNum(sd.netChange),
+        changePct: parseNum(sd.percentageChange),
+        prevClose: null, // derived in the merge step from price - change
         sessionDate: parseNasdaqDate(sd.lastTradeTimestamp),
     } : null;
 
@@ -294,10 +305,13 @@ function parseCnbcNum(s) {
 // internally consistent regardless of which source wins the extended slot.
 function extractCnbcSession(row) {
     const price = parseCnbcNum(row.last);
+    // row.change belongs to the session `last` came from; previous_day_closing
+    // repeats that same close pre-market, so prevClose derives as last - change.
+    const cnChange = parseCnbcNum(row.change);
     const regular = (price != null) ? {
         price,
-        prevClose: parseCnbcNum(row.previous_day_closing),
-        change: parseCnbcNum(row.change),
+        change: cnChange,
+        prevClose: cnChange != null ? +(price - cnChange).toFixed(4) : null,
         changePct: parseCnbcNum(row.change_pct),
         sessionDate: row.last_time || null, // probe shows this is already "YYYY-MM-DD"
     } : null;
@@ -475,20 +489,38 @@ async function main() {
         if (cReg?.price != null) perSource.cboe = cReg.price;
         if (cnReg?.price != null) perSource.cnbc = cnReg.price;
 
-        // prevClose chain: primary's own > Cboe > CNBC > prior file > today (last resort).
+        // Session move: take the change each source reports FOR the session it
+        // published, then derive prevClose from it. Falling back to a stored
+        // prior-run price is a last resort — across a weekend or a skipped run it
+        // silently spans more than one session.
+        const sessionChange = (nReg?.change != null) ? nReg.change
+            : (cReg?.change != null) ? cReg.change
+            : (cnReg?.change != null) ? cnReg.change
+            : null;
+
         const priorPrice = prior?.quotes?.[sym]?.price;
-        const carriedPrev = (primary.prevClose != null) ? primary.prevClose
-            : (cReg?.prevClose != null) ? cReg.prevClose
-            : (cnReg?.prevClose != null) ? cnReg.prevClose
-            : (priorPrice != null && priorPrice !== primary.price) ? priorPrice
-            : primary.price;
-
-        const change = +(primary.price - carriedPrev).toFixed(4);
-        const changePct = (carriedPrev !== 0)
-            ? +(((primary.price - carriedPrev) / carriedPrev) * 100).toFixed(4)
-            : 0;
-
+        const priorSessionDate = prior?.quotes?.[sym]?.regularSessionDate;
         const regularSessionDate = nReg?.sessionDate ?? cReg?.sessionDate ?? cnReg?.sessionDate ?? null;
+
+        let carriedPrev, change, changePct;
+        if (sessionChange != null) {
+            change = +sessionChange.toFixed(4);
+            carriedPrev = +(primary.price - change).toFixed(4);
+            changePct = (carriedPrev !== 0) ? +((change / carriedPrev) * 100).toFixed(4) : 0;
+        } else if (priorPrice != null && priorSessionDate && regularSessionDate
+                   && priorSessionDate !== regularSessionDate) {
+            // No source reported a change, but the stored run is a genuinely
+            // earlier session — safe to difference against it.
+            carriedPrev = priorPrice;
+            change = +(primary.price - carriedPrev).toFixed(4);
+            changePct = (carriedPrev !== 0) ? +((change / carriedPrev) * 100).toFixed(4) : 0;
+        } else {
+            // Unknown rather than zero: a fabricated 0.00% reads as "flat today".
+            carriedPrev = null;
+            change = null;
+            changePct = null;
+        }
+
         const assetClass = classifySymbol(sym, indexSymbolSet);
         const tolerance = TOLERANCE_BY_CLASS[assetClass] ?? TOLERANCE_BY_CLASS.equity;
         const { verified } = pairwiseVerify(perSource, tolerance);
