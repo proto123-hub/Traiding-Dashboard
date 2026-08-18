@@ -28,6 +28,13 @@ This repo is the working dashboard behind Daniel's **LLM Wiki Trading OS**
   (Codex) sessions, plus a GitHub Actions bot. Follow the conventions in this
   file strictly and append to `SESSION_LOG.md` so cross-tool sessions can
   reconstruct state.
+- **Work-start declaration (착수 선언)**: before beginning any multi-step
+  session, append a one-line start entry to `SESSION_LOG.md` (mark it `⏳`)
+  naming the scope and branch, and push it early. Append the completion
+  summary as a separate line when done — never edit the start line (the log
+  is append-only). A tool seeing another tool's open `⏳` entry must not
+  start overlapping work. (Added 2026-08-18 after a Claude/Codex duplicate
+  implementation of the watchlist view.)
 
 ## Coding Behavior — Karpathy Guidelines
 

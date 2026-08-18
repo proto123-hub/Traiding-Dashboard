@@ -5,6 +5,10 @@ Format: `YYYY-MM-DD HH:MM KST | <session> | <summary>  [refs: path1, path2 ...]`
 
 ---
 
+## 2026-08-18
+
+- **19:45 KST | Claude Code (phase2 착수 선언 ⏳)** | **Phase 2 시작** — branch `claude/llm-wiki-trading-os-1f299e` (fresh from main 3f17777). Scope: ① scrape-quotes 장애 복구 (8/13~ 0/27 verified: stooq 404 + yahoo 429) ② 검증 시세로 MRVL/CLS/SOXL 스톱 재확인 ③ scrape-fundamentals.mjs (PER 검증) ④ watch-16 재평가. Codex는 이 브랜치/스코프에 병렬 착수 금지 (합의 프로토콜). 완료 entry는 별도 append 예정  [refs: reports/2026-08/2026-08-14-watchlist-analytics-phase1.md]
+
 ## 2026-08-14
 
 - **21:05 KST | Claude Code (watchlist-analytics-phase1)** | **워치리스트 분석 뷰 전면 개편 (PR #17)** — full pipeline 가동: planner→architect→collector×3→validator→builder→evaluator→interpreter. (1) **UI**: 워치리스트+밸류에이션 패널을 22종목 accordion analytics 테이블로 통합 (추세/리스크/뉴스/FV/애널리스트 목표가/PER + 키보드 접근성 + 모바일 사이드바 축소 픽스). (2) **신규 데이터**: analyst-targets.json (15/20 verified, CRWD 컨센서스 $295-613→$103-250 교정), fundamentals.json (PER 전항목 unverified — phase 2 스크레이퍼 필요), news-latest.json (110건). (3) **evaluator 갱신**: MU HOLD→BUY fvMid $868→$1,196 · CLS HOLD→BUY $424 · SOXL TRIM→SELL (하드스톱 $170 붕괴) · MRVL 스톱 이탈 플래그만 (미검증 시세) · watch-16에 coverage:informational 신설. **🔴 인프라**: 8/13~8/14 크론 quotes 0/27 verified (stooq 404 + yahoo 429 지속) — 스크레이퍼 복구 필요. Codex 병렬 구현 충돌 회피 (로컬 62c02e6 미push 합의). CLAUDE.md 전면 overhaul 포함  [refs: reports/2026-08/2026-08-14-watchlist-analytics-phase1.md, reports/designs/2026-08-14-watchlist-analytics-view.md, reports/validation/2026-08-14-watchlist-analytics-phase1.md, data/analyst-targets.json, index.html]
