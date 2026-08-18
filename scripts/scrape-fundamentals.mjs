@@ -12,7 +12,10 @@
 //   tickers, gives pe/eps/fpe/feps (trailing + NTM-basis forward).
 // - SEC XBRL companyconcept (authoritative second source for TRAILING P/E
 //   only) — TTM diluted EPS computed from the last 4 discrete-quarter
-//   USD/shares facts, PE anchored to OUR OWN verified close in
+//   USD/shares facts, deriving the never-separately-filed Q4 quarter as
+//   FY - (Q1+Q2+Q3) when the annual fact and its three quarters are all
+//   present and contiguous (computeTtmEpsDiluted). PE anchored to OUR OWN
+//   verified close in
 //   data/price-quotes.json (SEC supplies no price). Domestic 10-Q/10-K
 //   filers only — TSM/ARM/CLS are foreign private issuers (20-F/40-F,
 //   annual-only) and are EXPECTED to miss this leg (sec:insufficient_quarters),
@@ -236,34 +239,109 @@ async function runCnbcPhase(stockSymbols, failures) {
 
 // ===== 1b. SEC XBRL — authoritative second source for TRAILING P/E only =====
 
-// Standard TTM technique for this SEC shape (design doc §1b, verbatim).
+// Standard TTM technique for this SEC shape (design doc §1b), with one fix:
+// no 10-Q ever covers a filer's own fourth fiscal quarter (it only appears
+// inside the ~annual figure), so a strict ~90-day-duration filter always
+// misses Q4 and silently reaches back an extra quarter instead — Q4 is
+// derived as FY − (Q1 + Q2 + Q3) whenever the annual fact and its three
+// quarters are all present and contiguous.
 function computeTtmEpsDiluted(json) {
     const facts = json?.units?.['USD/shares'];
     if (!Array.isArray(facts)) throw new Error('sec:no_data');
 
-    // Isolate SINGLE-QUARTER facts by duration, not by the `fp` label —
-    // annual (fp:"FY") facts span ~365 days; some filers also report 6/9-month
-    // YTD cumulative facts. Filtering by (end-start) in [80,100] days robustly
-    // keeps only true discrete-quarter figures regardless of label quirks.
-    const quarterly = facts.filter(f => {
-        if (f.val == null || !f.start || !f.end) return false;
-        const days = (new Date(f.end) - new Date(f.start)) / 86400000;
-        return days >= 80 && days <= 100;
-    });
-    if (!quarterly.length) throw new Error('sec:insufficient_quarters');
+    const withDuration = facts.filter(f => f.val != null && f.start && f.end);
+    const durationDays = (f) => (new Date(f.end) - new Date(f.start)) / 86400000;
 
     // Dedupe by `end` date, keeping the LATEST `filed` (amendments/restatements
-    // supersede the original filing for the same period).
-    const byEnd = new Map();
-    for (const f of quarterly) {
-        const prev = byEnd.get(f.end);
-        if (!prev || new Date(f.filed) > new Date(prev.filed)) byEnd.set(f.end, f);
+    // supersede the original filing for the same period) — applied separately
+    // to quarterly and annual facts below.
+    function dedupeByEnd(list) {
+        const byEnd = new Map();
+        for (const f of list) {
+            const prev = byEnd.get(f.end);
+            if (!prev || new Date(f.filed) > new Date(prev.filed)) byEnd.set(f.end, f);
+        }
+        return [...byEnd.values()];
     }
-    const last4 = [...byEnd.values()].sort((a, b) => new Date(b.end) - new Date(a.end)).slice(0, 4);
-    if (last4.length < 4) throw new Error('sec:insufficient_quarters');
+
+    // Isolate SINGLE-QUARTER facts by duration, not by the `fp` label — these
+    // are the labels of the *filing*, not the period. Annual (fp:"FY") facts
+    // span ~350-385 days (52/53-week fiscal calendars vary); some filers also
+    // report 6/9-month YTD cumulative facts. Filtering by (end-start) in
+    // [80,100] days robustly keeps only true discrete-quarter figures
+    // regardless of label quirks.
+    const quarterlyFiled = dedupeByEnd(withDuration.filter(f => {
+        const d = durationDays(f);
+        return d >= 80 && d <= 100;
+    })).map(f => ({ start: f.start, end: f.end, val: f.val, form: f.form, filed: f.filed, derived: false }));
+
+    const annual = dedupeByEnd(withDuration.filter(f => {
+        const d = durationDays(f);
+        return d >= 340 && d <= 385;
+    }));
+
+    const TOL_DAYS = 10; // shared contiguity tolerance for windows/gaps below
+
+    // Derive Q4 for every fiscal year where the annual fact AND its three
+    // quarterly facts (Q1-Q3, matched by window, not by label) are present
+    // and contiguous — Q4 is never filed standalone, so it must be solved for.
+    const derived = [];
+    for (const fy of annual) {
+        const fyStart = new Date(fy.start).getTime();
+        const fyEnd = new Date(fy.end).getTime();
+        const inYear = quarterlyFiled
+            .filter(q => new Date(q.start).getTime() >= fyStart - TOL_DAYS * 86400000
+                && new Date(q.end).getTime() <= fyEnd + TOL_DAYS * 86400000)
+            .sort((a, b) => new Date(a.start) - new Date(b.start));
+        if (inYear.length !== 3) continue; // need exactly Q1-Q3 present to solve for Q4
+
+        let contiguous = true;
+        for (let i = 1; i < inYear.length; i++) {
+            const gapDays = (new Date(inYear[i].start) - new Date(inYear[i - 1].end)) / 86400000;
+            if (Math.abs(gapDays) > TOL_DAYS) { contiguous = false; break; }
+        }
+        if (!contiguous) continue;
+
+        const q4Start = inYear[2].end;
+        const q4End = fy.end;
+        const q4Days = (new Date(q4End) - new Date(q4Start)) / 86400000;
+        if (q4Days < 80 - TOL_DAYS || q4Days > 100 + TOL_DAYS) continue; // implausible Q4 window length
+
+        const sumFirstThree = inYear.reduce((s, q) => s + q.val, 0);
+        const q4Val = +(fy.val - sumFirstThree).toFixed(4);
+
+        // Fail closed on an implausible derived Q4 rather than publish a bad
+        // number — bound its magnitude against its own sibling quarters
+        // instead of an arbitrary absolute cutoff.
+        const siblingMax = Math.max(...inYear.map(q => Math.abs(q.val)));
+        if (!Number.isFinite(q4Val) || Math.abs(q4Val) > siblingMax * 5 + 0.01) continue;
+
+        derived.push({ start: q4Start, end: q4End, val: q4Val, form: fy.form, filed: fy.filed, derived: true });
+    }
+
+    // Filed quarters take priority; a derived quarter only fills a genuine
+    // gap in the filed set (real 10-Q/10-K data always wins over arithmetic).
+    const byEnd = new Map();
+    for (const f of quarterlyFiled) byEnd.set(f.end, f);
+    for (const f of derived) if (!byEnd.has(f.end)) byEnd.set(f.end, f);
+
+    const all = [...byEnd.values()].sort((a, b) => new Date(b.end) - new Date(a.end));
+    if (all.length < 4) throw new Error('sec:insufficient_quarters');
+
+    const last4 = all.slice(0, 4);
+    // Fail closed: the four most recent quarters must be genuinely
+    // consecutive — no gap > ~10 days between one quarter's end and the next
+    // quarter's start, and no duplicate/overlapping window. An unverifiable
+    // TTM must never reach the file.
+    for (let i = 1; i < last4.length; i++) {
+        const gapDays = (new Date(last4[i - 1].start) - new Date(last4[i].end)) / 86400000;
+        if (gapDays > TOL_DAYS || gapDays < -TOL_DAYS) throw new Error('sec:non_contiguous_quarters');
+    }
 
     const ttmEps = +last4.reduce((s, f) => s + f.val, 0).toFixed(4);
-    return { ttmEps, quartersUsed: last4.map(f => ({ end: f.end, val: f.val, form: f.form, filed: f.filed })) };
+    const quartersUsed = last4.map(f => ({ end: f.end, val: f.val, form: f.form, filed: f.filed, derived: f.derived }));
+    const derivedQuarters = last4.filter(f => f.derived).map(f => f.end);
+    return { ttmEps, quartersUsed, derivedQuarters };
 }
 
 async function fetchSecJson(url, signal) {
@@ -331,7 +409,7 @@ async function runSecPhase(stockSymbols, priceQuotes, failures) {
         const url = `https://data.sec.gov/api/xbrl/companyconcept/CIK${cik}/us-gaap/EarningsPerShareDiluted.json`;
         try {
             const j = await withTimeout(s => fetchSecJsonWithRetry(url, s), SEC_TIMEOUT_MS, `sec:${sym}`);
-            const { ttmEps, quartersUsed } = computeTtmEpsDiluted(j);
+            const { ttmEps, quartersUsed, derivedQuarters } = computeTtmEpsDiluted(j);
 
             // Anchor to OUR OWN verified close (never SEC's or CNBC's price) —
             // apples-to-apples per design doc §4.
@@ -340,7 +418,7 @@ async function runSecPhase(stockSymbols, priceQuotes, failures) {
             const anchorVerified = pq?.verified ?? false;
             if (anchorPrice == null) {
                 failures.push({ symbol: sym, source: 'sec-xbrl', reason: 'sec:no_anchor_price' });
-                raw[sym] = { cik, quartersUsed, ttmEps, extracted: false, reason: 'sec:no_anchor_price' };
+                raw[sym] = { cik, quartersUsed, derivedQuarters, ttmEps, extracted: false, reason: 'sec:no_anchor_price' };
                 return;
             }
             const computedPE = ttmEps > 0 ? +(anchorPrice / ttmEps).toFixed(2) : null;
@@ -348,9 +426,10 @@ async function runSecPhase(stockSymbols, priceQuotes, failures) {
                 trailingPE: computedPE,
                 epsUsed: ttmEps,
                 quartersUsed: quartersUsed.map(q => q.end),
+                derivedQuarters,
                 anchorPrice, anchorVerified,
             };
-            raw[sym] = { cik, quartersUsed, ttmEps, anchorPrice, anchorVerified, computedPE };
+            raw[sym] = { cik, quartersUsed, derivedQuarters, ttmEps, anchorPrice, anchorVerified, computedPE };
         } catch (e) {
             failures.push({ symbol: sym, source: 'sec-xbrl', reason: e.message });
             raw[sym] = { extracted: false, reason: e.message };
@@ -682,7 +761,7 @@ async function main() {
 
         const perSource = {};
         if (cnbc) perSource.cnbc = { trailingPE: cnbc.trailingPE, eps: cnbc.eps, forwardPE: cnbc.forwardPE, forwardPEBasis: 'NTM', forwardEps: cnbc.forwardEps };
-        if (sec) perSource['sec-xbrl'] = { trailingPE: sec.trailingPE, epsUsed: sec.epsUsed, quartersUsed: sec.quartersUsed, anchorPrice: sec.anchorPrice, anchorVerified: sec.anchorVerified, anchorSource: 'data/price-quotes.json' };
+        if (sec) perSource['sec-xbrl'] = { trailingPE: sec.trailingPE, epsUsed: sec.epsUsed, quartersUsed: sec.quartersUsed, derivedQuarters: sec.derivedQuarters, anchorPrice: sec.anchorPrice, anchorVerified: sec.anchorVerified, anchorSource: 'data/price-quotes.json' };
         if (sa) perSource.stockanalysis = { trailingPE: sa.trailingPE, forwardPE: sa.forwardPE, forwardPEBasis: 'NTM', basisConfidence: 'assumed' };
 
         // Basis-purity gate — build entries once, group/verify per-basis only.
