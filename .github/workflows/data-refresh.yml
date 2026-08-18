@@ -26,10 +26,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Scrape quotes (Yahoo + Saveticker)
+      - name: Scrape quotes (nasdaq+cboe+stooq+yahoo)
         run: node scripts/scrape-quotes.mjs
 
-      - name: Scrape news (Saveticker)
+      - name: Scrape news (Google News RSS)
         run: node scripts/scrape-news.mjs
         continue-on-error: true
 

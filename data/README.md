@@ -15,7 +15,7 @@ user edits persist between sessions without requiring a commit.
 | `risk-scores.json` | Per-ticker risk score + entry zone + target | evaluator agent |
 | `news-feed.json` | Collected news items with verification state | collector + validator |
 | `sector-map.json` | Ticker → sector bucket → macro theme | architect agent |
-| `price-quotes.json` | Cron-scraped quote table (Yahoo + Saveticker) with cross-source verification | refresher agent + GH Actions |
+| `price-quotes.json` | Cron-scraped quote table with cross-source verification | refresher agent + GH Actions |
 | `analyst-targets.json` | Wall Street analyst consensus price targets (low/mean/high, numAnalysts) | validator |
 | `fundamentals.json` | Trailing/forward P/E per ticker; ETFs marked notApplicable | validator (phase 1) / scripts/scrape-fundamentals.mjs (phase 2) |
 | `news-latest.json` | Top 3-5 recent headlines per ticker, sliced from news-feed.json — the ONLY news file index.html fetches | validator |
@@ -327,12 +327,22 @@ enough for the browser (3-5 items × 22 tickers ≈ 100 items max).
 ### price-quotes.json
 Refreshed by `.github/workflows/data-refresh.yml` (cron 21:00 UTC + 11:00 UTC on
 weekdays) and merged into `v3.seedQuotes` by the dashboard at boot and on Refresh.
+Sources (see `scripts/scrape-quotes.mjs` header comment for the authoritative
+rationale/rate parameters): **NASDAQ** public API (primary), **Cboe**
+delayed-quotes CDN (secondary), **Stooq.com** (best-effort, batched),
+**Yahoo** v7 spark / v8 chart (best-effort), **CNBC** restQuote
+(indices-only, probe-gated), plus manual **Kapture** imports merged into
+`perSource.kapture`. `verified: true` iff ANY PAIR of distinct `perSource`
+values agrees within `tolerance` — not all sources. Note: Cboe and NASDAQ are
+operationally independent (different operators/infra/failure modes) but both
+ultimately read the consolidated tape, so their agreement is a weaker
+verification signal than two genuinely distinct data pipelines.
 ```jsonc
 {
   "updated": "2026-04-26T21:05:00Z",   // ISO timestamp of last successful run
   "asOfDate": "2026-04-26",            // YYYY-MM-DD of the quote reference
   "agent": "refresher",
-  "sources": ["yahoo", "saveticker"],
+  "sources": ["nasdaq", "cboe", "stooq", "yahoo", "cnbc"],
   "tolerance": 0.002,                  // fractional price-diff cutoff for verified=true
   "quotes": {
     "GOOGL": {
@@ -340,14 +350,14 @@ weekdays) and merged into `v3.seedQuotes` by the dashboard at boot and on Refres
       "change": 7.04,
       "changePct": 2.12,
       "prevClose": 332.28,
-      "verified": true,                // ≥2 sources within tolerance
+      "verified": true,                // any pair of perSource values within tolerance
       "sourceCount": 2,
-      "perSource": { "yahoo": 339.32, "saveticker": 339.30, "kapture": 339.32 },
+      "perSource": { "nasdaq": 339.32, "cboe": 339.30, "kapture": 339.32 },
       "lastUpdated": "2026-04-26T21:04:58Z"
     }
   },
   "failures": [
-    { "symbol": "TSMU", "source": "saveticker", "reason": "404" }
+    { "symbol": "TSMU", "source": "stooq", "reason": "stooq-batch:http_404" }
   ]
 }
 ```
