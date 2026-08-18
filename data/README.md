@@ -40,7 +40,8 @@ behavior):
 - `data/risk-scores.json`     — verdict + score + coverage (all 22 tickers)
 - `data/portfolio-current.json` — held symbol set
 - `data/sector-map.json`      — sector label lookup
-- `data/price-quotes.json`    — price + changePct + verified
+- `data/price-quotes.json`    — price + changePct + verified (+ optional
+extended{} block, not yet consumed by index.html — see §6)
 - `data/tickers-universe.json` — the 22-ticker universe (name/sector/held/theme)
 
 Optional / progressive enhancement (missing ⇒ that column/detail-block renders
@@ -328,36 +329,63 @@ enough for the browser (3-5 items × 22 tickers ≈ 100 items max).
 Refreshed by `.github/workflows/data-refresh.yml` (cron 21:00 UTC + 11:00 UTC on
 weekdays) and merged into `v3.seedQuotes` by the dashboard at boot and on Refresh.
 Sources (see `scripts/scrape-quotes.mjs` header comment for the authoritative
-rationale/rate parameters): **NASDAQ** public API (primary), **Cboe**
-delayed-quotes CDN (secondary), **Stooq.com** (best-effort, batched),
-**Yahoo** v7 spark / v8 chart (best-effort), **CNBC** restQuote
-(indices-only, probe-gated), plus manual **Kapture** imports merged into
-`perSource.kapture`. `verified: true` iff ANY PAIR of distinct `perSource`
-values agrees within `tolerance` — not all sources. Note: Cboe and NASDAQ are
-operationally independent (different operators/infra/failure modes) but both
-ultimately read the consolidated tape, so their agreement is a weaker
-verification signal than two genuinely distinct data pipelines.
+rationale/rate parameters — Yahoo and Stooq were removed 2026-08-18, both
+structurally dead from runner IPs, see the header tombstone): **NASDAQ**
+public API (primary), **Cboe** delayed-quotes CDN (secondary), **CNBC**
+restQuote (tertiary, full coverage — equities, ETFs, and indices), plus
+manual **Kapture** imports merged into `perSource.kapture`. `verified: true`
+iff ANY PAIR of distinct `perSource` values agrees within the symbol's
+class-resolved tolerance (see `toleranceByClass`) — not all sources.
+
+**Session-aware since 2026-08-18** (`reports/designs/2026-08-18-session-aware-quotes.md`):
+`quotes[sym].price`/`.changePct`/`.verified` describe ONLY the official
+**regular-session close** — never a live pre/after-hours print. A live print,
+when available, is reported separately under the optional `quotes[sym].extended`
+block and is verified independently; it is never blended into the close
+comparison. `quotes[sym].regularSessionDate` states which completed session
+`price` belongs to (diagnostic only — a parse miss leaves it `null`, it never
+silently mislabels a session). Top-level `session` states the market phase at
+scrape time (`"pre-market"|"intraday"|"after-hours"|"closed"`).
+
+Note: Cboe and NASDAQ are operationally independent (different
+operators/infra/failure modes) but both ultimately read the consolidated
+tape, so their agreement is a weaker verification signal than two genuinely
+distinct data pipelines; CNBC is a distinct, unofficial partner feed with no
+SLA, kept in the priority chain last for primary-price selection even though
+it participates fully in verification.
+
 ```jsonc
 {
-  "updated": "2026-04-26T21:05:00Z",   // ISO timestamp of last successful run
-  "asOfDate": "2026-04-26",            // YYYY-MM-DD of the quote reference
+  "updated": "2026-08-18T21:05:00Z",   // ISO timestamp of last successful run
+  "asOfDate": "2026-08-18",            // YYYY-MM-DD of the scrape run
   "agent": "refresher",
-  "sources": ["nasdaq", "cboe", "stooq", "yahoo", "cnbc"],
-  "tolerance": 0.002,                  // fractional price-diff cutoff for verified=true
+  "sources": ["nasdaq", "cboe", "cnbc"],
+  "session": "after-hours",            // market phase at scrape time
+  "tolerance": 0.002,                  // back-compat scalar = toleranceByClass.equity
+  "toleranceByClass": { "equity": 0.002, "index": 0.005, "fx": 0.001 },
   "quotes": {
     "GOOGL": {
-      "price": 339.32,
+      "price": 344.00,
       "change": 7.04,
       "changePct": 2.12,
-      "prevClose": 332.28,
-      "verified": true,                // any pair of perSource values within tolerance
+      "prevClose": 336.96,
+      "regularSessionDate": "2026-08-17",
+      "verified": true,
       "sourceCount": 2,
-      "perSource": { "nasdaq": 339.32, "cboe": 339.30, "kapture": 339.32 },
-      "lastUpdated": "2026-04-26T21:04:58Z"
+      "assetClass": "equity",
+      "perSource": { "nasdaq": 344.00, "cboe": 344.00, "kapture": 344.00 },
+      "lastUpdated": "2026-08-18T21:04:58Z",
+      "extended": {                     // optional — omitted when no live print exists this cycle
+        "price": 342.15,
+        "changePct": -0.54,
+        "verified": false,
+        "sessionType": "pre-market",
+        "perSource": { "nasdaq": 342.15 }
+      }
     }
   },
   "failures": [
-    { "symbol": "TSMU", "source": "stooq", "reason": "stooq-batch:http_404" }
+    { "symbol": "TSMU", "source": "cnbc", "reason": "cnbc:not_found" }
   ]
 }
 ```

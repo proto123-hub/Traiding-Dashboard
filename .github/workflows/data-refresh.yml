@@ -26,11 +26,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: TEMP probe sources (remove before merge)
-        run: node scripts/probe-sources.mjs
-        continue-on-error: true
-
-      - name: Scrape quotes (nasdaq+cboe+stooq+yahoo)
+      - name: Scrape quotes (nasdaq+cboe+cnbc)
         run: node scripts/scrape-quotes.mjs
 
       - name: Scrape news (Google News RSS)
