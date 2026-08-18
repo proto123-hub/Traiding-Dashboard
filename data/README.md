@@ -17,7 +17,7 @@ user edits persist between sessions without requiring a commit.
 | `sector-map.json` | Ticker → sector bucket → macro theme | architect agent |
 | `price-quotes.json` | Cron-scraped quote table with cross-source verification | refresher agent + GH Actions |
 | `analyst-targets.json` | Wall Street analyst consensus price targets (low/mean/high, numAnalysts) | validator |
-| `fundamentals.json` | Trailing/forward P/E per ticker; ETFs marked notApplicable | validator (phase 1) / scripts/scrape-fundamentals.mjs (phase 2) |
+| `fundamentals.json` | Trailing/forward P/E per ticker (basis-aware, cross-verified) + ETF expense ratio/AUM | refresher agent + GH Actions (`scripts/scrape-fundamentals.mjs`) |
 | `news-latest.json` | Top 3-5 recent headlines per ticker, sliced from news-feed.json — the ONLY news file index.html fetches | validator |
 
 ## Resolution order at boot
@@ -231,46 +231,79 @@ Single-source entries keep `verified: false` but still populate `low/mean/high`
 rather than hiding the number, matching the existing quote-verification UX.
 
 ### fundamentals.json
-Owner: **validator** in phase 1 (same collector→validator pipeline as
-`analyst-targets.json` — PER is collected alongside analyst consensus, no new
-collector output type needed). Phase 2: `scripts/scrape-fundamentals.mjs`
-(deferred) refreshes this file non-interactively via the GH Actions cron, at
-which point `agent: "refresher"` is also a valid value.
+Owner: **refresher agent + GitHub Actions data-refresh workflow**
+(`scripts/scrape-fundamentals.mjs`) — same ownership model as
+`price-quotes.json`. This **supersedes** the prior validator/WebSearch-
+synthesis phase entirely; the validator no longer writes this file (the
+whole point of this revision is to replace "AI-generated snapshot of a
+search snapshot" provenance with direct-fetch, cron-refreshed, cross-
+verified data — see `reports/designs/2026-08-18-fundamentals-scraper.md`).
+
+Sources: **CNBC** batched `quote.htm` (primary — `pe`/`eps`/`fpe`/`feps`),
+**SEC XBRL** `companyconcept` (authoritative TTM diluted EPS, computed PE
+anchored to the verified close in `price-quotes.json` — domestic 10-Q/10-K
+filers only; foreign private issuers like TSM/ARM/CLS file annually and are
+expected to miss this leg, see their `note`), **stockanalysis.com**
+statistics page (best-effort HTML regex extraction, fails safe), **NASDAQ**
+`peg-ratio` (FY-basis forward P/E estimates) + `summary?assetclass=etf`
+(expense ratio/AUM/beta for SOXL/TSMU).
+
+**Forward P/E is basis-aware, not one number** (see the design doc §2 for
+the full rationale): every forward P/E carries an explicit `forwardPEBasis`
+(`"NTM"` or `"FY20XXE"`) and is **only ever cross-verified against another
+source on the identical basis** — never averaged or compared across bases.
+`forwardPEByBasis` carries every basis independently; the top-level
+`forwardPE`/`forwardPEBasis` (kept for `index.html` back-compat) resolve to
+the NTM figure when available, falling back to the nearest FY-basis estimate
+(flagged via `forwardPEBasisNote`) only when no NTM source succeeded that
+cycle.
+
+**Trailing P/E verification is EPS-based, not PE-based**, at a **1%**
+tolerance (`tolerance.trailingEps` — reuses validator.md's already-
+documented "1% for fundamentals (EPS/rev)" convention): comparing TTM
+diluted EPS directly removes cross-vendor price-timestamp noise (each raw
+source's own PE divides by its OWN last-price snapshot, which may not match
+our verified close's timestamp). A wider **5%** raw-PE fallback
+(`tolerance.trailingPE`) applies only when a second source exposes a PE with
+no separate EPS figure to compare instead. `verified: true` (top-level,
+combined) requires **both** legs (`trailingVerified` AND `forwardVerified`)
+— per the basis-purity rule above, `forwardVerified` will be single-source-
+false most cycles, so **`trailingVerified` is the more informative signal**
+day to day; a future `index.html` patch may switch the PER-block badge to
+read it directly (documented, not implemented — see the design doc §2).
+
 ```jsonc
 {
-  "note": "Owned by validator agent (phase 1: from collector raw drops). Phase 2: scripts/scrape-fundamentals.mjs (refresher-style, non-interactive) may also write this file — agent field reflects whichever wrote last. trailingPE = trailing-twelve-month GAAP or non-GAAP EPS as reported by source (see perSource); forwardPE = consensus NTM EPS estimate. ETFs get notApplicable.",
-  "updated": "2026-08-14T12:00:00Z",
-  "agent": "validator",
-  "tolerance": { "trailingPE": 0.03, "forwardPE": 0.05 },
+  "updated": "2026-08-18T21:07:00Z",
+  "asOfDate": "2026-08-18",
+  "agent": "refresher",
+  "sources": ["cnbc", "sec-xbrl", "stockanalysis", "nasdaq-peg"],
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
   "fundamentals": {
     "GOOGL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 24.8,
-      "forwardPE": 21.3,
-      "asOf": "2026-08-13",
+      "updated": "2026-08-18", "agent": "refresher", "asOf": "2026-08-18",
+      "trailingPE": 17.26, "eps": 19.93, "trailingVerified": true,
+      "forwardPE": 26.06, "forwardPEBasis": "NTM", "forwardEps": 13.199, "forwardVerified": false,
+      "verified": false, "sourceCount": 3, "notApplicable": false,
       "perSource": {
-        "stooq":  { "trailingPE": 24.9, "forwardPE": 21.1 },
-        "nasdaq": { "trailingPE": 24.7, "forwardPE": 21.5 }
+        "cnbc": { "trailingPE": 17.2604, "eps": 19.93, "forwardPE": 26.0626, "forwardPEBasis": "NTM" },
+        "sec-xbrl": { "trailingPE": 17.31, "epsUsed": 19.87, "anchorPrice": 344.00, "anchorVerified": true }
       },
-      "verified": true,                 // both trailingPE and forwardPE within their tolerance across sources
-      "sourceCount": 2,
-      "notApplicable": false
+      "forwardPEByBasis": {
+        "NTM": { "value": 26.06, "verified": false, "sourceCount": 1, "perSource": { "cnbc": 26.0626 } },
+        "FY2026E": { "value": 16.77, "verified": false, "sourceCount": 1, "perSource": { "nasdaq-peg": 16.77 } }
+      }
     },
     "SOXL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": null,
-      "forwardPE": null,
-      "notApplicable": true,
-      "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)"
+      "updated": "2026-08-18", "agent": "refresher",
+      "trailingPE": null, "forwardPE": null, "notApplicable": true,
+      "reason": "Leveraged ETF — PE not meaningful",
+      "expenseRatio": 0.0090, "aum": "$1.2B", "etfBeta": 5.73
     }
-  }
+  },
+  "failures": [ { "symbol": "ARM", "source": "sec-xbrl", "reason": "sec:insufficient_quarters" } ]
 }
 ```
-Trailing/forward are tracked as separate `verified` conditions internally, but
-the JSON exposes one `verified` boolean = true only if **both** pass their
-respective tolerance.
 
 ### news-latest.json
 Owner: **validator**, regenerated (full overwrite, not appended) each cycle by
