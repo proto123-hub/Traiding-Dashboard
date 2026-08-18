@@ -79,6 +79,35 @@ function pairwiseVerify(perSource, tolerance) {
     return { verified: minDelta <= tolerance, minDelta };
 }
 
+// Source order used both for tie-breaks and as the fallback when nothing agrees.
+const SOURCE_PRIORITY = ['nasdaq', 'cboe', 'cnbc'];
+
+// Largest set of sources that mutually agree within tolerance. The published
+// price must come from this set: `verified: true` has to describe the number we
+// actually publish, otherwise a single source disagreeing with the other two can
+// still be the one that reaches the dashboard.
+function consensusCluster(perSource, tolerance) {
+    const names = SOURCE_PRIORITY.filter(n => perSource[n] != null);
+    const agree = (a, b) => {
+        const x = perSource[a], y = perSource[b];
+        return Math.abs(x - y) / Math.max(Math.min(x, y), 1e-6) <= tolerance;
+    };
+    let best = [];
+    // ≤3 sources, so enumerate every subset rather than clustering cleverly.
+    for (let mask = 1; mask < (1 << names.length); mask++) {
+        const subset = names.filter((_, i) => mask & (1 << i));
+        if (subset.length < 2 || subset.length <= best.length) continue;
+        let mutual = true;
+        for (let i = 0; i < subset.length && mutual; i++) {
+            for (let j = i + 1; j < subset.length; j++) {
+                if (!agree(subset[i], subset[j])) { mutual = false; break; }
+            }
+        }
+        if (mutual) best = subset;
+    }
+    return { verified: best.length >= 2, cluster: best };
+}
+
 // Symbol -> tolerance class, derived from tickers-universe.json's
 // tickers[]/indices[] split (already loaded in main()) rather than a
 // duplicated hardcoded list — see reports/designs/2026-08-18-session-aware-quotes.md §3.
@@ -476,27 +505,41 @@ async function main() {
         const cReg = c?.regular;
         const cnReg = cn?.regular;
 
-        // Primary-price selection chain (unchanged pattern, sources
-        // removed): NASDAQ > Cboe > CNBC, regular-session values only.
-        const primary = (nReg?.price != null) ? nReg
-            : (cReg?.price != null) ? cReg
-            : (cnReg?.price != null) ? cnReg
-            : null;
-        if (!primary) continue;
-
+        const bySource = { nasdaq: nReg, cboe: cReg, cnbc: cnReg };
         const perSource = {};
-        if (nReg?.price != null) perSource.nasdaq = nReg.price;
-        if (cReg?.price != null) perSource.cboe = cReg.price;
-        if (cnReg?.price != null) perSource.cnbc = cnReg.price;
+        for (const name of SOURCE_PRIORITY) {
+            if (bySource[name]?.price != null) perSource[name] = bySource[name].price;
+        }
+        if (Object.keys(perSource).length === 0) continue;
 
-        // Session move: take the change each source reports FOR the session it
-        // published, then derive prevClose from it. Falling back to a stored
-        // prior-run price is a last resort — across a weekend or a skipped run it
-        // silently spans more than one session.
-        const sessionChange = (nReg?.change != null) ? nReg.change
-            : (cReg?.change != null) ? cReg.change
-            : (cnReg?.change != null) ? cnReg.change
-            : null;
+        const assetClass = classifySymbol(sym, indexSymbolSet);
+        const tolerance = TOLERANCE_BY_CLASS[assetClass] ?? TOLERANCE_BY_CLASS.equity;
+
+        // Publish what the agreeing sources agree on — NOT whatever the
+        // highest-priority source said. On 2026-08-18 NASDAQ served a pre-market
+        // print in secondaryData for GOOGL (342.4922) while Cboe and CNBC both
+        // had the real 8/17 close (344.00); a fixed priority chain published the
+        // lone outlier under a verified:true flag, which is precisely the claim
+        // that flag is supposed to make impossible.
+        const { verified, cluster } = consensusCluster(perSource, tolerance);
+        const primaryName = verified
+            ? SOURCE_PRIORITY.find(n => cluster.includes(n))
+            : SOURCE_PRIORITY.find(n => perSource[n] != null);
+        const primary = bySource[primaryName];
+        const outliers = verified
+            ? Object.keys(perSource).filter(n => !cluster.includes(n))
+            : [];
+
+        // Session move: take the change reported FOR the session, preferring a
+        // source inside the agreeing cluster. Falling back to a stored prior-run
+        // price is a last resort — across a weekend or a skipped run it silently
+        // spans more than one session.
+        const changeOrder = verified
+            ? [...cluster, ...SOURCE_PRIORITY.filter(n => !cluster.includes(n))]
+            : SOURCE_PRIORITY;
+        const sessionChange = changeOrder
+            .map(n => bySource[n]?.change)
+            .find(c => c != null) ?? null;
 
         const priorPrice = prior?.quotes?.[sym]?.price;
         const priorSessionDate = prior?.quotes?.[sym]?.regularSessionDate;
@@ -521,10 +564,6 @@ async function main() {
             changePct = null;
         }
 
-        const assetClass = classifySymbol(sym, indexSymbolSet);
-        const tolerance = TOLERANCE_BY_CLASS[assetClass] ?? TOLERANCE_BY_CLASS.equity;
-        const { verified } = pairwiseVerify(perSource, tolerance);
-
         const row = {
             price: primary.price,
             change,
@@ -537,6 +576,11 @@ async function main() {
             perSource,
             lastUpdated: ts
         };
+        // Name the sources that carried the published price, and any source that
+        // disagreed with them — an outlier is a signal about that feed, not noise
+        // to drop silently.
+        if (verified) row.verifiedBy = cluster;
+        if (outliers.length) row.outlierSources = outliers;
 
         // Extended (live) print — sibling of perSource, never blended into
         // the regular close above. changePct is self-derived vs the row's
