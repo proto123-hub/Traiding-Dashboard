@@ -1,409 +1,1098 @@
 {
-  "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-fundamentals.mjs). Supersedes the prior validator/WebSearch-synthesis phase — see data/README.md for the ownership history. trailingPE = CNBC's reported TTM PE (falls back to stockanalysis.com, then a SEC-XBRL-computed figure anchored to the verified close in data/price-quotes.json). trailingVerified = TTM diluted EPS agreement (CNBC vs SEC-XBRL, and stockanalysis when it exposes EPS) within tolerance.trailingEps — see tolerance.trailingPE for the wider raw-PE fallback comparison used only when no source exposes a separate EPS figure. forwardPE/forwardPEBasis = the NTM-basis consensus figure when available (CNBC feps, falls back to stockanalysis, then the nearest NASDAQ FY-basis estimate — see forwardPEBasisNote when that fallback fires). forwardPEByBasis carries every basis independently, each verified only against another source on the SAME basis — forward P/Es on different bases are NEVER cross-verified or averaged (see reports/designs/2026-08-18-fundamentals-scraper.md §2). verified (top-level, back-compat) is UNCHANGED semantics: true only if BOTH trailingVerified AND forwardVerified pass — expect this to be rare under basis-aware forward verification; trailingVerified is the more informative signal going forward. ETFs get notApplicable plus real expenseRatio/aum/etfBeta from NASDAQ's ETF summary. NOTE (interim, pre-first-dispatch): the fields below still hold the prior validator/WebSearch-synthesis values — scripts/scrape-fundamentals.mjs has not run yet in this environment (dev sandbox cannot reach CNBC/SEC/NASDAQ/stockanalysis.com); the next data-refresh workflow dispatch will overwrite this entire file, including this note.",
-  "updated": "2026-08-14T12:00:00Z",
-  "agent": "validator",
+  "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-fundamentals.mjs). Supersedes the prior validator/WebSearch-synthesis phase — see data/README.md for the ownership history. trailingPE = CNBC's reported TTM PE (falls back to stockanalysis.com, then a SEC-XBRL-computed figure anchored to the verified close in data/price-quotes.json). trailingVerified = TTM diluted EPS agreement (CNBC vs SEC-XBRL, and stockanalysis when it exposes EPS) within tolerance.trailingEps — see tolerance.trailingPE for the wider raw-PE fallback comparison used only when no source exposes a separate EPS figure. forwardPE/forwardPEBasis = the NTM-basis consensus figure when available (CNBC feps, falls back to stockanalysis, then the nearest NASDAQ FY-basis estimate — see forwardPEBasisNote when that fallback fires). forwardPEByBasis carries every basis independently, each verified only against another source on the SAME basis — forward P/Es on different bases are NEVER cross-verified or averaged (see reports/designs/2026-08-18-fundamentals-scraper.md §2). verified (top-level, back-compat) is UNCHANGED semantics: true only if BOTH trailingVerified AND forwardVerified pass — expect this to be rare under basis-aware forward verification; trailingVerified is the more informative signal going forward. ETFs get notApplicable plus real expenseRatio/aum/etfBeta from NASDAQ's ETF summary.",
+  "updated": "2026-08-18T12:09:03Z",
+  "asOfDate": "2026-08-18",
+  "agent": "refresher",
+  "sources": [
+    "cnbc",
+    "sec-xbrl",
+    "stockanalysis",
+    "nasdaq-peg"
+  ],
   "tolerance": {
-    "trailingPE": 0.03,
+    "trailingEps": 0.01,
+    "trailingPE": 0.05,
     "forwardPE": 0.05
   },
-  "collectionMethod": "Collector's WebFetch was EGRESS_BLOCKED for every candidate financial-data domain this session (confirmed org-level, not source-specific, via a control test against example.com). All raw figures were obtained instead via the WebSearch tool with allowed_domains restricted per source, which returns an AI-generated synthesis of that domain's indexed snippets rather than raw parsed HTML/JSON. This is a materially weaker provenance chain than a direct fetch — numbers are 'as reported by a search snapshot of <source>', not independently parsed. The validator performed a second round of targeted WebSearch re-checks (same tool/limitation) on the highest-priority disagreements (held tickers + the worst cross-source gaps); these re-checks corroborate or contradict the collector's original figures but share the same fundamental weakness (search-snapshot synthesis, not direct page parsing). Treat all 'verified:true' stamps in this file as 'agreement between ≥2 independently-queried search snapshots', not as ground-truth confirmation from primary filings.",
   "fundamentals": {
     "GOOGL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 17.95,
-      "forwardPE": 26.91,
-      "asOf": "2026-08-13",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 17.2604,
+      "eps": 19.93,
+      "trailingVerified": false,
+      "forwardPE": 26.0626,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 13.199,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 17.94,
-          "forwardPE": 26.91
+        "cnbc": {
+          "trailingPE": 17.2604,
+          "eps": 19.93,
+          "forwardPE": 26.0626,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 13.199
         },
-        "tipranks.com": {
-          "trailingPE": 27.8,
-          "forwardPE": null,
-          "excluded": true,
-          "excludedReason": "Outlier not corroborated by independent recheck — see note."
-        },
-        "GuruFocus (validator recheck, 2026-08-10)": {
-          "trailingPE": 17.96
+        "sec-xbrl": {
+          "trailingPE": 17.65,
+          "epsUsed": 19.4,
+          "quartersUsed": [
+            "2026-06-30",
+            "2026-03-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 342.4922,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 3,
-      "notApplicable": false,
-      "note": "KNOWN FLAG ADJUDICATED: stockanalysis.com's trailingPE (17.94) vs TipRanks' (27.8) differ by 55% — far outside 3% tolerance. Validator ran an independent WebSearch recheck (GuruFocus/MacroTrends): GuruFocus TTM PE = 17.37 as of 2026-08-13 and 17.96 as of 2026-08-10, both clustering tightly with stockanalysis.com (17.94) and NOT with TipRanks (27.8). trailingPE is treated as effectively cross-verified at ~17.95 (TipRanks' 27.8 rejected as an outlier/stale/different-EPS-basis figure); forwardPE remains single-source (stockanalysis.com only, 26.91) so the schema's combined verified boolean stays false (requires both legs to pass)."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 26.0626,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 26.0626
+          },
+          "deltaPct": null
+        }
+      }
     },
     "CLS": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 51.65,
-      "forwardPE": 37.61,
-      "asOf": "2026-08-14",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 35.3795,
+      "eps": 9.6214,
+      "trailingVerified": false,
+      "forwardPE": 22.5013,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 15.128,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 51.65,
-          "forwardPE": 37.61
+        "cnbc": {
+          "trailingPE": 35.3795,
+          "eps": 9.6214,
+          "forwardPE": 22.5013,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 15.128
+        },
+        "sec-xbrl": {
+          "trailingPE": 37.28,
+          "epsUsed": 9.13,
+          "quartersUsed": [
+            "2026-06-30",
+            "2026-03-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 340.4,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — TipRanks/MarketBeat returned no numeric PE for CLS in this collection pass."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 22.5013,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 22.5013
+          },
+          "deltaPct": null
+        }
+      }
     },
     "AVGO": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 69.25,
-      "forwardPE": 26.4,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 69.25,
-          "forwardPE": 26.4
-        },
-        "tipranks.com": {
-          "trailingPE": 62.23,
-          "forwardPE": 83,
-          "forwardPENote": "reported only as an approximate '~83x'"
-        }
-      },
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 65.3669,
+      "eps": 6.0035,
+      "trailingVerified": false,
+      "forwardPE": 24.9479,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 15.73,
+      "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
-      "note": "trailingPE 69.25 vs 62.23 differ 10.1% (outside 3% tolerance); forwardPE 26.4 vs ~83 differ ~3.1x (outside 5% tolerance). Not reconciled this session — plausibly a GAAP vs. non-GAAP/adjusted EPS basis difference (Broadcom's GAAP EPS runs well below adjusted EPS due to VMware-related purchase-intangible amortization, which would explain a much higher GAAP-basis PE), but this is a hypothesis, not confirmed. Both legs unverified; stockanalysis.com figures reported as primary/headline values."
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 65.3669,
+          "eps": 6.0035,
+          "forwardPE": 24.9479,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 15.73
+        },
+        "sec-xbrl": {
+          "trailingPE": 74.18,
+          "epsUsed": 5.29,
+          "quartersUsed": [
+            "2026-05-03",
+            "2026-02-01",
+            "2025-08-03",
+            "2025-05-04"
+          ],
+          "anchorPrice": 392.43,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 24.9479,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 24.9479
+          },
+          "deltaPct": null
+        }
+      }
     },
     "MRVL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 60.45,
-      "forwardPE": 38.54,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 60.45,
-          "forwardPE": 38.54
-        },
-        "tipranks.com": {
-          "trailingPE": null,
-          "forwardPE": 48.5
-        }
-      },
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 80.2637,
+      "eps": 2.9195,
+      "trailingVerified": false,
+      "forwardPE": 51.9348,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 4.512,
+      "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
-      "note": "trailingPE single-source (stockanalysis.com only). forwardPE 38.54 vs 48.5 differ 20.5% (outside 5% tolerance) — not reconciled; TipRanks explicitly frames 48.5x as 'low end of past-year historical range,' suggesting it is a genuine, differently-timed consensus read rather than an error."
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 80.2637,
+          "eps": 2.9195,
+          "forwardPE": 51.9348,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 4.512
+        },
+        "sec-xbrl": {
+          "trailingPE": 88.09,
+          "epsUsed": 2.66,
+          "quartersUsed": [
+            "2026-05-02",
+            "2025-11-01",
+            "2025-08-02",
+            "2025-05-03"
+          ],
+          "anchorPrice": 234.33,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 51.9348,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 51.9348
+          },
+          "deltaPct": null
+        }
+      }
     },
     "MU": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 19.43,
-      "forwardPE": 5.99,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 19.43,
-          "forwardPE": 5.99
-        },
-        "tipranks.com": {
-          "trailingPE": null,
-          "forwardPE": 11.1
-        }
-      },
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 22.9047,
+      "eps": 44.1721,
+      "trailingVerified": false,
+      "forwardPE": 7.0237,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 144.049,
+      "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
-      "note": "trailingPE single-source (stockanalysis.com only). forwardPE 5.99 vs 11.1 differ 46% (outside 5% tolerance) — not reconciled; MU is a highly cyclical memory name where small forward-EPS-estimate differences produce large PE swings; likely differing consensus fiscal-year windows or EPS basis, not confirmed."
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 22.9047,
+          "eps": 44.1721,
+          "forwardPE": 7.0237,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 144.049
+        },
+        "sec-xbrl": {
+          "trailingPE": 23.52,
+          "epsUsed": 43.02,
+          "quartersUsed": [
+            "2026-05-28",
+            "2026-02-26",
+            "2025-11-27",
+            "2025-05-29"
+          ],
+          "anchorPrice": 1011.75,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 7.0237,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 7.0237
+          },
+          "deltaPct": null
+        }
+      }
     },
     "TSM": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 29.7,
-      "forwardPE": 19.27,
-      "asOf": "2026-08-14",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 31.346,
+      "eps": 13.7488,
+      "trailingVerified": false,
+      "forwardPE": 21.9424,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 19.641,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 1,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 29.7,
-          "forwardPE": 19.27
-        },
-        "wallstreetzen.com": {
-          "trailingPE": 37.57,
-          "trailingPEAlt": 35.59
+        "cnbc": {
+          "trailingPE": 31.346,
+          "eps": 13.7488,
+          "forwardPE": 21.9424,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 19.641
         }
       },
-      "verified": false,
-      "sourceCount": 2,
-      "notApplicable": false,
-      "note": "trailingPE 29.70 vs 37.57 differ 21% (outside 3% tolerance) — not reconciled. WallStreetZen itself cited two different trailing-PE figures (37.57 vs 35.59) in the same pull, underscoring the metric's instability across vendors for TSM's ADR listing. forwardPE single-source (stockanalysis.com only)."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 21.9424,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 21.9424
+          },
+          "deltaPct": null
+        }
+      },
+      "note": "TSM is a Taiwan 20-F foreign private issuer — SEC XBRL companyconcept has no quarterly EarningsPerShareDiluted facts (annual-only reporting); sec-xbrl leg not attempted for this reason, not a fetch failure."
     },
     "PLTR": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 153.1,
-      "forwardPE": 94.05,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 153.1,
-          "forwardPE": 94.05
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for PLTR."
-    },
-    "TSMU": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": null,
-      "forwardPE": null,
-      "notApplicable": true,
-      "reason": "Leveraged single-stock ETF (2x daily-reset TSM exposure) — P/E not meaningful, no issuer earnings"
-    },
-    "NVDA": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 34.32,
-      "forwardPE": 22.49,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 34.32,
-          "forwardPE": 22.49
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for NVDA."
-    },
-    "AMD": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 123.37,
-      "forwardPE": 43.52,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 123.37,
-          "forwardPE": 43.52
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for AMD."
-    },
-    "ARM": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": null,
-      "forwardPE": null,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 288.43,
-          "forwardPE": 118.43,
-          "excluded": true,
-          "excludedReason": "Same stale June-2026 page excluded above — not trusted as current."
-        }
-      },
-      "verified": false,
-      "sourceCount": 0,
-      "notApplicable": false,
-      "note": "The only source with numeric PE for ARM (stockanalysis.com, 288.43 trailing / 118.43 forward) is the same page excluded above for being >30 days stale. No other source reported numeric ARM PE. trailingPE/forwardPE reported as null rather than passing along an unverified stale figure — evaluator should treat ARM PE as unavailable this cycle."
-    },
-    "AMAT": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 46.09,
-      "forwardPE": 33.45,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 46.09,
-          "forwardPE": 33.45,
-          "basisNote": "non-GAAP adjusted, per source"
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for AMAT."
-    },
-    "LRCX": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 51.64,
-      "forwardPE": 36.55,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 51.64,
-          "forwardPE": 36.55
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for LRCX."
-    },
-    "KLAC": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 57.57,
-      "forwardPE": 42.34,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 57.57,
-          "forwardPE": 42.34
-        }
-      },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for KLAC. (Post-split basis, consistent with the verified target data above.)"
-    },
-    "MSFT": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 28.07,
-      "forwardPE": 25.57,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 28.07,
-          "forwardPE": 25.57
-        },
-        "marketbeat.com": {
-          "trailingPE": 38.75,
-          "excluded": true,
-          "excludedReason": "Collector itself flagged this figure as ambiguous — MarketBeat's snippet did not label it trailing vs. forward; recorded as trailingPE only by the collector's default assumption. 27.6% off stockanalysis.com's trailingPE — not reconciled."
-        }
-      },
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 147.0388,
+      "eps": 1.1735,
+      "trailingVerified": false,
+      "forwardPE": 100.3781,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 1.719,
+      "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
-      "note": "trailingPE not verified — the only second data point (MarketBeat 38.75) carries acknowledged metric-definition ambiguity from the collector itself, so it is not treated as a genuine cross-check. forwardPE single-source (stockanalysis.com only)."
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 147.0388,
+          "eps": 1.1735,
+          "forwardPE": 100.3781,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 1.719
+        },
+        "sec-xbrl": {
+          "trailingPE": 162.78,
+          "epsUsed": 1.06,
+          "quartersUsed": [
+            "2026-06-30",
+            "2026-03-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 172.55,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 100.3781,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 100.3781
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "NVDA": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 34.4579,
+      "eps": 6.53,
+      "trailingVerified": false,
+      "forwardPE": 22.4382,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 10.028,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 34.4579,
+          "eps": 6.53,
+          "forwardPE": 22.4382,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 10.028
+        },
+        "sec-xbrl": {
+          "trailingPE": 40.69,
+          "epsUsed": 5.53,
+          "quartersUsed": [
+            "2026-04-26",
+            "2025-10-26",
+            "2025-07-27",
+            "2025-04-27"
+          ],
+          "anchorPrice": 225.01,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 22.4382,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 22.4382
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "AMD": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 129.1442,
+      "eps": 3.9181,
+      "trailingVerified": false,
+      "forwardPE": 45.5323,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 11.113,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 129.1442,
+          "eps": 3.9181,
+          "forwardPE": 45.5323,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 11.113
+        },
+        "sec-xbrl": {
+          "trailingPE": 144.16,
+          "epsUsed": 3.51,
+          "quartersUsed": [
+            "2026-06-27",
+            "2026-03-28",
+            "2025-09-27",
+            "2025-06-28"
+          ],
+          "anchorPrice": 506,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 45.5323,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 45.5323
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "ARM": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 320.6876,
+      "eps": 0.8464,
+      "trailingVerified": false,
+      "forwardPE": 113.7118,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 2.387,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 320.6876,
+          "eps": 0.8464,
+          "forwardPE": 113.7118,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 2.387
+        },
+        "sec-xbrl": {
+          "trailingPE": 339.29,
+          "epsUsed": 0.8,
+          "quartersUsed": [
+            "2026-06-30",
+            "2025-12-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 271.43,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 113.7118,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 113.7118
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "AMAT": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 46.1701,
+      "eps": 11.5943,
+      "trailingVerified": false,
+      "forwardPE": 30.3688,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 17.627,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 46.1701,
+          "eps": 11.5943,
+          "forwardPE": 30.3688,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 17.627
+        },
+        "sec-xbrl": {
+          "trailingPE": 49.11,
+          "epsUsed": 10.9,
+          "quartersUsed": [
+            "2026-04-26",
+            "2026-01-25",
+            "2025-07-27",
+            "2025-04-27"
+          ],
+          "anchorPrice": 535.31,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 30.3688,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 30.3688
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "LRCX": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 59.652,
+      "eps": 5.7641,
+      "trailingVerified": false,
+      "forwardPE": 36.5166,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 9.416,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 59.652,
+          "eps": 5.7641,
+          "forwardPE": 36.5166,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 9.416
+        },
+        "sec-xbrl": {
+          "trailingPE": 69.04,
+          "epsUsed": 4.98,
+          "quartersUsed": [
+            "2026-03-29",
+            "2025-12-28",
+            "2025-09-28",
+            "2025-03-30"
+          ],
+          "anchorPrice": 343.84,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 36.5166,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 36.5166
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "KLAC": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 56.1909,
+      "eps": 3.6618,
+      "trailingVerified": false,
+      "forwardPE": 37.1609,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 5.537,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 56.1909,
+          "eps": 3.6618,
+          "forwardPE": 37.1609,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 5.537
+        },
+        "sec-xbrl": {
+          "trailingPE": 5.98,
+          "epsUsed": 34.43,
+          "quartersUsed": [
+            "2026-03-31",
+            "2025-12-31",
+            "2025-09-30",
+            "2025-03-31"
+          ],
+          "anchorPrice": 205.76,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 37.1609,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 37.1609
+          },
+          "deltaPct": null
+        }
+      }
+    },
+    "MSFT": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 26.7654,
+      "eps": 17.9467,
+      "trailingVerified": false,
+      "forwardPE": 24.449,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 19.647,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
+      "perSource": {
+        "cnbc": {
+          "trailingPE": 26.7654,
+          "eps": 17.9467,
+          "forwardPE": 24.449,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 19.647
+        },
+        "sec-xbrl": {
+          "trailingPE": 28.92,
+          "epsUsed": 16.61,
+          "quartersUsed": [
+            "2026-03-31",
+            "2025-12-31",
+            "2025-09-30",
+            "2025-03-31"
+          ],
+          "anchorPrice": 480.35,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 24.449,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 24.449
+          },
+          "deltaPct": null
+        }
+      }
     },
     "META": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 21.81,
-      "forwardPE": 18.07,
-      "asOf": "2026-08-13",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 19.7023,
+      "eps": 28.8783,
+      "trailingVerified": false,
+      "forwardPE": 18.7026,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 30.422,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 21.81,
-          "forwardPE": 18.07
+        "cnbc": {
+          "trailingPE": 19.7023,
+          "eps": 28.8783,
+          "forwardPE": 18.7026,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 30.422
+        },
+        "sec-xbrl": {
+          "trailingPE": 22.93,
+          "epsUsed": 24.81,
+          "quartersUsed": [
+            "2026-06-30",
+            "2026-03-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 568.97,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for META."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 18.7026,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 18.7026
+          },
+          "deltaPct": null
+        }
+      }
     },
     "TSLA": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 339.86,
-      "forwardPE": 169.43,
-      "asOf": "2026-08-14",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 339.5717,
+      "eps": 0.9992,
+      "trailingVerified": false,
+      "forwardPE": 179.714,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 1.888,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 339.86,
-          "forwardPE": 169.43
+        "cnbc": {
+          "trailingPE": 339.5717,
+          "eps": 0.9992,
+          "forwardPE": 179.714,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 1.888
+        },
+        "sec-xbrl": {
+          "trailingPE": 290,
+          "epsUsed": 1.17,
+          "quartersUsed": [
+            "2026-06-30",
+            "2026-03-31",
+            "2025-09-30",
+            "2025-06-30"
+          ],
+          "anchorPrice": 339.3,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for TSLA."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 179.714,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 179.714
+          },
+          "deltaPct": null
+        }
+      }
     },
     "ORCL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
-      "trailingPE": 24.77,
-      "forwardPE": 17.93,
-      "asOf": "2026-08-14",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
+      "trailingPE": 23.861,
+      "eps": 6.146,
+      "trailingVerified": false,
+      "forwardPE": 18.2038,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 8.056,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 2,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": 24.77,
-          "forwardPE": 17.93
+        "cnbc": {
+          "trailingPE": 23.861,
+          "eps": 6.146,
+          "forwardPE": 18.2038,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 8.056
+        },
+        "sec-xbrl": {
+          "trailingPE": 27.16,
+          "epsUsed": 5.4,
+          "quartersUsed": [
+            "2026-02-28",
+            "2025-11-30",
+            "2025-08-31",
+            "2025-02-28"
+          ],
+          "anchorPrice": 146.65,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "Single-source only — no other source returned numeric PE for ORCL."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 18.2038,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 18.2038
+          },
+          "deltaPct": null
+        }
+      }
     },
     "SNOW": {
-      "updated": "2026-08-14",
-      "agent": "validator",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
       "trailingPE": null,
-      "forwardPE": null,
-      "asOf": "2026-08-14",
-      "perSource": {
-        "stockanalysis.com": {
-          "trailingPE": null,
-          "forwardPE": null,
-          "note": "TTM GAAP loss — trailing PE not meaningful; forward PE not captured in this source's own snippet."
-        }
-      },
+      "eps": -3.5145,
+      "trailingVerified": false,
+      "forwardPE": 155.7123,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 2.12,
+      "forwardVerified": false,
       "verified": false,
       "sourceCount": 0,
       "notApplicable": false,
-      "note": "SNOW is GAAP loss-making TTM — trailing PE is genuinely not meaningful (consistent with all sources showing no numeric trailing PE). No source in this collection pass returned a structured numeric forward PE; the collector's raw note mentions an informal secondary range (~169-172, GuruFocus/Investing.com/Yahoo, not independently captured as a structured perSource entry) — not usable for verification, flagged for a future collection pass."
+      "perSource": {
+        "cnbc": {
+          "trailingPE": null,
+          "eps": -3.5145,
+          "forwardPE": 155.7123,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 2.12
+        },
+        "sec-xbrl": {
+          "trailingPE": null,
+          "epsUsed": -3.91,
+          "quartersUsed": [
+            "2026-04-30",
+            "2025-10-31",
+            "2025-07-31",
+            "2025-04-30"
+          ],
+          "anchorPrice": 330.11,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
+        }
+      },
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 155.7123,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 155.7123
+          },
+          "deltaPct": null
+        }
+      }
     },
     "CRWD": {
-      "updated": "2026-08-14",
-      "agent": "validator",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
       "trailingPE": null,
-      "forwardPE": 181.82,
-      "asOf": "2026-08-14",
+      "eps": -0.0258,
+      "trailingVerified": false,
+      "forwardPE": 163.908,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 1.305,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 0,
+      "notApplicable": false,
       "perSource": {
-        "stockanalysis.com": {
+        "cnbc": {
           "trailingPE": null,
-          "forwardPE": null,
-          "note": "GAAP loss TTM — not meaningful."
+          "eps": -0.0258,
+          "forwardPE": 163.908,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 1.305
         },
-        "Yahoo Finance": {
-          "forwardPE": 181.82,
-          "note": "Trailing P/E shown as '--' (not meaningful) per source; forward PE explicitly attributed to Yahoo Finance."
+        "sec-xbrl": {
+          "trailingPE": null,
+          "epsUsed": -0.76,
+          "quartersUsed": [
+            "2026-04-30",
+            "2025-10-31",
+            "2025-07-31",
+            "2025-04-30"
+          ],
+          "anchorPrice": 213.9,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "CRWD is GAAP loss-making TTM — trailing PE genuinely not meaningful. forwardPE is single-source (Yahoo Finance, 181.82) — unverified pending a second source."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 163.908,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 163.908
+          },
+          "deltaPct": null
+        }
+      }
     },
     "INTC": {
-      "updated": "2026-08-14",
-      "agent": "validator",
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "asOf": "2026-08-18",
       "trailingPE": null,
-      "forwardPE": 76.86,
-      "asOf": "2026-08-11",
+      "eps": -2.1203,
+      "trailingVerified": false,
+      "forwardPE": 62.3058,
+      "forwardPEBasis": "NTM",
+      "forwardEps": 1.661,
+      "forwardVerified": false,
+      "verified": false,
+      "sourceCount": 0,
+      "notApplicable": false,
       "perSource": {
-        "GuruFocus": {
-          "forwardPE": 76.86,
-          "asOf": "2026-08-11",
-          "note": "Reconfirmed via an independent validator recheck — identical value returned both times."
+        "cnbc": {
+          "trailingPE": null,
+          "eps": -2.1203,
+          "forwardPE": 62.3058,
+          "forwardPEBasis": "NTM",
+          "forwardEps": 1.661
+        },
+        "sec-xbrl": {
+          "trailingPE": null,
+          "epsUsed": -2.66,
+          "quartersUsed": [
+            "2026-06-27",
+            "2026-03-28",
+            "2025-09-27",
+            "2025-06-28"
+          ],
+          "anchorPrice": 103.49,
+          "anchorVerified": true,
+          "anchorSource": "data/price-quotes.json"
         }
       },
-      "verified": false,
-      "sourceCount": 1,
-      "notApplicable": false,
-      "note": "KNOWN FLAG ADJUDICATED: trailingPE is null across ALL sources (stockanalysis.com, MarketBeat, TipRanks, WallStreetZen) — consistent, since INTC is TTM GAAP-loss-making (not meaningful). forwardPE: collector's raw notes cited three conflicting figures (76.86 GuruFocus / 71.42 valueinvesting.io / 138.89 ycharts), but only GuruFocus was captured as a structured, attributable source; the validator's independent WebSearch recheck reproduced GuruFocus's 76.86 exactly (dated 2026-08-11 both times) — high-confidence but still technically single-source since the other two figures were never captured as full perSource entries. Do NOT treat INTC's forward PE as reliable for evaluation — it is a currently-loss-making/turnaround name with a small forward-EPS denominator, which the wide informal dispersion (71-139) itself demonstrates."
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 62.3058,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 62.3058
+          },
+          "deltaPct": null
+        }
+      }
     },
-    "SOXL": {
-      "updated": "2026-08-14",
-      "agent": "validator",
+    "TSMU": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
       "trailingPE": null,
       "forwardPE": null,
       "notApplicable": true,
-      "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)"
+      "reason": "Leveraged single-stock ETF (2x daily-reset TSM exposure) — P/E not meaningful, no issuer earnings",
+      "expenseRatio": 0,
+      "aum": "67,939",
+      "etfBeta": 3.58,
+      "etfAsOf": "2026-08-18"
+    },
+    "SOXL": {
+      "updated": "2026-08-18",
+      "agent": "refresher",
+      "trailingPE": null,
+      "forwardPE": null,
+      "notApplicable": true,
+      "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)",
+      "expenseRatio": 0.009000000000000001,
+      "aum": "25,669,182",
+      "etfBeta": 5.73,
+      "etfAsOf": "2026-08-18"
     }
-  }
+  },
+  "failures": [
+    {
+      "symbol": "AVGO",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "CLS",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "GOOGL",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "MRVL",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "TSM",
+      "source": "sec-xbrl",
+      "reason": "sec:http_404"
+    },
+    {
+      "symbol": "NVDA",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "TSM",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "PLTR",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "MU",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "AMD",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "AMAT",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "ARM",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "LRCX",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "KLAC",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "MSFT",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "META",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "TSLA",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "ORCL",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "SNOW",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "INTC",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "CRWD",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    }
+  ]
 }
