@@ -12,14 +12,23 @@
 // share, NAND pricing. Candidate list from
 // reports/raw/2026-08-19-timeseries-source-scout.json.
 
+import { withTimeout } from './lib/io.mjs';
+
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+// Round-3 run 185 died on the 8-minute job timeout: six FRED requests each hung
+// ~72s on TCP connect with no per-request deadline, so nothing past FRED was
+// ever tested. Every probe now aborts at 8s — a host that cannot answer in 8s
+// is unusable for a cron scraper anyway, so a timeout IS the verdict.
+const TIMEOUT_MS = 8000;
 
 // head: how much body to show. CSV wants the first lines AND the last lines
 // (the last row is the newest observation and proves history depth).
 async function probe(label, url, { head = 400, tail = 0, headers = {} } = {}) {
     const t0 = Date.now();
     try {
-        const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers }, redirect: 'follow' });
+        const res = await withTimeout(
+            (signal) => fetch(url, { headers: { 'User-Agent': UA, ...headers }, redirect: 'follow', signal }),
+            TIMEOUT_MS, label);
         const text = await res.text();
         const ms = Date.now() - t0;
         const ct = res.headers.get('content-type') || '?';
