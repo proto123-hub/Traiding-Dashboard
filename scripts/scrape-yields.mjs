@@ -26,6 +26,7 @@
 // not a machine-readable feed. Those stay collector→validator curated; see
 // data/history/hbm-share.json / nand-price.json.
 
+import { pathToFileURL } from 'node:url';
 import { readJson, writeJsonAtomic, nowIso, todayUtc, withTimeout } from './lib/io.mjs';
 
 const TIMEOUT_MS = 8000;
@@ -337,4 +338,11 @@ async function main() {
     console.log(`scrape-yields: ${newRows.length} rows fetched (${Object.keys(rawDrop.perSourceRaw).length} sources ok), ${failures.length} failures, ${shardsWritten} shards written / ${shardsUnchanged} unchanged`);
 }
 
-main().catch(e => { console.error('fatal:', e); process.exit(1); });
+// This module exports its parsers so they can be unit-tested. Without this
+// guard, `import`ing it to test one of them RUNS a live scrape and overwrites
+// data/history/* with whatever the importing environment could fetch — which
+// happened once, wiping a good yields-latest.json in a sandbox with no egress.
+// Sibling scrapers export nothing and so are not exposed to this.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+    main().catch(e => { console.error('fatal:', e); process.exit(1); });
+}
