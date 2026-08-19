@@ -26,6 +26,10 @@ jobs:
         with:
           node-version: '20'
 
+      - name: TEMP probe phase-3 sources (remove before merge)
+        run: node scripts/probe-sources.mjs
+        continue-on-error: true
+
       - name: Scrape quotes (nasdaq+cboe+cnbc)
         run: node scripts/scrape-quotes.mjs
 
