@@ -45,6 +45,14 @@ jobs:
         run: node scripts/scrape-fundamentals.mjs
         continue-on-error: true
 
+      - name: Scrape yields (treasury+mof+eurostat)
+        # Runs on BOTH weekday cron slots, unlike fundamentals above — each
+        # source updates once daily at most, so the pre-market run simply
+        # re-fetches yesterday's already-stored value and no-ops via the
+        # upsert-by-date rule (a same-value re-write is a no-op diff).
+        run: node scripts/scrape-yields.mjs
+        continue-on-error: true
+
       - name: Validate JSON
         run: |
           # Recursive: data/history/ and any future subdirectory must be checked

@@ -423,6 +423,36 @@
   @media (max-width: 380px) {
     #analytics-table th:nth-child(6), #analytics-table td:nth-child(6) { display: none; }
   }
+
+  /* ===== Phase 3 trackers (yields / HBM / NAND / Anthropic events) ===== */
+  .p3-panel-title { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  .p3-yields-wrap { height: 260px; margin-bottom: 16px; }
+  .p3-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .p3-chart-wrap { height: 200px; }
+  .p3-events-list { max-height: 200px; overflow-y: auto; }
+  .p3-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--faint); font-size: 11px; }
+
+  .card-toggle { cursor: pointer; color: var(--muted); font-size: 14px; transition: transform .15s; user-select: none; }
+  .card.collapsed .card-toggle { transform: rotate(-90deg); }
+  .card.collapsed .card-body { display: none; }
+
+  .p3-event-item { padding: 8px 0; border-bottom: 1px solid var(--line-2); font-size: 11px; }
+  .p3-event-item:last-child { border-bottom: none; }
+  .p3-event-head { display: flex; align-items: center; gap: 6px; }
+  .p3-event-badge { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; white-space: nowrap; }
+  .p3-event-badge.corroborated  { background: var(--amber-soft); color: var(--amber); }
+  .p3-event-badge.single-source { background: var(--line-2);     color: var(--faint); }
+  .p3-event-date { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+  .p3-event-headline { margin-top: 4px; color: var(--ink-2); line-height: 1.4; }
+  .p3-event-sources { margin-top: 4px; color: var(--muted); font-size: 10px; }
+  .p3-event-sources a { color: var(--cyan-2); }
+
+  @media (max-width: 768px) {
+    .p3-row-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .p3-yields-wrap { height: 300px; }   /* legend wraps to 2-3 rows at this width — give it room */
+  }
 </style>
 </head>
 <body>
@@ -443,6 +473,7 @@
     <div class="side-link active" data-scroll="glance"><span class="dot green"></span><span class="ko">시장 종합</span><span class="en">Market Overview</span></div>
     <div class="side-link" data-scroll="analytics-panel"><span class="dot"></span><span class="ko">워치리스트 분석</span><span class="en">Watchlist Analytics</span></div>
     <div class="side-link" data-scroll="sectors"><span class="dot"></span><span class="ko">섹터 히트맵</span><span class="en">Sector Heatmap</span></div>
+    <div class="side-link" data-scroll="phase3-trackers"><span class="dot"></span><span class="ko">거시 트래커</span><span class="en">Macro Trackers</span></div>
 
     <div class="side-section"><span class="ko">인사이트</span><span class="en">Insights</span></div>
     <div class="side-link" data-scroll="whales"><span class="dot"></span><span class="ko">Whale 13F 분석</span><span class="en">Whale 13F</span></div>
@@ -625,6 +656,37 @@
             <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">로딩 중…</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="card" id="phase3-trackers" style="margin-bottom: 16px;">
+      <div class="card-head">
+        <h3><span class="ko">거시 트래커</span><span class="en">Macro Trackers</span></h3>
+        <span class="sub" id="p3-updated">history/yields-latest.json + hbm-share.json + nand-price.json + anthropic-funding-events.json</span>
+        <span class="spacer"></span>
+        <span class="card-toggle" id="p3-collapse-toggle">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="p3-yields-wrap" id="p3-yields-canvas-wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">
+            <span class="ko">10년물 국채금리 (24개월)</span><span class="en">10Y Sovereign Yields (24mo)</span>
+          </div>
+          <canvas id="p3-yields-chart"></canvas>
+        </div>
+        <div class="p3-row-3">
+          <div>
+            <div class="p3-panel-title"><span class="ko">HBM 시장 점유율</span><span class="en">HBM Market Share</span></div>
+            <div class="p3-chart-wrap" id="p3-hbm-canvas-wrap"><canvas id="p3-hbm-chart"></canvas></div>
+          </div>
+          <div>
+            <div class="p3-panel-title"><span class="ko">NAND 계약가</span><span class="en">NAND Contract Price</span></div>
+            <div class="p3-chart-wrap" id="p3-nand-canvas-wrap"><canvas id="p3-nand-chart"></canvas></div>
+          </div>
+          <div>
+            <div class="p3-panel-title"><span class="ko">Anthropic 펀딩 이벤트</span><span class="en">Anthropic Funding Events</span></div>
+            <div class="p3-events-list" id="p3-anthropic-events"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1050,6 +1112,192 @@
     renderAnalytics();
   }
 
+  // ===== Phase 3 trackers (yields / HBM / NAND / Anthropic events) =====
+  // data/history/*.json — read-only, agent/cron-authored, fetched once at
+  // boot via bootTrackers(), independent of bootValuations() above (a slow
+  // or missing history file never blocks the watchlist panel). No
+  // localStorage layer — see reports/designs/2026-08-19-phase3-trackers.md §6-§9.
+  let yieldsChart, hbmChart, nandChart;
+  const P3_COUNTRIES = ['US', 'DE', 'FR', 'IT', 'UK', 'JP'];
+  // Canvas fillStyle/strokeStyle cannot resolve CSS var() — literal hex
+  // mirrors :root (see the design doc §0 Finding A). All six are pre-existing
+  // --cyan/--cyan-2/--gold/--gold-2/--blue/--amber values, repurposed here as
+  // 6 categorical (not semantic) line colors — --green/--red are deliberately
+  // reserved for a future spread/differential series, not used for a country.
+  const P3_YIELD_COLOR = { US: '#00B7C7', DE: '#C9A227', FR: '#1D4ED8', IT: '#B45309', UK: '#0892A0', JP: '#8C6D14' };
+  const P3_VENDOR_COLOR = { 'SK Hynix': '#00B7C7', 'Samsung': '#C9A227', 'Micron': '#1D4ED8', 'Other': '#94A0B0' }; // #94A0B0 mirrors --faint
+
+  function p3EmptyState(wrapId) {
+    document.getElementById(wrapId).innerHTML = '<div class="p3-empty">데이터 없음 — 아직 수집되지 않음</div>';
+  }
+
+  function renderYieldsChart(data) {
+    const series = data && data.series;
+    const anyPoints = series && P3_COUNTRIES.some(c => ((series[c] && series[c]['10y']) || []).length);
+    if (!anyPoints) { p3EmptyState('p3-yields-canvas-wrap'); return; }
+    const dateSet = new Set();
+    P3_COUNTRIES.forEach(c => ((series[c] && series[c]['10y']) || []).forEach(p => dateSet.add(p.date)));
+    const labels = [...dateSet].sort(); // YYYY-MM-DD string-sorts chronologically
+    const datasets = P3_COUNTRIES.map(c => {
+      const byDate = new Map(((series[c] && series[c]['10y']) || []).map(p => [p.date, p.yield]));
+      return {
+        label: c,
+        data: labels.map(d => byDate.has(d) ? byDate.get(d) : null),
+        borderColor: P3_YIELD_COLOR[c],
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        tension: 0.15,
+        spanGaps: false, // null = a real visible gap, never interpolated across
+      };
+    });
+    yieldsChart = new Chart(document.getElementById('p3-yields-chart').getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        plugins: {
+          // Chart.js's BUILT-IN legend click-to-toggle — no custom show/hide UI.
+          legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+          tooltip: { enabled: true },
+        },
+        scales: {
+          x: { ticks: { maxTicksLimit: 8, font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { font: { size: 10 }, callback: v => v + '%' }, grid: { color: '#EEF1F4' } }, // #EEF1F4 mirrors --line-2
+        },
+      },
+    });
+  }
+
+  // Later array occurrences overwrite earlier ones — resolves the
+  // hbm-share.json/nand-price.json append-only-revision convention (a
+  // corrected estimate for an already-published quarter/month is a NEW row,
+  // never an edit to the prior one).
+  function latestByKey(rows, keyFn) {
+    const m = new Map();
+    for (const r of rows) m.set(keyFn(r), r);
+    return [...m.values()];
+  }
+
+  function renderHbmChart(data) {
+    const rows = (data && data.rows) || [];
+    if (!rows.length) { p3EmptyState('p3-hbm-canvas-wrap'); return; }
+    const resolved = latestByKey(rows, r => `${r.quarter}|${r.vendor}|${r.metric}`);
+    const quarters = [...new Set(resolved.map(r => r.quarter))].sort();
+    const vendors = [...new Set(resolved.map(r => r.vendor))];
+    const datasets = vendors.map(v => {
+      const byQuarter = new Map(resolved.filter(r => r.vendor === v).map(r => [r.quarter, r.sharePct]));
+      return {
+        label: v,
+        data: quarters.map(q => byQuarter.has(q) ? byQuarter.get(q) * 100 : null), // fraction -> percent
+        borderColor: P3_VENDOR_COLOR[v] || '#6B7889', // #6B7889 mirrors --muted, fallback for an unmapped vendor
+        backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.15, spanGaps: false,
+      };
+    });
+    hbmChart = new Chart(document.getElementById('p3-hbm-chart').getContext('2d'), {
+      type: 'line',
+      data: { labels: quarters, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } } },
+        scales: {
+          x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { font: { size: 9 }, callback: v => v + '%' }, grid: { color: '#EEF1F4' }, min: 0 },
+        },
+      },
+    });
+  }
+
+  function renderNandChart(data) {
+    const rows = (data && data.rows) || [];
+    if (!rows.length) { p3EmptyState('p3-nand-canvas-wrap'); return; }
+    const resolved = latestByKey(rows, r => `${r.month}|${r.metric}`);
+    // Chart the metric with the most rows — guards against silently mixing
+    // two non-comparable series if the tracked benchmark ever changes.
+    const counts = {};
+    resolved.forEach(r => counts[r.metric] = (counts[r.metric] || 0) + 1);
+    const primaryMetric = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    const filtered = resolved.filter(r => r.metric === primaryMetric).sort((a, b) => a.month.localeCompare(b.month));
+    nandChart = new Chart(document.getElementById('p3-nand-chart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: filtered.map(r => r.month),
+        datasets: [{
+          data: filtered.map(r => r.priceUsd),
+          borderColor: '#00B7C7', backgroundColor: 'rgba(0,183,199,0.15)', // literal values mirroring --cyan, identical to sparkChart
+          fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxTicksLimit: 6 }, grid: { display: false } },
+          y: { ticks: { font: { size: 9 }, callback: v => '$' + v }, grid: { color: '#EEF1F4' } },
+        },
+      },
+    });
+  }
+
+  // No smooth interpolated line, no continuous chart, no green
+  // "verified"-style visual language anywhere in this list — a
+  // citation-badged discrete list is the entire UI for Anthropic funding
+  // data, by design (see the corroborated-vs-verified rule, data/README.md).
+  function renderAnthropicEvents(data) {
+    const wrap = document.getElementById('p3-anthropic-events');
+    const events = (data && data.events) || [];
+    if (!events.length) {
+      wrap.innerHTML = '<div class="p3-empty">데이터 없음 — 아직 수집되지 않음</div>';
+      return;
+    }
+    const sorted = [...events].sort((a, b) => b.date.localeCompare(a.date)); // most recent first
+    wrap.innerHTML = sorted.map(e => {
+      const n = (e.corroboratedBy || []).length;
+      const badge = e.corroborated
+        ? '<span class="p3-event-badge corroborated">CORROB · ' + n + ' SRC</span>'
+        : '<span class="p3-event-badge single-source">SINGLE-SOURCE</span>';
+      const srcLinks = (e.sources || [])
+        .map(s => '<a href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener">' + escapeHtml(s.outlet) + '</a>')
+        .join(' · ');
+      return '<div class="p3-event-item">' +
+          '<div class="p3-event-head">' + badge + '<span class="p3-event-date">' + escapeHtml(e.date) + '</span></div>' +
+          '<div class="p3-event-headline">' + escapeHtml(e.headline) + '</div>' +
+          '<div class="p3-event-sources">' + srcLinks + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  async function bootTrackers() {
+    const [yields, hbm, nand, anthropic] = await Promise.all([
+      fetchJsonSafe('data/history/yields-latest.json'),
+      fetchJsonSafe('data/history/hbm-share.json'),
+      fetchJsonSafe('data/history/nand-price.json'),
+      fetchJsonSafe('data/history/anthropic-funding-events.json'),
+    ]);
+    renderYieldsChart(yields);
+    renderHbmChart(hbm);
+    renderNandChart(nand);
+    renderAnthropicEvents(anthropic);
+    const stamps = [yields, hbm, nand, anthropic].map(d => d && d.updated).filter(Boolean);
+    if (stamps.length) document.getElementById('p3-updated').textContent =
+      'history/* · updated ' + stamps.sort().slice(-1)[0].slice(0, 10);
+  }
+
+  document.getElementById('p3-collapse-toggle').addEventListener('click', () => {
+    const card = document.getElementById('phase3-trackers');
+    const wasCollapsed = card.classList.contains('collapsed');
+    card.classList.toggle('collapsed');
+    if (wasCollapsed) {
+      // Re-expanding: a display:none ancestor at chart-creation time doesn't
+      // fire Chart.js's resize observer, so force one now real layout
+      // dimensions are available again.
+      [yieldsChart, hbmChart, nandChart].forEach(c => c && c.resize());
+    }
+  });
+
   // ===== Trend (phase 1) + staleness — see design doc §5/§6 =====
   function deriveTrend(changePct, v) {
     if (changePct == null) return { dayCls: 'flat', dayArrow: '—', bandTag: null };
@@ -1358,7 +1606,10 @@
     renderAnalytics();
   });
 
-  document.addEventListener('DOMContentLoaded', bootValuations);
+  document.addEventListener('DOMContentLoaded', () => {
+    bootValuations();
+    bootTrackers();
+  });
 
 </script>
 

@@ -19,6 +19,11 @@ user edits persist between sessions without requiring a commit.
 | `analyst-targets.json` | Wall Street analyst consensus price targets (low/mean/high, numAnalysts) | validator |
 | `fundamentals.json` | Trailing/forward P/E per ticker (basis-aware, cross-verified) + ETF expense ratio/AUM | refresher agent + GH Actions (`scripts/scrape-fundamentals.mjs`) |
 | `news-latest.json` | Top 3-5 recent headlines per ticker, sliced from news-feed.json — the ONLY news file index.html fetches | validator |
+| `history/yields-YYYY.json` | Daily sovereign 10Y yield table, sharded by year | refresher agent + GH Actions (`scripts/scrape-yields.mjs`) |
+| `history/yields-latest.json` | Trailing ~24-month yield slice — the ONLY yield file index.html fetches | refresher agent (derived each run) |
+| `history/hbm-share.json` | Quarterly HBM market share by vendor | collector (raw) + validator (writes) |
+| `history/nand-price.json` | Monthly NAND contract/spot price | collector (raw) + validator (writes) |
+| `history/anthropic-funding-events.json` | Curated sparse event log — Anthropic IPO/funding/debt events, press-reported (corroborated, not verified) | collector (raw) + validator (writes) |
 
 ## Resolution order at boot
 
@@ -56,6 +61,44 @@ panel; expand/collapse UI state is ephemeral (resets on reload).
 
 These reads are non-blocking: the rest of the dashboard renders from `data.js`
 as before; the analytics panel populates when the fetches resolve (~50ms local).
+
+## `verified` vs `corroborated`
+
+`verified`/`verifiedBy` (used in `price-quotes.json`, `analyst-targets.json`,
+`fundamentals.json`, `history/hbm-share.json`, `history/nand-price.json`)
+mean ≥2 independent, live, queryable data feeds agreeing within a stated
+numeric tolerance. Never apply these field names to press-reported
+information about a private company — there is no live feed to
+cross-query, only journalism about a single underlying event.
+
+`corroborated`/`corroboratedBy` (used ONLY in
+`history/anthropic-funding-events.json` today) mean ≥2 independently-bylined
+news outlets reported the same claim — same-wire reprints of one original
+story count as one source. `corroborated:false` means "reported once, not
+yet independently corroborated," not "false" — the UI renders it visibly
+dimmer than a corroborated entry and never with the "verified" green visual
+language used elsewhere in the dashboard.
+
+This rule applies to any future tracker of privately-reported,
+non-exchange-quoted information — pick `corroborated`, not `verified`.
+
+### Phase 3 trackers panel (`index.html` `#phase3-trackers`)
+
+Fetches these files directly via `bootTrackers()` (separate from, and
+independent of, `bootValuations()`'s fetch group above — a slow/missing
+history file never blocks the watchlist panel):
+
+- `data/history/yields-latest.json`
+- `data/history/hbm-share.json`
+- `data/history/nand-price.json`
+- `data/history/anthropic-funding-events.json`
+
+All four are optional/progressive-enhancement — missing (404, first deploy
+before any of these files exist yet) ⇒ that chart/list renders a "데이터
+없음" (no data yet) placeholder, the rest of the panel and the rest of the
+dashboard are unaffected. No `localStorage` key is used by this panel —
+these are read-only agent/cron-authored trackers, no manual-entry UI exists
+for them in this phase.
 
 ## Schemas
 
@@ -456,3 +499,161 @@ GOOGL,339.32,7.04,2.12
 ```
 Imports merge into `price-quotes.json` under `perSource.kapture` and trigger
 the comparator agent unless `verifyAgainstScrape` is unchecked.
+
+### history/yields-YYYY.json
+```jsonc
+{
+  "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-yields.mjs). Daily sovereign 10Y yield table, sharded one file per calendar year to keep any single file small (see reports/designs/2026-08-19-phase3-trackers.md §4 for the size/retention rationale). DEDUPE-BY-DATE, not append-only: each run UPSERTS one row per (country,tenor,date) key — if that exact key already has a row, the new row REPLACES it wholesale (last-write-wins on same-day double-writes, e.g. the 21:00 UTC post-close cron overwriting the 11:00 UTC pre-market cron's same-date row, or two ad-hoc workflow_dispatch runs the same afternoon); rows are never duplicated for the same key. The row shape is IDENTICAL whether refresher-scraped or collector/human-curated — only source/agent differ — so a scraper outage never blocks a manual backfill using the same shape.",
+  "year": 2026,
+  "updated": "2026-08-19T21:05:00Z",     // ISO timestamp of the last write to THIS shard
+  "agent": "refresher",
+  "rows": [
+    {
+      "date": "2026-08-19",              // YYYY-MM-DD — the trading/reference date this yield belongs to
+      "country": "US",                    // "US" | "DE" | "FR" | "IT" | "UK" | "JP" today — additive, extend the set freely
+      "tenor": "10y",                     // "10y" only today; "2y"/"30y" slot in later as new VALUES of this same field — zero schema change
+      "yield": 4.32,                      // percent (4.32 means 4.32%), NOT a fraction — matches the existing US10Y convention already live in price-quotes.json (Cboe _TNX, normalized)
+      "source": "fred-csv",               // "fred-csv" | "cboe-tnx" | "cnbc" | "manual" | any future adapter name — free string, not an enum
+      "agent": "refresher",               // "refresher" | "collector" | "human" — whoever actually produced this row
+      "collectedAt": "2026-08-19T21:04:58Z"
+    }
+  ]
+}
+```
+**Dedupe key**: `` `${country}|${tenor}|${date}` ``. Two same-date writes in one
+day (the two weekday cron slots, or an ad-hoc `workflow_dispatch`) never
+produce two rows — the second write's `updated`/`collectedAt` simply
+supersede the first's for that `(country,tenor,date)` key.
+
+Live sources today (see `scripts/scrape-yields.mjs` header for the full
+rationale): US via the US Treasury daily par yield curve CSV
+(`source:"treasury-csv"`), Japan via MoF's `jgbcme.csv` (`source:"mof-jgbcme-csv"`,
+current month only), DE/FR/IT via Eurostat's `irt_lt_mcby_m` JSON-stat
+dataset (`source:"eurostat-irt_lt_mcby_m"`, monthly). FRED is dead from
+GitHub-runner IPs and is not used. UK is not scraped — the BoE IADB endpoint
+is reachable but the only series code tried returns an annual average, not a
+usable daily/monthly series — UK stays a curated row (`source:"manual"`)
+until a correct series code is found.
+
+### history/yields-latest.json
+```jsonc
+{
+  "note": "Derived by scripts/scrape-yields.mjs each run from the current + prior year's history/yields-YYYY.json shards — a trailing ~24-month slice, regenerated WHOLESALE (not appended) every run, same shielding pattern as data/news-latest.json relative to data/news-feed.json. This is the ONLY yield file index.html fetches. Per-row provenance (source/agent/collectedAt) is dropped here to keep the file small — full provenance lives in the yearly shards; index.html never needs it.",
+  "updated": "2026-08-19T21:05:00Z",
+  "agent": "refresher",
+  "sourceFiles": ["history/yields-2026.json", "history/yields-2025.json"],
+  "windowMonths": 24,
+  "asOf": "2026-08-19",
+  "series": {
+    "US": { "10y": [ { "date": "2026-08-19", "yield": 4.32 }, { "date": "2026-08-18", "yield": 4.30 } ] },
+    "DE": { "10y": [ { "date": "2026-08-19", "yield": 2.41 } ] },
+    "FR": { "10y": [] },
+    "IT": { "10y": [] },
+    "UK": { "10y": [] },
+    "JP": { "10y": [] }
+  }
+}
+```
+`series[country][tenor]` is nested one level deeper than strictly needed
+today so that adding `2y`/`30y` later is additive — a new key under an
+existing country, not a schema break. Countries with zero points in the
+trailing window are present with an **empty array**, not omitted — same
+"empty is valid, not an error" convention as `news-latest.json`'s
+`TSMU: {items: []}`.
+
+### history/hbm-share.json
+```jsonc
+{
+  "note": "Owned by validator (collector drops raw vendor share figures to reports/raw/YYYY-MM-DD-hbm-share.json; validator cross-checks ≥2 sources and appends here — same ownership pattern as data/analyst-targets.json). APPEND-ONLY: a revised estimate for an already-published quarter is a NEW row with the same quarter+vendor+metric and a later `updated`, never an edit to the prior row (matches the decisionLog[]/SESSION_LOG.md append-only convention). Readers must resolve duplicates by taking the LAST array occurrence of a given (quarter,vendor,metric) key — see index.html's latestByKey() helper.",
+  "updated": "2026-08-19T12:00:00Z",
+  "agent": "validator",
+  "tolerance": 0.05,                    // fractional — reuses analyst-targets.json's 5% rationale: research-firm market-share estimates drift more than same-tick price quotes
+  "rows": [
+    {
+      "quarter": "2026-Q2",              // YYYY-Q[1-4]
+      "vendor": "SK Hynix",              // "SK Hynix" | "Samsung" | "Micron" | "Other"
+      "metric": "revenue-share",         // "revenue-share" | "bit-shipment-share" — MUST stay identical across rows to be one comparable series; a metric change starts a visually distinct line, not a continuation
+      "sharePct": 0.62,                  // fraction 0-1 (repo convention: percents as fractions in JSON)
+      "source": "TrendForce",
+      "url": "https://...",
+      "asOf": "2026-07-15",              // date the estimate was published
+      "verified": true,                  // ≥2 perSource entries agree within `tolerance`
+      "verifiedBy": ["validator"],
+      "perSource": { "TrendForce": 0.62, "Counterpoint": 0.60 },
+      "updated": "2026-08-19",
+      "agent": "validator"
+    }
+  ]
+}
+```
+Single-source rows keep `verified: false` but still populate `sharePct` (one
+`perSource` entry) — same "single-source stays visible, just flagged"
+convention as `analyst-targets.json`/`price-quotes.json` DXY.
+
+### history/nand-price.json
+```jsonc
+{
+  "note": "Owned by validator (collector drops raw pricing figures to reports/raw/YYYY-MM-DD-nand-price.json; validator cross-checks and appends here — same pattern as history/hbm-share.json and data/analyst-targets.json). APPEND-ONLY — a later revision of a published month is a NEW row, never an edit; readers resolve duplicates by taking the LAST array occurrence of a given (month,metric) key, same as hbm-share.json.",
+  "updated": "2026-08-19T12:00:00Z",
+  "agent": "validator",
+  "tolerance": 0.05,
+  "rows": [
+    {
+      "month": "2026-07",                          // YYYY-MM
+      "metric": "128Gb TLC NAND contract price",    // human-readable, source-defined — MUST stay identical across rows for one continuous series (same caveat as hbm-share.json's metric field)
+      "unit": "USD",
+      "priceUsd": 3.85,
+      "changeMoMPct": 0.021,                        // optional, fraction — month-over-month, source-reported or self-derived vs the prior row; null if unknown
+      "source": "TrendForce",
+      "url": "https://...",
+      "asOf": "2026-07-31",
+      "verified": false,                            // typical case — spot/contract NAND pricing usually has one authoritative tracker, not two independent live feeds
+      "perSource": { "TrendForce": 3.85 },
+      "updated": "2026-08-05",
+      "agent": "validator"
+    }
+  ]
+}
+```
+
+### history/anthropic-funding-events.json
+```jsonc
+{
+  "note": "Owned by validator (collector drops raw press claims to reports/raw/YYYY-MM-DD-<slug>.json — see the existing example reports/raw/2026-08-19-anthropic-ipo-debt.json; validator groups claims into distinct real-world events and cross-checks outlet independence — same ownership pattern as data/analyst-targets.json). Anthropic is a private company: there is no live, independently-verifiable primary feed the way there is for price-quotes.json. Every entry here is PRESS-REPORTED, not independently verifiable the same way a cross-source quote is. This file therefore uses corroborated/corroboratedBy, NEVER verified/verifiedBy — see the 'verified vs corroborated' rule above. corroborated:true requires ≥2 INDEPENDENTLY-BYLINED outlets — same-wire reprints of one original story (e.g. five outlets all reprinting one Bloomberg piece) count as ONE source, per the collector's existing dedup convention. Curated, not append-only-raw: entries are UPSERTED BY id (a new corroborating source found later is merged into the existing event's sources[]/corroboratedBy[], not appended as a duplicate event).",
+  "updated": "2026-08-19T12:00:00Z",
+  "agent": "validator",
+  "events": [
+    {
+      "id": "2026-06-01-confidential-s1-filing",     // kebab-date-slug, same id convention as news-feed.json items[].id
+      "date": "2026-06-01",                           // event date
+      "category": "filing-status",                    // "ipo-timing" | "ipo-valuation" | "ipo-size" | "filing-status" | "underwriters" | "debt-size" | "debt-structure" | "debt-purpose"
+      "headline": "Anthropic confidentially files draft S-1 with the SEC",
+      "detail": "Pending SEC review, this gives Anthropic the option to pursue an IPO. No share price, share count, or listing date disclosed.",
+      "figureUSD": null,                              // numeric USD figure this event centers on, if any (e.g. 35000000000 for the $35B XPV deal); null when the event has no single dollar figure
+      "corroborated": true,                            // ≥2 independently-bylined outlets
+      "corroboratedBy": ["Anthropic (company statement)", "CNBC"],
+      "sources": [
+        { "outlet": "Anthropic (company X post)", "url": "https://x.com/anthropicai/status/2061478052257841495", "publishedAt": "2026-06-01", "attribution": "company-statement" },
+        { "outlet": "CNBC", "url": "https://www.cnbc.com/2026/06/01/anthropic-ipo-s1-prospectus.html", "publishedAt": "2026-06-01", "attribution": "named-source" }
+      ],
+      "updated": "2026-08-19",
+      "agent": "validator"
+    },
+    {
+      "id": "2026-08-17-2t-valuation-target",
+      "date": "2026-08-17",
+      "category": "ipo-valuation",
+      "headline": "Investors/bankers reportedly targeting a $2T+ IPO valuation for an October debut",
+      "detail": "Figure attributed to unnamed investors/bankers circling the deal, not to Anthropic's own guidance; execs have not confirmed a valuation target even privately.",
+      "figureUSD": 2000000000000,
+      "corroborated": false,                           // single distinct chain of reporting (qz.com/Motley Fool/PYMNTS/Forbes all cite the same underlying anonymous sourcing — one source-chain, not independent corroboration)
+      "corroboratedBy": [],
+      "sources": [
+        { "outlet": "Motley Fool / Yahoo Finance", "url": "https://www.fool.com/investing/2026/08/17/anthropic-is-reportedly-aiming-for-a-valuation-of/", "publishedAt": "2026-08-17", "attribution": "anonymous-source" }
+      ],
+      "updated": "2026-08-19",
+      "agent": "validator"
+    }
+  ]
+}
+```
