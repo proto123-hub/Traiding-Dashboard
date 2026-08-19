@@ -8,6 +8,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // Chart.js is the page's only external dependency. If the CDN is unreachable,
+  // every `new Chart(...)` throws a ReferenceError that stops the whole inline
+  // script — observed taking the watchlist table down with it, so a charting
+  // outage was blanking the verified data too. Stand in a no-op so the data
+  // half of the dashboard survives, and say so where a chart would have been.
+  if (typeof Chart === 'undefined') {
+    window.Chart = function () { this.destroy = function () {}; this.update = function () {}; };
+    window.Chart.defaults = {};
+    window.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('canvas').forEach(function (c) {
+        var n = document.createElement('div');
+        n.style.cssText = 'padding:12px;color:var(--faint);font-size:11px;text-align:center';
+        n.textContent = '차트를 불러올 수 없습니다 (Chart.js CDN 연결 실패) — 데이터는 정상';
+        if (c.parentNode) c.parentNode.replaceChild(n, c);
+      });
+    });
+  }
+</script>
 <style>
   :root {
     /* v3.5 cyan/gold light theme inheritance */
