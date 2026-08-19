@@ -269,13 +269,22 @@ async function main() {
         if (!byYear.has(y)) byYear.set(y, []);
         byYear.get(y).push(row);
     }
+    let shardsWritten = 0, shardsUnchanged = 0;
     for (const [y, rowsForYear] of byYear) {
         const shardPath = `data/history/yields-${y}.json`;
         let shard;
         try { shard = await readJson(shardPath); } catch { shard = { rows: [] }; }
         const rows = shard.rows || [];
+        const before = JSON.stringify(rows);
         rowsForYear.forEach(r => upsertRow(rows, r));
         sortRows(rows);
+        // Eurostat hands back its ENTIRE history (1980-) on every call, so every
+        // year-shard is a write candidate on every run. Writing them all would
+        // stamp a fresh `updated` into ~47 files twice a weekday forever — the
+        // first run alone produced a 57-file, 18.8k-line commit. Only write a
+        // shard whose ROWS actually changed; a timestamp is not a change.
+        if (JSON.stringify(rows) === before) { shardsUnchanged++; continue; }
+        shardsWritten++;
         await writeJsonAtomic(shardPath, {
             note: 'Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-yields.mjs). Daily sovereign 10Y yield table, sharded one file per calendar year to keep any single file small. DEDUPE-BY-DATE, not append-only: each run UPSERTS one row per (country,tenor,date) key — if that exact key already has a row, the new row REPLACES it wholesale (last-write-wins on same-day double-writes, e.g. the 21:00 UTC post-close cron overwriting the 11:00 UTC pre-market cron\'s same-date row); rows are never duplicated for the same key. The row shape is IDENTICAL whether refresher-scraped or collector/human-curated (e.g. UK, source:"manual") — only source/agent differ.',
             year: Number(y),
@@ -318,7 +327,7 @@ async function main() {
 
     await writeJsonAtomic(`reports/raw/${today}-yields.json`, rawDrop);
 
-    console.log(`scrape-yields: ${newRows.length} rows fetched (${Object.keys(rawDrop.perSourceRaw).length} sources ok), ${failures.length} failures`);
+    console.log(`scrape-yields: ${newRows.length} rows fetched (${Object.keys(rawDrop.perSourceRaw).length} sources ok), ${failures.length} failures, ${shardsWritten} shards written / ${shardsUnchanged} unchanged`);
 }
 
 main().catch(e => { console.error('fatal:', e); process.exit(1); });
