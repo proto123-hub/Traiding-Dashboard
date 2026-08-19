@@ -75,12 +75,38 @@ jobs:
           # had to be remembered here or it silently never got committed.
           git add data/ reports/raw/ reports/validation/
           git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
-          # Rebase-and-retry: a human/agent push landing mid-run otherwise loses
-          # the whole refresh to a rejected non-fast-forward (seen 2026-08-18).
+          # A push landing mid-run otherwise loses the whole refresh to a
+          # rejected non-fast-forward (seen 2026-08-18). Rebasing was the first
+          # fix, but it fails too: two refresh runs regenerate the SAME files, so
+          # the replay hits content conflicts in all ten of them and exits 1
+          # (seen 2026-08-19). Instead of merging generated data, replay it —
+          # take origin's tree wholesale, drop this run's regenerated files on
+          # top, and commit that. Nothing can conflict because nothing is merged.
           for i in 1 2 3; do
             git push && exit 0
-            echo "push rejected (attempt $i) — rebasing onto origin"
-            git pull --rebase origin "$GITHUB_REF_NAME" || exit 1
-            sleep $((i * 5))
+            echo "push rejected (attempt $i) — replaying this run's output onto origin"
+            tmp=$(mktemp -d)
+            git archive HEAD data reports | tar -x -C "$tmp"
+            git fetch origin "$GITHUB_REF_NAME"
+            git reset --hard "origin/$GITHUB_REF_NAME"
+            # news-feed.json is the one append-only file here; overwriting it
+            # would drop whatever the other run appended, so union by item id.
+            if [ -f data/news-feed.json ] && [ -f "$tmp/data/news-feed.json" ]; then
+              node -e "
+                const fs=require('fs');
+                const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+                const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+                const m=new Map();
+                (a.items||[]).forEach(i=>m.set(i.id,i));
+                (b.items||[]).forEach(i=>{if(!m.has(i.id))m.set(i.id,i)});
+                fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...m.values()]},null,2)+'\n');
+              " data/news-feed.json "$tmp/data/news-feed.json"
+            fi
+            cp -r "$tmp"/data "$tmp"/reports .
+            rm -rf "$tmp"
+            git add data/ reports/raw/ reports/validation/
+            if git diff --cached --quiet; then echo "origin already has this data"; exit 0; fi
+            git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
+            sleep $((i * 3))
           done
           git push
