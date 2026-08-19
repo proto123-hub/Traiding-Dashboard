@@ -182,7 +182,7 @@ python3 -m http.server 8765
 node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs
 
 # Validate JSON
-for f in data/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f'))" && echo OK $f; done
+find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
 
 # Syntax-check inline scripts
 node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].forEach((m,i)=>{try{new Function('async function __(){'+m[1]+'}');console.log('script',i,'OK')}catch(e){console.log('script',i,e.message)}})"
