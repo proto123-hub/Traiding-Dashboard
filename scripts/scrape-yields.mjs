@@ -194,8 +194,15 @@ function rowKey(r) { return `${r.country}|${r.tenor}|${r.date}`; }
 
 export function upsertRow(rows, newRow) {
     const idx = rows.findIndex(r => rowKey(r) === rowKey(newRow));
-    if (idx >= 0) rows[idx] = newRow;   // last-write-wins, wholesale replace
-    else rows.push(newRow);
+    if (idx < 0) { rows.push(newRow); return rows; }
+    // Re-observing the same value is not a change. Eurostat replays its whole
+    // history every run, so replacing wholesale would rewrite `collectedAt` on
+    // every row every run — the rows would differ, the shard would be written,
+    // and ~47 files would churn twice a weekday while no number moved.
+    // `collectedAt` therefore records when a value was FIRST seen.
+    const cur = rows[idx];
+    if (cur.yield === newRow.yield && cur.source === newRow.source) return rows;
+    rows[idx] = newRow;   // a genuinely different value still wins
     return rows;
 }
 
