@@ -1225,10 +1225,12 @@
         : (rrrUnstable
             ? '<span style="color:var(--amber)">' + r.riskRrr + ' ⚠</span>'
             : String(r.riskRrr));
-      const rrrWarn = rrrUnstable
-        ? '<div style="margin-top:2px;color:var(--amber);font-size:10px">price is ' + stopProxPct.toFixed(2) +
-          '% above the stop — RRR is inflated by a collapsing denominator, not an attractive setup</div>'
-        : '';
+      const rrrWarn = !rrrUnstable ? ''
+        : (stopProxPct < 0
+            ? '<div style="margin-top:2px;color:var(--red);font-size:10px">price is ' + Math.abs(stopProxPct).toFixed(2) +
+              '% BELOW the stop — the stop is breached and RRR no longer describes this position</div>'
+            : '<div style="margin-top:2px;color:var(--amber);font-size:10px">price is ' + stopProxPct.toFixed(2) +
+              '% above the stop — RRR is inflated by a collapsing denominator, not an attractive setup</div>');
       riskBody = '<div>Score ' + (r.riskScore != null ? r.riskScore : '—') + ' · ' + verdictPillHtml(r.riskVerdict) + '</div>' +
         '<div style="margin-top:6px;font-size:11px">Entry ' + ez + '</div>' +
         '<div style="margin-top:2px;font-size:11px">Target ' + tg + '</div>' +
