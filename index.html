@@ -1213,10 +1213,27 @@
       const ez = r.riskEntryZone ? ('$' + r.riskEntryZone.low + '-' + r.riskEntryZone.high) : '—';
       const tg = r.riskTarget ? ('base $' + r.riskTarget.base + '/bull $' + r.riskTarget.bull + '/bear $' + r.riskTarget.bear) : '—';
       const log = (r.riskDecisionLog || []).map(x => escapeHtml(x.date) + ' ' + escapeHtml(x.action) + ' — ' + escapeHtml(x.reason)).join('<br>') || '—';
+      // RRR divides by (price - stopLoss). As price approaches the stop that
+      // denominator collapses and the ratio inflates, so a position sitting ON
+      // its stop reports the best risk/reward in the book — exactly backwards.
+      // Flag it rather than printing a number that reads as the opposite of
+      // what it means. (AVGO, 2026-08-18: $392.43 vs a $390 stop, RRR 26.98.)
+      const stopProxPct = (r.price != null && r.riskStopLoss != null && r.price > 0)
+        ? ((r.price - r.riskStopLoss) / r.price) * 100 : null;
+      const rrrUnstable = stopProxPct != null && stopProxPct < 1.5;
+      const rrrFmt = r.riskRrr == null ? '—'
+        : (rrrUnstable
+            ? '<span style="color:var(--amber)">' + r.riskRrr + ' ⚠</span>'
+            : String(r.riskRrr));
+      const rrrWarn = rrrUnstable
+        ? '<div style="margin-top:2px;color:var(--amber);font-size:10px">price is ' + stopProxPct.toFixed(2) +
+          '% above the stop — RRR is inflated by a collapsing denominator, not an attractive setup</div>'
+        : '';
       riskBody = '<div>Score ' + (r.riskScore != null ? r.riskScore : '—') + ' · ' + verdictPillHtml(r.riskVerdict) + '</div>' +
         '<div style="margin-top:6px;font-size:11px">Entry ' + ez + '</div>' +
         '<div style="margin-top:2px;font-size:11px">Target ' + tg + '</div>' +
-        '<div style="margin-top:2px;font-size:11px">Stop $' + (r.riskStopLoss != null ? r.riskStopLoss : '—') + ' · RRR ' + (r.riskRrr != null ? r.riskRrr : '—') + '</div>' +
+        '<div style="margin-top:2px;font-size:11px">Stop $' + (r.riskStopLoss != null ? r.riskStopLoss : '—') + ' · RRR ' + rrrFmt + '</div>' +
+        rrrWarn +
         '<div style="margin-top:6px;color:var(--muted);font-size:11px">Risks: ' + riskListHtml(r.riskRisks) + '</div>' +
         '<div style="margin-top:6px;color:var(--muted);font-size:11px">decisionLog: ' + log + '</div>';
     } else {
