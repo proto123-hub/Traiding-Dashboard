@@ -1,6 +1,6 @@
 {
   "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-fundamentals.mjs). Supersedes the prior validator/WebSearch-synthesis phase — see data/README.md for the ownership history. trailingPE = CNBC's reported TTM PE (falls back to stockanalysis.com, then a SEC-XBRL-computed figure anchored to the verified close in data/price-quotes.json). trailingVerified = TTM diluted EPS agreement (CNBC vs SEC-XBRL, and stockanalysis when it exposes EPS) within tolerance.trailingEps — see tolerance.trailingPE for the wider raw-PE fallback comparison used only when no source exposes a separate EPS figure. forwardPE/forwardPEBasis = the NTM-basis consensus figure when available (CNBC feps, falls back to stockanalysis, then the nearest NASDAQ FY-basis estimate — see forwardPEBasisNote when that fallback fires). forwardPEByBasis carries every basis independently, each verified only against another source on the SAME basis — forward P/Es on different bases are NEVER cross-verified or averaged (see reports/designs/2026-08-18-fundamentals-scraper.md §2). verified (top-level, back-compat) is UNCHANGED semantics: true only if BOTH trailingVerified AND forwardVerified pass — expect this to be rare under basis-aware forward verification; trailingVerified is the more informative signal going forward. ETFs get notApplicable plus real expenseRatio/aum/etfBeta from NASDAQ's ETF summary.",
-  "updated": "2026-08-19T11:06:36Z",
+  "updated": "2026-08-19T11:24:05Z",
   "asOfDate": "2026-08-19",
   "agent": "refresher",
   "sources": [
@@ -670,9 +670,9 @@
       "trailingPE": 26.8367,
       "eps": 17.9467,
       "trailingVerified": true,
-      "forwardPE": 24.5142,
+      "forwardPE": 24.5179,
       "forwardPEBasis": "NTM",
-      "forwardEps": 19.647,
+      "forwardEps": 19.644,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
@@ -681,9 +681,9 @@
         "cnbc": {
           "trailingPE": 26.8367,
           "eps": 17.9467,
-          "forwardPE": 24.5142,
+          "forwardPE": 24.5179,
           "forwardPEBasis": "NTM",
-          "forwardEps": 19.647
+          "forwardEps": 19.644
         },
         "sec-xbrl": {
           "trailingPE": 26.83,
@@ -704,11 +704,11 @@
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 24.5142,
+          "value": 24.5179,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 24.5142
+            "cnbc": 24.5179
           },
           "deltaPct": null
         }
@@ -874,9 +874,9 @@
       "trailingPE": null,
       "eps": -3.5145,
       "trailingVerified": false,
-      "forwardPE": 153.4575,
+      "forwardPE": 153.2407,
       "forwardPEBasis": "NTM",
-      "forwardEps": 2.12,
+      "forwardEps": 2.123,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 0,
@@ -885,9 +885,9 @@
         "cnbc": {
           "trailingPE": null,
           "eps": -3.5145,
-          "forwardPE": 153.4575,
+          "forwardPE": 153.2407,
           "forwardPEBasis": "NTM",
-          "forwardEps": 2.12
+          "forwardEps": 2.123
         },
         "sec-xbrl": {
           "trailingPE": null,
@@ -908,11 +908,11 @@
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 153.4575,
+          "value": 153.2407,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 153.4575
+            "cnbc": 153.2407
           },
           "deltaPct": null
         }
@@ -1149,16 +1149,6 @@
   },
   "failures": [
     {
-      "symbol": "AVGO",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "CLS",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
       "symbol": "MRVL",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
@@ -1169,17 +1159,12 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "TSM",
+      "symbol": "AVGO",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "MU",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "PLTR",
+      "symbol": "CLS",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1189,17 +1174,17 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "AMD",
+      "symbol": "PLTR",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "ARM",
+      "symbol": "MU",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "AMAT",
+      "symbol": "TSM",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1209,32 +1194,7 @@
       "reason": "sec:http_404"
     },
     {
-      "symbol": "META",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "MSFT",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "KLAC",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "TSLA",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "SNOW",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "ORCL",
+      "symbol": "AMD",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1244,12 +1204,47 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "CRWD",
+      "symbol": "AMAT",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "SNDK",
+      "symbol": "ARM",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "KLAC",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "META",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "TSLA",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "MSFT",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "SNOW",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "PANW",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "CRWD",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1259,7 +1254,12 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "PANW",
+      "symbol": "ORCL",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "SNDK",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     }
