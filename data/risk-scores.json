@@ -21,7 +21,7 @@
   "scores": {
     "GOOGL": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 35,
       "verdict": "HOLD",
       "entryZone": {
@@ -34,12 +34,12 @@
         "bear": 333
       },
       "stopLoss": 325,
-      "rrr": 2.95,
+      "rrr": 2.91,
       "risks": [
         {
           "tag": "concentration",
           "severity": "high",
-          "note": "41.1% of book at verified EOD market values (240sh × $344.00) — crossed >40% threshold, +25 pts"
+          "note": "42.92% of book at verified EOD market values (240sh × $344.20 vs the other 5 holdings' 8/18 selloff shrinking the rest of the book) — up from 41.1% on 8/18, still >40% threshold, +25 pts unchanged."
         },
         {
           "tag": "regulatory",
@@ -49,7 +49,7 @@
         {
           "tag": "data-quality",
           "severity": "low",
-          "note": "RESOLVED 2026-08-18: currentPrice now verified (nasdaq+cboe+cnbc agree $344.00, 2026-08-17 regular-session close) — prior single-source caveat no longer applies"
+          "note": "RE-CHECKED 2026-08-19: verified close $344.20 (nasdaq+cboe+cnbc agree, 2026-08-18 session, +0.06%) essentially flat vs 8/17 — GOOGL was the lone held ticker to hold up through the broad semis selloff; stop $325 holds comfortably (+5.9%), still within entry zone $335-355."
         }
       ],
       "decisionLog": [
@@ -76,14 +76,20 @@
           "action": "HOLD",
           "by": "evaluator",
           "reason": "Verified close $344.00 (2-source) confirms above stop $325, within entry zone; concentration 41.1% still >40%; HOLD unchanged."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "HOLD",
+          "by": "evaluator",
+          "reason": "Close $344.20 flat vs 8/17, stop $325 holds +5.9%; book concentration rose to 42.9% as peers sold off; HOLD unchanged."
         }
       ]
     },
     "AVGO": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 16,
-      "verdict": "HOLD",
+      "verdict": "SELL",
       "entryZone": {
         "low": 395,
         "high": 425
@@ -94,7 +100,7 @@
         "bear": 375
       },
       "stopLoss": 390,
-      "rrr": 26.98,
+      "rrr": -7.8,
       "risks": [
         {
           "tag": "customer-concentration",
@@ -114,7 +120,7 @@
         {
           "tag": "technical",
           "severity": "high",
-          "note": "Verified close $392.43 is only $2.43 (0.6%) above stopLoss $390 (was believed $419.47 on single-source 8/14, -6.4% correction) — no rubric points added (not yet breached), but immediate stop-watch; verified pre-market print $386.50 is already BELOW $390 (context only, not a session close)"
+          "note": "CONFIRMED 2026-08-19: verified close $380.00 (nasdaq+cboe+cnbc agree, 2026-08-18 session, -3.17%) is BELOW stopLoss $390 by 2.6% — hard stop breached on fully verified data (was $2.43/0.6% above on 8/18); no fundamental cause found in validated inputs (news-latest.json unchanged since 8/14) for this broad semis-selloff move, so stop is honored as written, not widened; score unchanged at 16 (no enumerated rubric fact newly applies — this is a stop-discipline verdict override, not a fundamentals re-score); published rrr (-7.80) is an artifact of price below stop, not meaningful."
         }
       ],
       "decisionLog": [
@@ -141,14 +147,20 @@
           "action": "HOLD",
           "by": "evaluator",
           "reason": "Verified close $392.43 (was $419.47 single-source) sits $2.43 above stop $390 — too close for new entries; BUY downgraded to HOLD."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified close $380.00 breached stop $390 by 2.6%; no fundamental cause found; stop honored not widened; HOLD→SELL."
         }
       ]
     },
     "CLS": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 15,
-      "verdict": "BUY",
+      "verdict": "SELL",
       "entryZone": {
         "low": 340,
         "high": 365
@@ -159,7 +171,7 @@
         "bear": 340
       },
       "stopLoss": 325,
-      "rrr": 5.43,
+      "rrr": -7.87,
       "risks": [
         {
           "tag": "cyclical",
@@ -173,8 +185,8 @@
         },
         {
           "tag": "data-quality",
-          "severity": "low",
-          "note": "RESOLVED 2026-08-18: verified close $340.40 (nasdaq+cboe+cnbc agree, 2026-08-17 session) confirms NOT breaching stop $325 — prior 8/14 stop-test flag cleared"
+          "severity": "high",
+          "note": "BREACHED 2026-08-19: verified close $310.59 (nasdaq+cboe+cnbc agree, 2026-08-18 session, -8.76%) is BELOW stopLoss $325 by 4.4% — the 8/18 \"resolved\" read is reversed on today's fully-verified data; no fundamental cause found in validated inputs (news-latest.json unchanged since 8/14) for this broad semis-selloff move, so stop is honored as written, not widened; score unchanged at 15 (no enumerated rubric fact newly applies); published rrr (-7.87) is an artifact of price below stop, not meaningful."
         }
       ],
       "decisionLog": [
@@ -201,12 +213,18 @@
           "action": "BUY",
           "by": "evaluator",
           "reason": "Verified close $340.40 confirms NOT breaching stop $325 (8/14 flag resolved); price at entry-zone floor; BUY unchanged."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified close $310.59 breached stop $325 by 4.4%; broad semis selloff only, no fundamental cause; stop honored; BUY→SELL."
         }
       ]
     },
     "MRVL": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 18,
       "verdict": "HOLD",
       "entryZone": {
@@ -219,7 +237,7 @@
         "bear": 235
       },
       "stopLoss": 205,
-      "rrr": 2.07,
+      "rrr": 7.18,
       "risks": [
         {
           "tag": "macro",
@@ -229,7 +247,7 @@
         {
           "tag": "technical",
           "severity": "low",
-          "note": "RESOLVED 2026-08-18: verified close $234.33 (nasdaq+cboe+cnbc agree, 2026-08-17 session) is comfortably above the reset stop $205 (+14.3%) and near the top of the $210-235 entry zone — the 8/14 unconfirmed-breach flag is cleared, +8 pts removed from score. Note: the OLD $255 stop level remains breached on verified data (-8.1%), a smaller but real confirmation of the original single-source signal (-12%)"
+          "note": "RE-CHECKED 2026-08-19: verified close $216.00 (nasdaq+cboe+cnbc agree, 2026-08-18 session, -7.82%) HOLDS the reset stop $205 (+5.4%, buffer thinned sharply from +14.3% on 8/18) — not breached, HOLD stands, stop not honored-as-breach because it was not breached; no new fundamental reason to move the stop either way. Under the ORIGINAL $255 stop the verified close is now -15.3% below (was -8.1% on 8/18) — a materially deeper breach of that historical level. Note: published rrr (7.18, up from 2.07) is inflated mostly by the shrinking stop-to-price denominator (11 vs 29.33) — a partial artifact, not a proportionate reward/risk improvement; treat with caution, especially with earnings timing still unconfirmed."
         },
         {
           "tag": "event",
@@ -255,12 +273,18 @@
           "action": "HOLD",
           "by": "evaluator",
           "reason": "Verified close $234.33 confirms NOT breaching reset stop $205 (8/14 flag resolved); earnings-timing uncertainty keeps HOLD, not BUY."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "HOLD",
+          "by": "evaluator",
+          "reason": "Close $216.00 holds reset stop $205 by 5.4% (thin, down from 14.3%); original $255 stop now -15.3% under; HOLD unchanged."
         }
       ]
     },
     "MU": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 15,
       "verdict": "BUY",
       "entryZone": {
@@ -273,7 +297,7 @@
         "bear": 800
       },
       "stopLoss": 850,
-      "rrr": 1.14,
+      "rrr": 2.81,
       "risks": [
         {
           "tag": "cyclical",
@@ -293,7 +317,7 @@
         {
           "tag": "entry-attractiveness",
           "severity": "low",
-          "note": "Verified close $1,011.75 (2026-08-17) is now ABOVE the $920-980 entry zone; rrr compressed 2.09→1.14 on price move alone — not a rubric risk point, but reduces new-money attractiveness (thesis unchanged)"
+          "note": "RE-CHECKED 2026-08-19: verified close $940.76 (nasdaq+cboe+cnbc agree, 2026-08-18 session, -7.02%) has fallen back INTO the $920-980 entry zone (was above it on 8/18); stop $850 holds comfortably (+10.7%); rrr improves 1.14→2.81 on price move alone (fundamentals/buyback catalyst/Burry short all unchanged) — a genuine entry-attractiveness improvement, not a near-zero-denominator artifact (buffer to stop is a healthy 9.6% of price). Not a rubric risk point."
         }
       ],
       "decisionLog": [
@@ -314,12 +338,18 @@
           "action": "BUY",
           "by": "evaluator",
           "reason": "Verified close $1,011.75 (above $920-980 entry zone) confirms fundamentals; RRR compresses 2.09→1.14 on price move alone; BUY unchanged."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "BUY",
+          "by": "evaluator",
+          "reason": "Close $940.76 back in entry zone $920-980; stop $850 holds +10.7%; rrr improves 1.14→2.81; BUY unchanged, more attractive."
         }
       ]
     },
     "SOXL": {
       "coverage": "full",
-      "updated": "2026-08-18",
+      "updated": "2026-08-19",
       "score": 31,
       "verdict": "SELL",
       "entryZone": {
@@ -332,7 +362,7 @@
         "bear": 125
       },
       "stopLoss": 130,
-      "rrr": 2.48,
+      "rrr": -84.33,
       "risks": [
         {
           "tag": "leveraged-etf",
@@ -342,7 +372,7 @@
         {
           "tag": "technical",
           "severity": "high",
-          "note": "CONFIRMED 2026-08-18: verified close $151.53 (nasdaq+cboe+cnbc agree, 2026-08-17 session) is 10.9% below the June hard stop $170 — largest breach of any held ticker, thesis-consistent, +8 pts. Magnitude is smaller than the provisional single-source read (-14.0%) but the breach is now confirmed, not flagged. Verified pre-market print $135.64 (-10.5% vs this close) shows continuing decay pressure toward the reset $130 stopLoss — context/urgency only, not itself a trigger"
+          "note": "DOUBLE BREACH 2026-08-19: verified close $129.10 (nasdaq+cboe+cnbc agree, 2026-08-18 session, -14.80%) is now BELOW the reset stopLoss $130 as well as the original hard stop $170 (-24.1%) — both levels breached on fully verified data; verified pre-market print $125.67 is further down still (context/urgency only, not a session close). SELL stands, reconfirmed not merely repeated; published rrr is a meaningless artifact (denominator near zero/negative)."
         },
         {
           "tag": "macro",
@@ -379,6 +409,12 @@
           "action": "SELL",
           "by": "evaluator",
           "reason": "Verified close $151.53 confirms hard-stop $170 breach (-10.9%, was -14% single-source); confidence up, magnitude smaller; SELL confirmed."
+        },
+        {
+          "date": "2026-08-19",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified close $129.10 breaches reset stop $130 too (orig $170 also breached -24.1%); SELL reconfirmed, execution is Daniel's call."
         }
       ]
     },
