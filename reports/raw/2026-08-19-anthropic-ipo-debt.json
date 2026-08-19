@@ -1,0 +1,265 @@
+{
+  "agent": "collector",
+  "collectedAt": "2026-08-19T12:00:00Z",
+  "purpose": "AI-sector tracking: Anthropic IPO size + debt raise (phase 3 scoping)",
+  "subject": { "company": "Anthropic", "public": false, "ticker": null },
+  "collectionMethod": "WebFetch is EGRESS_BLOCKED for the two primary-source hosts that matter most here: www.anthropic.com (company newsroom — 'confidential-draft-s1-sec' and 'series-h' posts) and www.apollo.com (Apollo Global Management IR press release on the $35B XPV deal). Both attempted once each and failed with EGRESS_BLOCKED; not retried. WebFetch on reuters.com and ft.com was rejected outright by WebSearch's allowed_domains restriction ('not accessible to our user agent') before any fetch occurred, so Reuters/FT claims below come from other outlets' reprints/summaries of their reporting, not direct reads. All other claims were gathered via WebSearch (unrestricted or bounded to bloomberg.com), whose result payloads include an AI-generated synthesis on top of the linked search snippets — verbatim fields below are drawn from the quoted snippet text where the search tool surfaced one; where only the synthesis was available, that is noted in the verbatim field itself. Many outlets (Investing.com, MarketScreener, SRN News, 93.3 The Drive, Invezz) are same-day wire reprints of a single Bloomberg story; these are treated as ONE source (Bloomberg), not counted separately, per instructions.",
+  "claims": [
+    {
+      "topic": "ipo-timing",
+      "value": "Anthropic hired law firm Wilson Sonsini to prepare for a possible IPO as early as 2026",
+      "asOf": "2025-12-03",
+      "outlet": "Financial Times (reported via Yahoo Finance / Euronews / Axios reprints)",
+      "url": "https://finance.yahoo.com/news/anthropic-plans-ipo-early-2026-004854547.html",
+      "publishedAt": "2025-12-03",
+      "attribution": "named-source",
+      "verbatim": "Anthropic, the artificial intelligence startup backed by Alphabet's Google and Amazon.com, has hired the law firm Wilson Sonsini to prepare for an initial public offering that could take place as early as 2026."
+    },
+    {
+      "topic": "ipo-timing",
+      "value": "Company declined to confirm IPO plans or timing",
+      "asOf": "2025-12-03",
+      "outlet": "Reuters (spokesperson quote, carried via Euronews/Axios coverage of the FT report)",
+      "url": "https://euronews.com/business/2025/12/03/anthropic-considers-ipo-preparations-as-ai-rivalry-intensifies",
+      "publishedAt": "2025-12-03",
+      "attribution": "company-statement",
+      "verbatim": "We haven't made any decisions about when or even whether to go public, and don't have any news to share at this time."
+    },
+    {
+      "topic": "filing-status",
+      "value": "Confidential draft S-1 registration statement submitted to the SEC",
+      "asOf": "2026-06-01",
+      "outlet": "Anthropic (company X/Twitter post), corroborated same-day by CNBC",
+      "url": "https://x.com/anthropicai/status/2061478052257841495",
+      "publishedAt": "2026-06-01",
+      "attribution": "company-statement",
+      "verbatim": "Anthropic has confidentially submitted a draft S-1 registration statement to the Securities and Exchange Commission. Pending completion of SEC review, this gives us the option to pursue an initial public offering."
+    },
+    {
+      "topic": "filing-status",
+      "value": "CNBC independently confirmed the confidential S-1 filing the same day",
+      "asOf": "2026-06-01",
+      "outlet": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/01/anthropic-ipo-s1-prospectus.html",
+      "publishedAt": "2026-06-01",
+      "attribution": "named-source",
+      "verbatim": "Anthropic confidentially files IPO prospectus with SEC, prepping Wall Street for landmark AI deal (headline); the draft S-1 does not disclose a share price, share count, or listing date and completion depends on market conditions."
+    },
+    {
+      "topic": "filing-status",
+      "value": "No public (non-confidential) S-1 or S-1/A located on EDGAR as of the search date",
+      "asOf": "2026-08-19",
+      "outlet": "WebSearch synthesis across multiple outlets (decodethefuture.org, TechCrunch, CNBC, SEC EDGAR absence)",
+      "url": "https://www.sec.gov/cgi-bin/browse-edgar",
+      "publishedAt": "2026-08-19",
+      "attribution": "unclear",
+      "verbatim": "As of July 18, no public Anthropic S-1 or S-1/A was located on EDGAR. [search-tool synthesis, not a direct EDGAR query by this collector — treat as indicative only, not verified against EDGAR directly]"
+    },
+    {
+      "topic": "underwriters",
+      "value": "Morgan Stanley and Goldman Sachs picked to lead the IPO",
+      "asOf": "2026-06-03",
+      "outlet": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-06-03/anthropic-said-to-pick-morgan-stanley-goldman-sachs-to-lead-ipo",
+      "publishedAt": "2026-06-03",
+      "attribution": "anonymous-source",
+      "verbatim": "Anthropic said to pick Morgan Stanley, Goldman Sachs to lead IPO (headline; body per snippet: sources familiar with the matter)."
+    },
+    {
+      "topic": "underwriters",
+      "value": "JPMorgan Chase added as a third lead underwriter alongside Morgan Stanley and Goldman Sachs",
+      "asOf": "2026-06-03",
+      "outlet": "TechTimes / BanklessTimes / PYMNTS (aggregating Bloomberg-originated reporting)",
+      "url": "https://www.techtimes.com/articles/317845/20260605/anthropic-ipo-picks-goldman-sachs-morgan-stanley-jpmorgan-revenue-accounting-question-looms.htm",
+      "publishedAt": "2026-06-05",
+      "attribution": "anonymous-source",
+      "verbatim": "Morgan Stanley and Goldman Sachs Group Inc. have been selected as lead underwriters for Anthropic's IPO, with JPMorgan Chase also joining. ... selected Morgan Stanley, Goldman Sachs, and JPMorgan Chase as lead underwriters on June 3."
+    },
+    {
+      "topic": "underwriters",
+      "value": "Bankers lining up investor meetings ahead of the offering; three-bank lineup (Morgan Stanley, Goldman Sachs, JPMorgan) still active",
+      "asOf": "2026-07-15",
+      "outlet": "CNBC",
+      "url": "https://www.cnbc.com/2026/07/15/anthropic-ipo-banks-investor-meetings.html",
+      "publishedAt": "2026-07-15",
+      "attribution": "named-source",
+      "verbatim": "Anthropic moves closer to mega-IPO as bankers line up investor meetings (headline); Anthropic is scheduling investor meetings for an October 2026 Nasdaq IPO. More banks could still join the syndicate."
+    },
+    {
+      "topic": "ipo-timing",
+      "value": "Target listing window: September or early October 2026, Nasdaq",
+      "asOf": "2026-07-15",
+      "outlet": "CNBC (per above) / multiple secondary aggregators (KuCoin, MeshLaunch, BitMEX) citing Bloomberg's July 15 report",
+      "url": "https://www.cnbc.com/2026/07/15/anthropic-ipo-banks-investor-meetings.html",
+      "publishedAt": "2026-07-15",
+      "attribution": "named-source",
+      "verbatim": "No exact date has been formally confirmed; October 2026 is described as the target window, contingent on regulatory review progress and market conditions."
+    },
+    {
+      "topic": "ipo-size",
+      "value": "Offering expected to raise more than $60 billion",
+      "asOf": "2026-03-27",
+      "outlet": "The Information (original), relayed by WinBuzzer/TechFundingNews/TECHi",
+      "url": "https://winbuzzer.com/2026/03/30/anthropic-ipo-q4-2026-60-billion-target-xcxwbn/",
+      "publishedAt": "2026-03-30",
+      "attribution": "anonymous-source",
+      "verbatim": "Anthropic is discussing an initial public offering as soon as the fourth quarter of 2026, with bankers expecting the AI company to raise more than $60 billion, as The Information first reported. ... a planning scenario, not a priced offering."
+    },
+    {
+      "topic": "ipo-valuation",
+      "value": "$965 billion post-money valuation (from the immediately preceding private round, used by press as the IPO reference point)",
+      "asOf": "2026-05-28",
+      "outlet": "Anthropic (company announcement)",
+      "url": "https://www.anthropic.com/news/series-h",
+      "publishedAt": "2026-05-28",
+      "attribution": "company-statement",
+      "verbatim": "We've raised $65 billion in Series H funding at a $965 billion post-money valuation, led by Altimeter Capital, Dragoneer, Greenoaks, and Sequoia. [full company blog post not directly fetchable — EGRESS_BLOCKED on www.anthropic.com; text reconstructed from Anthropic's own X post and search-index snippet of the same announcement]"
+    },
+    {
+      "topic": "ipo-valuation",
+      "value": "Fortune headline links the confidential S-1 filing directly to the $965B round valuation as the IPO reference figure",
+      "asOf": "2026-06-01",
+      "outlet": "Fortune",
+      "url": "https://fortune.com/2026/06/01/anthropic-confidentially-files-ipo-965-billion-valuation/",
+      "publishedAt": "2026-06-01",
+      "attribution": "named-source",
+      "verbatim": "Anthropic confidentially files for IPO after raising $65 billion in a funding round at a $965 billion valuation (headline)."
+    },
+    {
+      "topic": "ipo-valuation",
+      "value": "Investors/bankers reportedly targeting a $2 trillion (or higher) IPO valuation for an October debut",
+      "asOf": "2026-08-14",
+      "outlet": "Multiple: qz.com, Motley Fool/Yahoo Finance, PYMNTS, Forbes — all citing the same underlying 'people familiar' reporting (original attribution unclear from search snippets, possibly Bloomberg/The Information)",
+      "url": "https://www.fool.com/investing/2026/08/17/anthropic-is-reportedly-aiming-for-a-valuation-of/",
+      "publishedAt": "2026-08-17",
+      "attribution": "anonymous-source",
+      "verbatim": "Anthropic investors expect the AI company to go public in October at a valuation of $2 trillion or more, which would make it the largest initial public offering in history. ... the $2 trillion figure is coming from investors and bankers circling the deal, not from Anthropic's own public guidance -- senior executives have not confirmed an IPO valuation target even in private conversations."
+    },
+    {
+      "topic": "ipo-valuation",
+      "value": "Some coverage floats a $3 trillion ceiling",
+      "asOf": "2026-08-14",
+      "outlet": "BigGo Finance (aggregator; original sourcing unclear, appears to be extrapolation on top of the $2T reporting rather than a distinct report)",
+      "url": "https://finance.biggo.com/news/91f900ba-4570-422e-8f18-cb8cc7ae64a4",
+      "publishedAt": "2026-08-14",
+      "attribution": "unclear",
+      "verbatim": "Anthropic IPO Valuation Could Reach $3 Trillion (headline) — treat as low-confidence extrapolation, not an independently sourced figure."
+    },
+    {
+      "topic": "ipo-valuation",
+      "value": "Secondary (pre-IPO) market implies a $1.05–1.15 trillion valuation for Anthropic",
+      "asOf": "2026-08-17",
+      "outlet": "TradingKey (aggregator; original data provenance for the secondary-market price not stated in the snippet)",
+      "url": "https://www.tradingkey.com/analysis/stocks/us-stocks/262113906-anthropic-ipo-valuation-revenue-ai-profit-ipo-timeline-tradingkey",
+      "publishedAt": "2026-08-17",
+      "attribution": "analyst-estimate",
+      "verbatim": "Secondary markets currently price Anthropic at an implied valuation of $1.05 to $1.15 trillion."
+    },
+    {
+      "topic": "filing-status",
+      "value": "Reference/prior private valuation levels used to contextualize the IPO: Series F $183B (Sept 2025), Series G $380B (Feb 2026), Series H $965B (May 2026) — all pre-IPO primary rounds, NOT IPO valuations",
+      "asOf": "2025-09 to 2026-05",
+      "outlet": "TechCrunch / Yahoo Finance / PYMNTS (multiple, consistent across outlets)",
+      "url": "https://techcrunch.com/2025/09/02/anthropic-raises-13b-series-f-at-183b-valuation/",
+      "publishedAt": "2025-09-02",
+      "attribution": "named-source",
+      "verbatim": "Anthropic closed a $13 billion Series F funding round, valuing it at $183 billion — up from $61.5 billion in March 2025. ... In February 2026, Anthropic closed a $30 billion Series G led by GIC and Coatue at a $380 billion post-money valuation."
+    },
+    {
+      "topic": "filing-status",
+      "value": "Anthropic founders/CEO to receive super-voting (dual-class) shares ahead of the IPO",
+      "asOf": "2026-08-18",
+      "outlet": "The Information (original), reported by Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-08-18/anthropic-plans-to-give-ceo-extra-voting-power-information-says",
+      "publishedAt": "2026-08-18",
+      "attribution": "named-source",
+      "verbatim": "Anthropic to Grant CEO Amodei Extra Voting Power Ahead of IPO, Report Says (headline, sourced to The Information). Amodei holds only about a 2% ownership stake; the dual-class structure would extend voting control disproportionate to that stake. Anthropic also retains its existing Long-Term Benefit Trust / trustee structure, under which trustees hold a special stock class electing a majority of the board — this is the company's pre-existing public benefit corporation governance, not a new IPO-specific feature."
+    },
+    {
+      "topic": "debt-size",
+      "value": "$2.5 billion five-year revolving credit facility",
+      "asOf": "2025-05-16",
+      "outlet": "CNBC (Reuters wire also carried the same CNBC-sourced item)",
+      "url": "https://www.cnbc.com/2025/05/16/anthropic-ai-credit-facility.html",
+      "publishedAt": "2025-05-16",
+      "attribution": "company-statement",
+      "verbatim": "Anthropic received a $2.5 billion, five-year revolving credit line. Lenders included Morgan Stanley, Goldman Sachs, JPMorgan, and four other banks. CFO Krishna Rao: 'significant flexibility to support our continued exponential growth' and 'the backing of these global financial institutions is a testament to the strength of our business.' [Note: dated May 2025 — prior-year background, not a 2026 event; included because it is the earliest confirmed Anthropic-direct credit facility and lender roster.]"
+    },
+    {
+      "topic": "debt-size",
+      "value": "Anthropic's pre-IPO revolving credit facility being expanded to exceed its roughly $10 billion target",
+      "asOf": "2026-08-18",
+      "outlet": "Bloomberg (same-day reprints on Investing.com, MarketScreener, Invezz, SRN News, 93.3 The Drive treated as one source)",
+      "url": "https://www.bloomberg.com/news/articles/2026-08-18/anthropic-pre-ipo-credit-facility-set-to-climb-past-10-billion",
+      "publishedAt": "2026-08-18",
+      "attribution": "anonymous-source",
+      "verbatim": "Anthropic's revolving credit facility is expected to exceed its roughly $10 billion target ... Banks are jockeying for a piece of the expanded credit line, hoping the involvement will strengthen their case for a role in the IPO. Anthropic has asked the banks most active in arranging the credit facility to commit about $1.25 billion each, with a second tier of active lenders encouraged to offer around $1 billion [and less-active participants roughly $750 million or less]. The talks are ongoing and Anthropic could decide to limit the size of the revolver to the target or even below."
+    },
+    {
+      "topic": "debt-structure",
+      "value": "$35 billion 'AI XPV Platform' capital solution — private-credit financing for compute capacity, led by Apollo in partnership with Blackstone and banks, tied to Broadcom chip supply",
+      "asOf": "2026-06",
+      "outlet": "Apollo Global Management (press release) / Broadcom, corroborated by Yahoo Finance, qz.com, DataCenterDynamics",
+      "url": "https://www.apollo.com/insights-news/pressreleases/2026/06/apollo-leads-35-billion-capital-solution-for-broadcom-ai-xpv-platform-in-partnership-with-blackstone-and-leading-global-banks-3308896",
+      "publishedAt": "2026-06",
+      "attribution": "filing",
+      "verbatim": "Apollo-managed funds and affiliates are leading an initial $35 billion capital solution as part of Broadcom's new AI XPV Platform, in partnership with Blackstone and leading global banks, designed to enable over 20GW in compute capacity for leading frontier AI labs through 2028. The initial transaction will facilitate Anthropic's previously announced expansion of more than 1 gigawatt of compute infrastructure ... at Fluidstack-based sites beginning in mid-2026. Apollo described the transaction as the largest private financing ever executed. [Full press release text not directly fetchable — EGRESS_BLOCKED on www.apollo.com; verbatim reconstructed from WebSearch snippet/synthesis of the press release, not a direct read.]"
+    },
+    {
+      "topic": "debt-structure",
+      "value": "Blackstone pitching a second private-credit package of at least $36 billion to finance Anthropic's lease of Google's Ironwood TPU chips, via a special-purpose vehicle",
+      "asOf": "2026-08-04",
+      "outlet": "Bloomberg (reprints on Yahoo Finance UK, Investing.com, briefs.co, TradingKey, StockTwits treated as one source)",
+      "url": "https://www.bloomberg.com/news/articles/2026-08-04/blackstone-has-pitched-mega-debt-package-for-anthropic-chip-deal",
+      "publishedAt": "2026-08-04",
+      "attribution": "anonymous-source",
+      "verbatim": "Blackstone has begun early-stage talks with investors about a second massive private credit package targeting at least $36 billion in debt to finance Anthropic's lease of Google's custom AI chips, arriving two months after a record $35 billion deal closed. A special-purpose vehicle would borrow money from investors and receive an equity contribution, then use the combined capital to purchase Google's custom Ironwood TPU chips. Anthropic would then lease compute capacity from the SPV, paying rent rather than servicing debt directly ... Expected tranches: ~$6B A1 notes, ~$25B A2 notes, ~$4.5B B notes, subject to revision. Details, including size, structure and whether Blackstone will lead, remain under discussion and may change — this is NOT a closed deal as of Aug 4."
+    },
+    {
+      "topic": "debt-size",
+      "value": "Roughly $15 billion of financing (Anthropic-linked, Google-backstopped) for a Texas data-center campus",
+      "asOf": "2026-07-30",
+      "outlet": "Bloomberg AND CNBC (independently bylined same-day coverage; both may trace to the same underlying Octus/Reorg debt-markets report — treat as corroborated but not fully independent)",
+      "url": "https://www.cnbc.com/2026/07/30/nexus-data-centers-in-advanced-talks-to-secure-15b-for-google-backed-anthropic-data-center.html",
+      "publishedAt": "2026-07-30",
+      "attribution": "anonymous-source",
+      "verbatim": "Nexus Data Centers is closing in on $15 billion in financing to build an AI campus in Hubbard, Texas, which Anthropic will lease, with Morgan Stanley leading the bank group. Structured as a $14 billion bridge loan paired with a revolving credit facility, expected to be taken out by bonds or loans in the fall. Guarantees extend to four Anthropic data-center leases and power-purchase agreements tied to an on-site natural-gas plant with 1.6 gigawatts of generating capacity. Google agreed to backstop Anthropic's obligations using its investment-grade credit rating, in exchange for an equity stake of about 20% in the data-center and power project. TPUs at the site are funded through a separate vendor-financing arrangement between Anthropic and Broadcom."
+    },
+    {
+      "topic": "debt-purpose",
+      "value": "$2.6 billion leveraged/delayed-draw term loan raised by CoreWeave (a compute vendor, NOT Anthropic itself) to fund GPU purchases serving Anthropic's take-or-pay contract, among other customers",
+      "asOf": "2026-07-29",
+      "outlet": "Bloomberg (and Bloomberg Tax follow-up)",
+      "url": "https://www.bloomberg.com/news/articles/2026-07-29/coreweave-boosts-yield-on-2-6-billion-loan-tied-to-anthropic",
+      "publishedAt": "2026-07-29",
+      "attribution": "named-source",
+      "verbatim": "CoreWeave secured a $2.6 billion leveraged loan to fund additional computing capacity for firms including Anthropic PBC; proceeds fund GPU acquisition/installation under take-or-pay contracts with Anthropic, Jane Street, Midjourney, Hudson River Trading and Anysphere. JPMorgan is administrative agent and joint lead arranger alongside MUFG. Pricing raised to 5.5 percentage points over benchmark (up to 1.25pp above initial talk), offered at 96-97 cents on the dollar — yield to maturity 8.53%-8.79% — after CoreWeave sweetened terms amid investor wariness about AI-related debt / bubble concerns. IMPORTANT: this is CoreWeave's own balance-sheet liability, not a direct Anthropic borrowing — included here only because press coverage explicitly ties it to Anthropic capacity demand."
+    },
+    {
+      "topic": "debt-purpose",
+      "value": "Stated rationale across the debt stack: fund compute/data-center capacity (GPUs, TPUs, data centers, power) to meet Claude demand, ahead of and in parallel with the IPO process, rather than to cover operating losses directly",
+      "asOf": "2026-06 to 2026-08",
+      "outlet": "Synthesis across Apollo press release, Bloomberg (Aug 4, Aug 18), CNBC (Jul 30)",
+      "url": "https://www.techtimes.com/articles/323034/20260804/anthropic-stacks-second-record-debt-deal-60-days-compute-bill-defies-equity-raise.htm",
+      "publishedAt": "2026-08-04",
+      "attribution": "named-source",
+      "verbatim": "Anthropic Stacks Second Record Debt Deal in 60 Days as Compute Bill Defies Equity Raise (headline) — framing across outlets is that even after the $65B Series H equity raise, compute/infrastructure spending needs exceed what equity alone covers, driving a parallel and rapidly growing private-credit debt stack."
+    }
+  ],
+  "absences": [
+    "No Anthropic-company-confirmed IPO valuation target exists as of 2026-08-19. The $965B figure traces to the last private round (company-confirmed); the $2T/$3T figures are attributed only to unnamed investors/bankers, and multiple outlets explicitly note Anthropic executives have not confirmed a valuation target even privately.",
+    "No public (non-confidential) S-1 has been located on SEC EDGAR as of 2026-08-19 — only the confidential draft S-1 (filed 2026-06-01, company-confirmed) exists in the public record.",
+    "No confirmed IPO share price, share count, exchange ticker symbol, or exact listing date. 'October 2026' and 'Nasdaq' appear repeatedly across outlets but are described even by CNBC (2026-07-15) as a target window, not a confirmed date.",
+    "No tier-1 confirmation found of a total/aggregate figure combining all of Anthropic's debt-linked facilities ($2.5B 2025 revolver, ~$10B+ 2026 revolver, $35B XPV platform, pitched $36B TPU-lease SPV, ~$15B Texas campus financing). Each is reported as a discrete deal; no outlet in this search summed them into one 'total Anthropic debt' number.",
+    "No public credit rating (Moody's, S&P, Fitch) for Anthropic was found — consistent with it being a private company; none of the debt structures found are traditional public corporate bonds.",
+    "No evidence found of Anthropic directly issuing convertible notes or public bonds — all debt/credit-adjacent structures found are (a) bank revolving credit facilities to Anthropic directly, or (b) private-credit / SPV lease-financing vehicles where a counterparty (a data-center or compute vendor) borrows and Anthropic pays lease/rent, or (c) a vendor's (CoreWeave's) own term loan collateralized partly by an Anthropic take-or-pay contract.",
+    "The full text of two likely-primary sources (Anthropic's own 'confidential-draft-s1-sec' and 'series-h' newsroom posts on anthropic.com, and Apollo's IR press release on apollo.com) could not be directly fetched in this session — EGRESS_BLOCKED on both hosts. Quotes attributed to these are reconstructed from WebSearch result snippets/synthesis, not a direct page read, and should be re-verified by the validator if a fetch path becomes available."
+  ],
+  "failures": [
+    { "target": "https://www.anthropic.com/news/confidential-draft-s1-sec", "status": "fetch-failed", "reason": "EGRESS_BLOCKED (www.anthropic.com blocked by network egress proxy)", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "target": "https://www.anthropic.com/news/series-h", "status": "fetch-failed", "reason": "EGRESS_BLOCKED (www.anthropic.com blocked by network egress proxy)", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "target": "https://www.apollo.com/insights-news/pressreleases/2026/06/apollo-leads-35-billion-capital-solution-for-broadcom-ai-xpv-platform-in-partnership-with-blackstone-and-leading-global-banks-3308896", "status": "fetch-failed", "reason": "EGRESS_BLOCKED (www.apollo.com blocked by network egress proxy)", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "target": "reuters.com (WebSearch allowed_domains)", "status": "fetch-failed", "reason": "WebSearch API rejected the domain restriction outright: 'The following domains are not accessible to our user agent: [reuters.com]'. No Reuters-domain content was retrieved directly in this session; Reuters claims above come via other outlets citing/wiring Reuters reporting.", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "target": "ft.com (WebSearch allowed_domains)", "status": "fetch-failed", "reason": "WebSearch API rejected the domain restriction outright: 'The following domains are not accessible to our user agent: [ft.com]'. No FT-domain content was retrieved directly in this session; FT claims above come via other outlets' reprints (Yahoo Finance, MarketScreener, Euronews, Axios) of FT's original reporting.", "attemptedAt": "2026-08-19T12:00:00Z" }
+  ]
+}
