@@ -12,17 +12,46 @@
   // Chart.js is the page's only external dependency. If the CDN is unreachable,
   // every `new Chart(...)` throws a ReferenceError that stops the whole inline
   // script — observed taking the watchlist table down with it, so a charting
-  // outage was blanking the verified data too. Stand in a no-op so the data
-  // half of the dashboard survives, and say so where a chart would have been.
+  // outage was blanking the verified data too.
+  //
+  // The stand-in has to carry the surface the page actually touches, not just a
+  // constructor: renderGauge assigns through `chart.data.datasets[i].data` and
+  // calls `update()`, and expanding the tracker panel calls `resize()`. A
+  // no-op-only shim survives first paint and then throws on the first 30s
+  // refresh tick or panel toggle.
+  //
+  // The canvases are also left in the DOM. Replacing them with a message node
+  // broke `getElementById(...).getContext('2d')`, and because the tracker boot
+  // is async that surfaced as an unhandled rejection rather than an onerror —
+  // invisible to a naive check. The notice is inserted alongside instead.
   if (typeof Chart === 'undefined') {
-    window.Chart = function () { this.destroy = function () {}; this.update = function () {}; };
-    window.Chart.defaults = {};
+    window.Chart = function (ctx, config) {
+      config = config || {};
+      this.ctx = ctx;
+      this.canvas = (ctx && ctx.canvas) || null;
+      this.config = config;
+      this.data = config.data || { labels: [], datasets: [] };
+      this.options = config.options || {};
+      this.update = function () {};
+      this.resize = function () {};
+      this.render = function () {};
+      this.reset = function () {};
+      this.stop = function () {};
+      this.destroy = function () {};
+      this.getDatasetMeta = function () { return { data: [] }; };
+      this.toBase64Image = function () { return ''; };
+    };
+    window.Chart.defaults = { plugins: {}, scales: {}, font: {} };
+    window.Chart.register = function () {};
     window.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('canvas').forEach(function (c) {
+        if (!c.parentNode || c.parentNode.querySelector('.chart-cdn-note')) return;
         var n = document.createElement('div');
-        n.style.cssText = 'padding:12px;color:var(--faint);font-size:11px;text-align:center';
+        n.className = 'chart-cdn-note';
+        n.style.cssText = 'padding:10px;color:var(--faint);font-size:11px;text-align:center';
         n.textContent = '차트를 불러올 수 없습니다 (Chart.js CDN 연결 실패) — 데이터는 정상';
-        if (c.parentNode) c.parentNode.replaceChild(n, c);
+        c.style.display = 'none';
+        c.parentNode.insertBefore(n, c);
       });
     });
   }

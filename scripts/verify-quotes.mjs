@@ -16,6 +16,38 @@
 
 import { readJson, writeJsonAtomic, nowIso, todayUtc } from './lib/io.mjs';
 
+// Publication priority, mirroring scripts/scrape-quotes.mjs. Kept in sync by
+// hand rather than shared, per the house convention of duplicating small pure
+// helpers between the zero-dependency scripts.
+const SOURCE_PRIORITY = ['nasdaq', 'cboe', 'cnbc', 'kapture'];
+
+// The published price must come from the sources that AGREE, not from a fixed
+// priority order — otherwise a lone outlier reaches the dashboard under a
+// verified:true flag, which is exactly the claim that flag is supposed to make
+// impossible. scrape-quotes.mjs does this at write time; this script is also
+// runnable standalone (and after a Kapture import), so it has to re-bind the
+// price too or that path silently reintroduces the bug.
+function consensusCluster(perSource, tolerance) {
+    const names = SOURCE_PRIORITY.filter(n => perSource[n] != null);
+    const agree = (a, b) => {
+        const x = perSource[a], y = perSource[b];
+        return Math.abs(x - y) / Math.max(Math.min(x, y), 1e-6) <= tolerance;
+    };
+    let best = [];
+    for (let mask = 1; mask < (1 << names.length); mask++) {
+        const subset = names.filter((_, i) => mask & (1 << i));
+        if (subset.length < 2 || subset.length <= best.length) continue;
+        let mutual = true;
+        for (let i = 0; i < subset.length && mutual; i++) {
+            for (let j = i + 1; j < subset.length; j++) {
+                if (!agree(subset[i], subset[j])) { mutual = false; break; }
+            }
+        }
+        if (mutual) best = subset;
+    }
+    return { verified: best.length >= 2, cluster: best };
+}
+
 // Fix B: verified iff ANY PAIR of distinct sources agrees within tolerance.
 // Mirrors the identical helper in scripts/scrape-quotes.mjs.
 function pairwiseVerify(perSource, tolerance) {
@@ -47,9 +79,24 @@ async function main() {
             failedCount++;
             compare.push({ symbol: sym, status: 'single-source', assetClass: cls, sources: Object.keys(sources) });
         } else {
-            const { verified: ok, minDelta } = pairwiseVerify(Object.fromEntries(entries), tolerance);
+            const perSource = Object.fromEntries(entries);
+            const { verified: ok, minDelta } = pairwiseVerify(perSource, tolerance);
+            const { cluster } = consensusCluster(perSource, tolerance);
             row.verified = ok;
             row.sourceCount = entries.length;
+            if (ok && cluster.length >= 2) {
+                // Re-bind the published price to the agreeing cluster, and record
+                // who agreed / who dissented, so a standalone run cannot leave a
+                // dissenting price sitting under verified:true.
+                const winner = SOURCE_PRIORITY.find(n => cluster.includes(n));
+                if (winner != null && perSource[winner] != null) row.price = perSource[winner];
+                row.verifiedBy = cluster;
+                const outliers = Object.keys(perSource).filter(n => !cluster.includes(n));
+                if (outliers.length) row.outlierSources = outliers; else delete row.outlierSources;
+            } else {
+                delete row.verifiedBy;
+                delete row.outlierSources;
+            }
             if (ok) verifiedCount++; else failedCount++;
             compare.push({
                 symbol: sym,
