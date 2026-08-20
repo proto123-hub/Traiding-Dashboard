@@ -39,7 +39,9 @@
         {
           "tag": "concentration",
           "severity": "high",
-          "note": "42.66% of book at verified EOD market values (240sh × $344.72 vs the other 5 holdings, computed against all 6 positions' 2026-08-19 verified closes, total book $193,915.40) — down from 42.92% on 8/18 (MRVL's +9.85% rally partially offset AVGO/CLS/SOXL's continued declines), still >40% threshold, +25 pts unchanged."
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 107 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. 42.66% of book at verified EOD market values (240sh × $344.72 vs the other 5 holdings, computed against all 6 positions' 2026-08-19 verified closes, total book $193,915.40) — down from 42.92% on 8/18 (MRVL's +9.85% rally partially offset AVGO/CLS/SOXL's continued declines), still >40% threshold, +25 pts unchanged.",
+          "provisional": true,
+          "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         },
         {
           "tag": "regulatory",
@@ -260,7 +262,9 @@
         {
           "tag": "concentration",
           "severity": "medium",
-          "note": "NEW 2026-08-19: MRVL crossed >20% of book at verified EOD market values — 172sh × $237.27 = $40,810.44 vs total book $193,915.40 (all 6 holdings at their respective 2026-08-19 verified closes, per data/portfolio-current.json share counts) = 21.05%, up from 19.30% on 8/18. The +9.85% rally pushed this position over the 20% concentration threshold for the first time this cycle; +15 pts added to score (18→33), moving the score into the medium band (30-60). This is a position-sizing fact, independent of the stop-level question below."
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 107 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. NEW 2026-08-19: MRVL crossed >20% of book at verified EOD market values — 172sh × $237.27 = $40,810.44 vs total book $193,915.40 (all 6 holdings at their respective 2026-08-19 verified closes, per data/portfolio-current.json share counts) = 21.05%, up from 19.30% on 8/18. The +9.85% rally pushed this position over the 20% concentration threshold for the first time this cycle; +15 pts added to score (18→33), moving the score into the medium band (30-60). This is a position-sizing fact, independent of the stop-level question below.",
+          "provisional": true,
+          "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         },
         {
           "tag": "macro",
@@ -417,7 +421,9 @@
         {
           "tag": "position-size",
           "severity": "low",
-          "note": "De minimis position (0.36% of book, ~$731) — low cost to exit cleanly"
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — share counts from data/portfolio-current.json asOf 2026-05-05, unconfirmed against the broker for 107 days; prices are verified, the share counts are an assumption. De minimis position (0.36% of book, ~$731) — low cost to exit cleanly",
+          "provisional": true,
+          "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         }
       ],
       "decisionLog": [
@@ -848,5 +854,17 @@
         }
       ]
     }
+  },
+  "portfolioBasis": {
+    "source": "data/portfolio-current.json",
+    "asOf": "2026-05-05",
+    "broker": "unconfirmed since asOf",
+    "status": "BROKER-REFRESH-REQUIRED",
+    "affects": [
+      "concentration risk weights",
+      "de-minimis / position-size claims",
+      "any score points derived from them"
+    ],
+    "note": "Every book-weight figure in this file (GOOGL 42.66%, MRVL 21.05%) multiplies VERIFIED 2026-08-19 closes by share counts last confirmed on 2026-05-05. The prices are cross-source verified; the share counts are not. Stop-loss, entry-zone and target adjudication are per-share and unaffected — they do not read share counts. Concentration-derived score points ARE affected: MRVL score 33 includes +15 for crossing 20%, which reverts to 18 if the 2026-06-05 TRIM was executed. Resolve by re-entering holdings through the dashboard UI and exporting portfolio-current.json."
   }
 }

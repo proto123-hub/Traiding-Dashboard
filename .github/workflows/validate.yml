@@ -44,5 +44,11 @@ jobs:
             process.exit(bad ? 1 : 0);
           "
 
+      # Runs BEFORE the live check: if the checks themselves have been
+      # weakened, a green run over live data proves nothing. The fixtures are
+      # recorded shapes of bugs this repo shipped.
+      - name: Validator regression fixtures
+        run: node scripts/test/validate-data.test.mjs
+
       - name: Data integrity
         run: node scripts/validate-data.mjs
