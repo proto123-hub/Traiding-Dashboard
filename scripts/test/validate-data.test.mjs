@@ -95,8 +95,15 @@ const CASES = [
         file: 'fundamentals-disagreeing-trailing.json',
         run: (d) => checkFundamentals(d).fail,
         shouldFail: true,
-        expect: 'corroborated by 1 source',
-        why: 'same failure on the trailing side, where perSource entries are objects',
+        expect: "the pe leg's published value",
+        why: 'no EPS available on either source, so the pe leg decides — and those disagree by 46%',
+    },
+    {
+        file: 'fundamentals-trailing-eps-mismatch.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: "the eps leg's published value",
+        why: 'identical P/E off 50%-apart EPS — the scraper decides this flag on the eps leg, so the validator must too',
     },
     {
         file: 'risk-book-weight-stale-undeclared.json',

@@ -1,21 +1,41 @@
 {
-  "note": "The shape the repo actually ships today: trailing P/E corroborated by two agreeing sources, forward P/E left unverified because only one NTM source exists — stated rather than inflated. Must PASS.",
-  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "note": "The shape the repo actually ships today: trailing verified on the EPS leg (cnbc eps vs sec-xbrl epsUsed, 0.10% apart, inside the 1% eps tolerance), forward P/E left unverified because only one NTM source exists — stated rather than inflated. Must PASS.",
+  "tolerance": {
+    "trailingEps": 0.01,
+    "trailingPE": 0.05,
+    "forwardPE": 0.05
+  },
   "fundamentals": {
     "GOOGL": {
       "trailingPE": 17.2965,
+      "eps": 19.93,
       "trailingVerified": true,
       "perSource": {
-        "cnbc": { "trailingPE": 17.2965, "eps": 19.93 },
-        "sec-xbrl": { "trailingPE": 17.31, "epsUsed": 19.91 }
+        "cnbc": {
+          "trailingPE": 17.2965,
+          "eps": 19.93
+        },
+        "sec-xbrl": {
+          "trailingPE": 17.31,
+          "epsUsed": 19.91
+        }
       },
       "forwardPE": 26.1171,
       "forwardPEBasis": "NTM",
       "forwardVerified": false,
       "forwardPEByBasis": {
-        "NTM": { "value": 26.1171, "verified": false, "sourceCount": 1, "perSource": { "cnbc": 26.1171 } }
+        "NTM": {
+          "value": 26.1171,
+          "verified": false,
+          "sourceCount": 1,
+          "perSource": {
+            "cnbc": 26.1171
+          }
+        }
       }
     },
-    "SOXL": { "notApplicable": true }
+    "SOXL": {
+      "notApplicable": true
+    }
   }
 }

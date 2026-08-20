@@ -123,11 +123,45 @@ export function checkQuotes(pq) {
  * `basis` field. An earlier version of this check read `entry.basis`, got
  * undefined for every entry, and so could never fail — inert, not passing.
  */
+/**
+ * Mirror of scrape-fundamentals.mjs `resolveTrailingVerification`: the trailing
+ * flag is decided on the EPS leg at 1% whenever two EPS figures exist, and only
+ * falls back to the P/E leg at 5% when they do not.
+ *
+ * The validator originally compared trailingPE at 5% unconditionally, which is
+ * a DIFFERENT claim from the one the scraper makes. Two sources reporting the
+ * same P/E off materially different EPS (60 = 6/0.1 and 60 = 4/0.0667) would
+ * satisfy the validator while the scraper's own rule rejects them.
+ *
+ * `trailingLeg` is not persisted in fundamentals.json — it only reaches the
+ * reports/validation compare drop — so the leg is re-derived here from the same
+ * inputs and in the same precedence.
+ */
+export function trailingLegOf(record) {
+    const per = record.perSource || {};
+    const eps = {};
+    if (per.cnbc?.eps != null) eps.cnbc = per.cnbc.eps;
+    if (per['sec-xbrl']?.epsUsed != null) eps['sec-xbrl'] = per['sec-xbrl'].epsUsed;
+    if (Object.keys(eps).length >= 2) {
+        return { leg: 'eps', values: eps, published: record.eps };
+    }
+    const pe = {};
+    for (const name of ['cnbc', 'stockanalysis', 'sec-xbrl']) {
+        const v = per[name]?.trailingPE;
+        if (v != null) pe[name] = v;
+    }
+    if (Object.keys(pe).length >= 2) {
+        return { leg: 'pe', values: pe, published: record.trailingPE };
+    }
+    return { leg: null, values: {}, published: null };
+}
+
 export function checkFundamentals(fu) {
     const fail = [];
     const tol = fu.tolerance || {};
     const fwdTol = tol.forwardPE ?? 0.05;
     const trailTol = tol.trailingPE ?? 0.05;
+    const trailEpsTol = tol.trailingEps ?? 0.01;
     let fwd = 0;
 
     for (const [sym, r] of Object.entries(fu.fundamentals || {})) {
@@ -185,19 +219,25 @@ export function checkFundamentals(fu) {
             if (r.trailingPE == null) {
                 fail.push(`${sym}: trailingVerified with null trailingPE`);
             } else {
-                // perSource entries here are objects, not bare numbers.
-                const flat = Object.fromEntries(
-                    Object.entries(r.perSource || {})
-                        .map(([k, v]) => [k, v && typeof v === 'object' ? v.trailingPE : v])
-                        .filter(([, v]) => v != null)
-                );
-                const backing = corroboratorsOf(flat, r.trailingPE, trailTol);
-                if (backing.length < 2) {
-                    const spread = Object.entries(flat).map(([k, v]) => `${k}=${v}`).join(', ');
+                const { leg, values, published } = trailingLegOf(r);
+                if (leg == null) {
+                    fail.push(`${sym}: trailingVerified:true with fewer than 2 sources on either the eps or pe leg`);
+                } else if (published == null) {
                     fail.push(
-                        `${sym}: trailingVerified:true but published trailingPE ${r.trailingPE} is ` +
-                        `corroborated by ${backing.length} source(s) within ${trailTol} (${spread})`
+                        `${sym}: trailingVerified:true on the ${leg} leg but the record publishes no ` +
+                        `${leg === 'eps' ? 'eps' : 'trailingPE'} value for those sources to corroborate`
                     );
+                } else {
+                    const legTol = leg === 'eps' ? trailEpsTol : trailTol;
+                    const backing = corroboratorsOf(values, published, legTol);
+                    if (backing.length < 2) {
+                        const spread = Object.entries(values).map(([k, v]) => `${k}=${v}`).join(', ');
+                        fail.push(
+                            `${sym}: trailingVerified:true but the ${leg} leg's published value ${published} ` +
+                            `is corroborated by ${backing.length} source(s) within ${legTol} (${spread}) — ` +
+                            `the scraper decides this flag on the ${leg} leg, so that is what must agree`
+                        );
+                    }
                 }
             }
         }
@@ -365,8 +405,14 @@ async function main() {
         // weights multiply and the date risk-scores claims to be adjudicated
         // for. Taking the max means backdating `updated` cannot shrink the
         // measured staleness.
-        const session = Object.values(pq.quotes || {})
-            .map(r => r.regularSessionDate).filter(Boolean).sort().pop();
+        //
+        // Scan only the HELD symbols: DXY and US10Y are in the same file but
+        // are not in the book, and their fresher pre-market session made the
+        // reported figure 107d when the prices behind the weights are 106d old.
+        const held = new Set((pf.positions || []).map(p => p.symbol));
+        const session = Object.entries(pq.quotes || {})
+            .filter(([sym]) => held.has(sym))
+            .map(([, r]) => r.regularSessionDate).filter(Boolean).sort().pop();
         const adjudicated = Object.values(rs.scores || {})
             .map(v => v.updated).filter(Boolean).sort().pop();
         const anchor = [session, adjudicated].filter(Boolean).sort().pop();
