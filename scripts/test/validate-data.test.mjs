@@ -146,6 +146,27 @@ const CASES = [
         why: 'top-level forwardPE follows the basis entry, cluster and dissenter both named, forwardEps dropped with cnbc',
     },
     {
+        file: 'quotes-duplicate-verifiedby.json',
+        run: (d) => checkQuotes(d).fail,
+        shouldFail: true,
+        expect: 'one source is not two',
+        why: 'array length accepted the same source twice as two independent ones',
+    },
+    {
+        file: 'fundamentals-duplicate-audit-names.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: 'one source is not two',
+        why: 'the same duplicate defect on both fundamentals legs, via the shared helper',
+    },
+    {
+        file: 'fundamentals-forward-verified-nothing-published.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: 'no forwardPE is published',
+        why: 'both consistency comparisons were guarded on != null, so publishing nothing skipped them all',
+    },
+    {
         file: 'risk-book-weight-stale-undeclared.json',
         run: (d) => checkBookWeights(d.riskScores, d.portfolio, d.adjudicationDate).fail,
         shouldFail: true,

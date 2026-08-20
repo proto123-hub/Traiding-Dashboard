@@ -85,20 +85,11 @@ export function checkQuotes(pq) {
             // must say the same thing. Making it optional meant a row could lose
             // the field entirely and still pass — the corroboration invariant
             // above does not depend on it, so nothing else would have noticed.
-            if (!Array.isArray(row.verifiedBy)) {
-                fail.push(`${sym}: verified:true without a verifiedBy audit trail`);
-            } else {
-                if (row.verifiedBy.length < 2) {
-                    fail.push(`${sym}: verifiedBy lists ${row.verifiedBy.length} source(s), needs 2+`);
-                }
-                const dissenting = row.verifiedBy.filter(n => !backing.includes(n));
-                if (dissenting.length) {
-                    fail.push(
-                        `${sym}: verifiedBy names ${JSON.stringify(dissenting)}, which do not agree ` +
-                        `with the published price ${row.price} within ${t}`
-                    );
-                }
-            }
+            //
+            // Shared with the fundamentals legs rather than reimplemented here:
+            // this file previously carried two copies of the rule and the
+            // fundamentals one drifted into checking existence only.
+            fail.push(...auditTrailFaults(sym, row.verifiedBy, backing, row.price, t, 'verifiedBy'));
         }
 
         // Session dates are compared as dates (staleness, prior-session carry).
@@ -170,10 +161,18 @@ export function auditTrailFaults(label, names, backing, published, tolerance, fi
         return [`${label}: verified without a ${field} audit trail`];
     }
     const out = [];
-    if (names.length < 2) {
-        out.push(`${label}: ${field} lists ${names.length} source(s), needs 2+`);
+    // Count DISTINCT sources. Length alone let ["cboe","cboe"] satisfy "2+
+    // independent sources" — one source counted twice is exactly the thing the
+    // verified flag is supposed to rule out.
+    const unique = [...new Set(names)];
+    if (unique.length < names.length) {
+        const dupes = [...new Set(names.filter((n, i) => names.indexOf(n) !== i))];
+        out.push(`${label}: ${field} repeats ${JSON.stringify(dupes)} — one source is not two`);
     }
-    const dissenting = names.filter(n => !backing.includes(n));
+    if (unique.length < 2) {
+        out.push(`${label}: ${field} lists ${unique.length} distinct source(s), needs 2+`);
+    }
+    const dissenting = unique.filter(n => !backing.includes(n));
     if (dissenting.length) {
         out.push(
             `${label}: ${field} names ${JSON.stringify(dissenting)}, which do not agree ` +
@@ -232,13 +231,21 @@ export function checkFundamentals(fu) {
                 );
             } else {
                 const [name] = verifiedBases;
-                if (r.forwardPEBasis != null && r.forwardPEBasis !== name) {
+                const value = r.forwardPEByBasis[name].value;
+                // Both comparisons below were guarded on != null, so a record
+                // claiming forwardVerified:true while publishing nothing at the
+                // top level skipped every one of them. A verified claim with no
+                // published value is the claim without the thing it is about.
+                if (r.forwardPEBasis == null) {
+                    fail.push(`${sym}: forwardVerified:true but no forwardPEBasis is published (verified basis is "${name}")`);
+                } else if (r.forwardPEBasis !== name) {
                     fail.push(
                         `${sym}: published forwardPEBasis "${r.forwardPEBasis}" but the verified basis is "${name}"`
                     );
                 }
-                const value = r.forwardPEByBasis[name].value;
-                if (r.forwardPE != null && value != null && r.forwardPE !== value) {
+                if (r.forwardPE == null) {
+                    fail.push(`${sym}: forwardVerified:true but no forwardPE is published (verified ${name} value is ${value})`);
+                } else if (value != null && r.forwardPE !== value) {
                     fail.push(
                         `${sym}: published forwardPE ${r.forwardPE} is not the verified ${name} value ${value}`
                     );
