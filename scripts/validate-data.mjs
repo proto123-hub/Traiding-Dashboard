@@ -81,8 +81,13 @@ export function checkQuotes(pq) {
                 continue;
             }
 
-            // verifiedBy is the audit trail for the above; it must say the same thing.
-            if (Array.isArray(row.verifiedBy)) {
+            // verifiedBy is the audit trail for the above; it must be PRESENT and
+            // must say the same thing. Making it optional meant a row could lose
+            // the field entirely and still pass — the corroboration invariant
+            // above does not depend on it, so nothing else would have noticed.
+            if (!Array.isArray(row.verifiedBy)) {
+                fail.push(`${sym}: verified:true without a verifiedBy audit trail`);
+            } else {
                 if (row.verifiedBy.length < 2) {
                     fail.push(`${sym}: verifiedBy lists ${row.verifiedBy.length} source(s), needs 2+`);
                 }
@@ -94,6 +99,13 @@ export function checkQuotes(pq) {
                     );
                 }
             }
+        }
+
+        // Session dates are compared as dates (staleness, prior-session carry).
+        // CNBC returns a full ISO timestamp for index/FX symbols, which reached
+        // this field for US10Y and DXY and silently skewed those comparisons.
+        if (row.regularSessionDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(row.regularSessionDate)) {
+            fail.push(`${sym}: regularSessionDate "${row.regularSessionDate}" is not YYYY-MM-DD`);
         }
 
         if (row.changePct != null && row.prevClose == null) {
@@ -113,17 +125,34 @@ export function checkQuotes(pq) {
  */
 export function checkFundamentals(fu) {
     const fail = [];
+    const tol = fu.tolerance || {};
+    const fwdTol = tol.forwardPE ?? 0.05;
+    const trailTol = tol.trailingPE ?? 0.05;
     let fwd = 0;
 
     for (const [sym, r] of Object.entries(fu.fundamentals || {})) {
         if (r.notApplicable) continue;
         const byBasis = Object.entries(r.forwardPEByBasis || {});
 
-        // Per-basis: a verified basis needs 2+ sources of its own.
+        // Per-basis: a verified basis needs 2+ sources that AGREE with the value
+        // it publishes. Counting sources alone let NTM cnbc=26 and
+        // stockanalysis=16 stand as "verified" — two sources, no agreement.
+        // Same invariant as checkQuotes, same reason.
         for (const [name, e] of byBasis) {
             if (!e || !e.verified) continue;
             const n = Object.values(e.perSource || {}).filter(v => v != null).length;
-            if (n < 2) fail.push(`${sym} forwardPEByBasis.${name}: verified:true with ${n} source(s)`);
+            if (n < 2) {
+                fail.push(`${sym} forwardPEByBasis.${name}: verified:true with ${n} source(s)`);
+                continue;
+            }
+            const backing = corroboratorsOf(e.perSource, e.value, fwdTol);
+            if (backing.length < 2) {
+                const spread = Object.entries(e.perSource).map(([k, v]) => `${k}=${v}`).join(', ');
+                fail.push(
+                    `${sym} forwardPEByBasis.${name}: verified:true with ${n} sources but only ` +
+                    `${backing.length} agree with the published value ${e.value} within ${fwdTol} (${spread})`
+                );
+            }
         }
 
         if (r.forwardVerified) {
@@ -152,8 +181,25 @@ export function checkFundamentals(fu) {
             }
         }
 
-        if (r.trailingVerified && r.trailingPE == null) {
-            fail.push(`${sym}: trailingVerified with null trailingPE`);
+        if (r.trailingVerified) {
+            if (r.trailingPE == null) {
+                fail.push(`${sym}: trailingVerified with null trailingPE`);
+            } else {
+                // perSource entries here are objects, not bare numbers.
+                const flat = Object.fromEntries(
+                    Object.entries(r.perSource || {})
+                        .map(([k, v]) => [k, v && typeof v === 'object' ? v.trailingPE : v])
+                        .filter(([, v]) => v != null)
+                );
+                const backing = corroboratorsOf(flat, r.trailingPE, trailTol);
+                if (backing.length < 2) {
+                    const spread = Object.entries(flat).map(([k, v]) => `${k}=${v}`).join(', ');
+                    fail.push(
+                        `${sym}: trailingVerified:true but published trailingPE ${r.trailingPE} is ` +
+                        `corroborated by ${backing.length} source(s) within ${trailTol} (${spread})`
+                    );
+                }
+            }
         }
     }
     return { fail, fwd };
@@ -199,13 +245,21 @@ export function checkBands(valuations, quotes) {
  * Per-share adjudication (stops, entry zones, targets) reads no share counts
  * and is deliberately not covered by this check.
  */
-export function checkBookWeights(riskScores, portfolio, maxStaleDays = 7) {
+export function checkBookWeights(riskScores, portfolio, adjudicationDate, maxStaleDays = 7) {
     const fail = [];
     const asOf = portfolio?.asOf;
-    const updated = riskScores?.portfolioBasis?.asOf ?? asOf;
-    const stale = asOf && riskScores?.updatedAgainst
-        ? (Date.parse(riskScores.updatedAgainst) - Date.parse(asOf)) / 86400000
-        : null;
+    const basis = riskScores?.portfolioBasis;
+
+    // Staleness must be measured against the prices the weights actually
+    // multiply. An earlier version read riskScores.updatedAgainst — a field
+    // that does not exist in this schema — so `stale` was always null and the
+    // whole branch was dead: deleting portfolioBasis, or flipping its status to
+    // CURRENT, both still returned zero failures.
+    if (!asOf) return { fail: ['portfolio-current.json has no asOf — staleness cannot be established'] };
+    const anchor = adjudicationDate
+        ?? Object.values(riskScores?.scores || {}).map(v => v.updated).filter(Boolean).sort().pop();
+    if (!anchor) return { fail: ['no adjudication date available to measure portfolio staleness against'] };
+    const staleDays = Math.round((Date.parse(anchor) - Date.parse(asOf)) / 86400000);
 
     for (const [sym, v] of Object.entries(riskScores?.scores || {})) {
         for (const risk of v.risks || []) {
@@ -213,18 +267,33 @@ export function checkBookWeights(riskScores, portfolio, maxStaleDays = 7) {
             if (risk.provisional === true) continue;
             fail.push(
                 `${sym}: asserts a book weight without provisional:true — share counts come from ` +
-                `portfolio-current.json (asOf ${asOf || 'unknown'}), which is hand-entered and not ` +
-                `broker-confirmed. Verified prices do not make the weight verified.`
+                `portfolio-current.json (asOf ${asOf}), which is hand-entered and not broker-confirmed. ` +
+                `Verified prices do not make the weight verified.`
             );
         }
     }
-    if (updated !== asOf) {
-        fail.push(`portfolioBasis.asOf ${updated} does not match portfolio-current.json asOf ${asOf}`);
+
+    if (staleDays > maxStaleDays) {
+        if (!basis) {
+            fail.push(
+                `portfolio is ${staleDays}d stale (asOf ${asOf} vs adjudication ${anchor}) with no ` +
+                `portfolioBasis block declaring it`
+            );
+        } else {
+            if (basis.status !== 'BROKER-REFRESH-REQUIRED') {
+                fail.push(
+                    `portfolio is ${staleDays}d stale but portfolioBasis.status is ` +
+                    `"${basis.status}" — must be "BROKER-REFRESH-REQUIRED"`
+                );
+            }
+            if (basis.asOf !== asOf) {
+                fail.push(`portfolioBasis.asOf ${basis.asOf} does not match portfolio-current.json asOf ${asOf}`);
+            }
+        }
+    } else if (basis && basis.asOf !== asOf) {
+        fail.push(`portfolioBasis.asOf ${basis.asOf} does not match portfolio-current.json asOf ${asOf}`);
     }
-    if (stale != null && stale > maxStaleDays && !riskScores?.portfolioBasis) {
-        fail.push(`portfolio is ${Math.round(stale)}d stale with no portfolioBasis block declaring it`);
-    }
-    return { fail };
+    return { fail, staleDays };
 }
 
 // --- runner ---------------------------------------------------------------
@@ -292,8 +361,18 @@ async function main() {
     try {
         const rs = await readJson('data/risk-scores.json');
         const pf = await readJson('data/portfolio-current.json');
-        record(checkBookWeights(rs, pf).fail);
-        ok(`book weights declared against portfolio asOf ${pf.asOf} (${rs.portfolioBasis?.status || 'no status'})`);
+        // Anchor staleness to the LATER of the quote session whose prices the
+        // weights multiply and the date risk-scores claims to be adjudicated
+        // for. Taking the max means backdating `updated` cannot shrink the
+        // measured staleness.
+        const session = Object.values(pq.quotes || {})
+            .map(r => r.regularSessionDate).filter(Boolean).sort().pop();
+        const adjudicated = Object.values(rs.scores || {})
+            .map(v => v.updated).filter(Boolean).sort().pop();
+        const anchor = [session, adjudicated].filter(Boolean).sort().pop();
+        const r = checkBookWeights(rs, pf, anchor);
+        record(r.fail);
+        ok(`book weights: portfolio asOf ${pf.asOf} is ${r.staleDays}d behind session ${session} (${rs.portfolioBasis?.status || 'no status'})`);
     } catch (e) {
         if (e.code === 'ENOENT') warn.push('risk-scores or portfolio-current absent — skipped'); else throw e;
     }

@@ -1,9 +1,14 @@
 {
-  "note": "The shape the repo actually ships today: forward P/E unverified because only one NTM source exists, stated rather than inflated. Must PASS.",
+  "note": "The shape the repo actually ships today: trailing P/E corroborated by two agreeing sources, forward P/E left unverified because only one NTM source exists — stated rather than inflated. Must PASS.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
   "fundamentals": {
     "GOOGL": {
       "trailingPE": 17.2965,
       "trailingVerified": true,
+      "perSource": {
+        "cnbc": { "trailingPE": 17.2965, "eps": 19.93 },
+        "sec-xbrl": { "trailingPE": 17.31, "epsUsed": 19.91 }
+      },
       "forwardPE": 26.1171,
       "forwardPEBasis": "NTM",
       "forwardVerified": false,

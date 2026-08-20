@@ -342,7 +342,12 @@ function extractCnbcSession(row) {
         change: cnChange,
         prevClose: cnChange != null ? +(price - cnChange).toFixed(4) : null,
         changePct: parseCnbcNum(row.change_pct),
-        sessionDate: row.last_time || null, // probe shows this is already "YYYY-MM-DD"
+        // The probe that produced this line only sampled equities, where
+        // last_time is already "YYYY-MM-DD". Index and FX symbols (US10Y, DXY)
+        // return a full ISO timestamp instead, which then flowed through to
+        // regularSessionDate and broke date comparison for exactly those rows.
+        // The cboe and nasdaq paths already normalize; this one now does too.
+        sessionDate: parseIsoDatePrefix(row.last_time),
     } : null;
 
     const ext = row.ExtendedMktQuote;
