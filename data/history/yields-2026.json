@@ -1,7 +1,7 @@
 {
   "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-yields.mjs). Daily sovereign 10Y yield table, sharded one file per calendar year to keep any single file small. DEDUPE-BY-DATE, not append-only: each run UPSERTS one row per (country,tenor,date) key — if that exact key already has a row, the new row REPLACES it wholesale (last-write-wins on same-day double-writes, e.g. the 21:00 UTC post-close cron overwriting the 11:00 UTC pre-market cron's same-date row); rows are never duplicated for the same key. The row shape is IDENTICAL whether refresher-scraped or collector/human-curated (e.g. UK, source:\"manual\") — only source/agent differ.",
   "year": 2026,
-  "updated": "2026-08-19T11:28:58Z",
+  "updated": "2026-08-20T10:39:59Z",
   "agent": "refresher",
   "rows": [
     {
@@ -291,6 +291,15 @@
       "source": "mof-jgbcme-csv",
       "agent": "refresher",
       "collectedAt": "2026-08-19T11:28:58Z"
+    },
+    {
+      "date": "2026-08-19",
+      "country": "JP",
+      "tenor": "10y",
+      "yield": 2.894,
+      "source": "mof-jgbcme-csv",
+      "agent": "refresher",
+      "collectedAt": "2026-08-20T10:39:59Z"
     },
     {
       "date": "2026-01-02",
@@ -1713,6 +1722,15 @@
       "source": "treasury-csv",
       "agent": "refresher",
       "collectedAt": "2026-08-19T11:28:58Z"
+    },
+    {
+      "date": "2026-08-19",
+      "country": "US",
+      "tenor": "10y",
+      "yield": 4.65,
+      "source": "treasury-csv",
+      "agent": "refresher",
+      "collectedAt": "2026-08-20T10:39:59Z"
     }
   ]
 }
