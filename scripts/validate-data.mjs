@@ -230,6 +230,12 @@ export function checkFundamentals(fu) {
                 } else {
                     const legTol = leg === 'eps' ? trailEpsTol : trailTol;
                     const backing = corroboratorsOf(values, published, legTol);
+                    // The pe leg can see three sources, so the agreeing pair need
+                    // not contain the priority pick; the scraper publishes from
+                    // the cluster and must record which sources those were.
+                    if (leg === 'pe' && !Array.isArray(r.trailingVerifiedBy)) {
+                        fail.push(`${sym}: trailingVerified:true on the pe leg without a trailingVerifiedBy audit trail`);
+                    }
                     if (backing.length < 2) {
                         const spread = Object.entries(values).map(([k, v]) => `${k}=${v}`).join(', ');
                         fail.push(
@@ -413,8 +419,11 @@ async function main() {
         const session = Object.entries(pq.quotes || {})
             .filter(([sym]) => held.has(sym))
             .map(([, r]) => r.regularSessionDate).filter(Boolean).sort().pop();
-        const adjudicated = Object.values(rs.scores || {})
-            .map(v => v.updated).filter(Boolean).sort().pop();
+        // Held symbols only, same as the session scan above: a watch-only entry
+        // refreshed a day later would otherwise inflate the figure by a day.
+        const adjudicated = Object.entries(rs.scores || {})
+            .filter(([sym]) => held.has(sym))
+            .map(([, v]) => v.updated).filter(Boolean).sort().pop();
         const anchor = [session, adjudicated].filter(Boolean).sort().pop();
         const r = checkBookWeights(rs, pf, anchor);
         record(r.fail);

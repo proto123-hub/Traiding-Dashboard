@@ -106,6 +106,19 @@ const CASES = [
         why: 'identical P/E off 50%-apart EPS — the scraper decides this flag on the eps leg, so the validator must too',
     },
     {
+        file: 'fundamentals-trailing-pe-outlier-published.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: "the pe leg's published value",
+        why: 'any-pair verification plus fixed-priority publication — the GOOGL defect, in the fundamentals scraper',
+    },
+    {
+        file: 'fundamentals-trailing-pe-consensus.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: false,
+        why: 'pe leg publishing from the agreeing cluster with the dissenter named',
+    },
+    {
         file: 'risk-book-weight-stale-undeclared.json',
         run: (d) => checkBookWeights(d.riskScores, d.portfolio, d.adjudicationDate).fail,
         shouldFail: true,

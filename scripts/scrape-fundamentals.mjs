@@ -107,9 +107,55 @@ const FUNDAMENTALS_NOTE = "Owned by refresher agent + GitHub Actions data-refres
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Fix B: verified iff ANY PAIR of distinct sources agrees within tolerance —
-// identical to scrape-quotes.mjs's helper, duplicated locally not shared,
-// matching house convention (design doc §2).
+// Publication priority when several sources agree. Only used to break ties
+// INSIDE a consensus cluster — never to pick a value over one that disagrees.
+const SOURCE_PRIORITY = ['cnbc', 'stockanalysis', 'sec-xbrl', 'nasdaq-peg'];
+
+// Largest mutually-agreeing subset of sources. Mirrors scrape-quotes.mjs.
+//
+// pairwiseVerify below answers "did ANY pair agree?", which is the right
+// question for the FLAG but the wrong one for the VALUE: with cnbc 30,
+// stockanalysis 20 and sec-xbrl 20.2, a pair does agree — and the old code
+// then published cnbc's 30 by fixed priority and stamped it verified. That is
+// the same defect fixed in scrape-quotes.mjs during the 2026-08-18 GOOGL
+// investigation (published 342.4922 while cboe/cnbc agreed at 344.00); this
+// file kept a comment claiming the two helpers were identical while the quotes
+// side moved on. Publish from the cluster, and name the dissenters.
+function consensusCluster(perSource, tolerance) {
+    const names = SOURCE_PRIORITY.filter(n => perSource[n] != null);
+    const agree = (a, b) => {
+        const x = perSource[a], y = perSource[b];
+        return Math.abs(x - y) / Math.max(Math.min(x, y), 1e-6) <= tolerance;
+    };
+    let best = [];
+    // ≤4 sources, so enumerate every subset rather than clustering cleverly.
+    for (let mask = 1; mask < (1 << names.length); mask++) {
+        const subset = names.filter((_, i) => mask & (1 << i));
+        if (subset.length < 2 || subset.length <= best.length) continue;
+        let mutual = true;
+        for (let i = 0; i < subset.length && mutual; i++) {
+            for (let j = i + 1; j < subset.length; j++) {
+                if (!agree(subset[i], subset[j])) { mutual = false; break; }
+            }
+        }
+        if (mutual) best = subset;
+    }
+    return { verified: best.length >= 2, cluster: best };
+}
+
+// Value to publish for a cluster, plus the sources that dissented.
+function publishFromCluster(perSource, cluster) {
+    const winner = SOURCE_PRIORITY.find(n => cluster.includes(n));
+    return {
+        value: winner != null ? perSource[winner] : null,
+        verifiedBy: cluster,
+        outlierSources: Object.keys(perSource).filter(n => !cluster.includes(n)),
+    };
+}
+
+// Verified iff ANY PAIR of distinct sources agrees within tolerance. Retained
+// for the FLAG and for reporting minDelta; see consensusCluster above for why
+// it must not decide which value gets published.
 function pairwiseVerify(perSource, tolerance) {
     const vals = Object.values(perSource).filter(v => v != null);
     let minDelta = Infinity;
@@ -134,7 +180,24 @@ function verifyForwardByBasis(entries) {
         const { verified, minDelta } = group.length >= 2
             ? pairwiseVerify(perSource, TOLERANCE.forwardPE)
             : { verified: false, minDelta: null };
-        out[basis] = { value: group[0].value, verified, sourceCount: group.length, perSource, deltaPct: minDelta };
+        const { cluster } = group.length >= 2
+            ? consensusCluster(perSource, TOLERANCE.forwardPE)
+            : { cluster: [] };
+        // Publish from the agreeing cluster, not group[0] — see consensusCluster.
+        // Unverified bases keep the priority pick, since there is no cluster to
+        // publish from and the value is honestly flagged unverified.
+        const pub = cluster.length >= 2 ? publishFromCluster(perSource, cluster) : null;
+        out[basis] = {
+            value: pub ? pub.value : group[0].value,
+            verified,
+            sourceCount: group.length,
+            perSource,
+            deltaPct: minDelta,
+        };
+        if (pub) {
+            out[basis].verifiedBy = pub.verifiedBy;
+            if (pub.outlierSources.length) out[basis].outlierSources = pub.outlierSources;
+        }
     }
     return out;
 }
@@ -699,9 +762,16 @@ function resolveTrailingVerification(cnbc, sec, sa) {
     if (sec && sec.trailingPE != null) peValues['sec-xbrl'] = sec.trailingPE;
     if (Object.keys(peValues).length >= 2) {
         const { verified, minDelta } = pairwiseVerify(peValues, TOLERANCE.trailingPE);
-        return { trailingVerified: verified, trailingLeg: 'pe', trailingDelta: minDelta, trailingSources: peValues };
+        // Three sources are possible on this leg, so the agreeing pair need not
+        // include the priority pick — publish from the cluster instead.
+        const { cluster } = consensusCluster(peValues, TOLERANCE.trailingPE);
+        const pub = cluster.length >= 2 ? publishFromCluster(peValues, cluster) : null;
+        return {
+            trailingVerified: verified, trailingLeg: 'pe', trailingDelta: minDelta, trailingSources: peValues,
+            trailingPublish: pub,
+        };
     }
-    return { trailingVerified: false, trailingLeg: null, trailingDelta: null, trailingSources: {} };
+    return { trailingVerified: false, trailingLeg: null, trailingDelta: null, trailingSources: {}, trailingPublish: null };
 }
 
 // ETFs never carry a PE — real expenseRatio/aum/etfBeta from NASDAQ's ETF
@@ -773,10 +843,15 @@ async function main() {
 
         const { forwardPE, forwardPEBasis, forwardEps, forwardPEBasisNote, forwardVerified } =
             resolveForwardPE(cnbc, sa, forwardPEByBasis);
-        const { trailingVerified, trailingLeg, trailingDelta, trailingSources } =
+        const { trailingVerified, trailingLeg, trailingDelta, trailingSources, trailingPublish } =
             resolveTrailingVerification(cnbc, sec, sa);
 
-        const trailingPE = (cnbc && cnbc.trailingPE != null) ? cnbc.trailingPE
+        // When the pe leg decided this verified, publish the value the agreeing
+        // sources actually hold. Fixed priority alone would publish cnbc even
+        // when cnbc is the outlier the other two disagree with.
+        const trailingPE = (trailingLeg === 'pe' && trailingVerified && trailingPublish)
+            ? trailingPublish.value
+            : (cnbc && cnbc.trailingPE != null) ? cnbc.trailingPE
             : (sa && sa.trailingPE != null) ? sa.trailingPE
             : (sec && sec.trailingPE != null) ? sec.trailingPE
             : null;
@@ -804,6 +879,12 @@ async function main() {
             perSource,
             forwardPEByBasis,
         };
+        if (trailingLeg === 'pe' && trailingVerified && trailingPublish) {
+            record.trailingVerifiedBy = trailingPublish.verifiedBy;
+            if (trailingPublish.outlierSources.length) {
+                record.trailingOutlierSources = trailingPublish.outlierSources;
+            }
+        }
         if (forwardPEBasisNote) record.forwardPEBasisNote = forwardPEBasisNote;
         if (FOREIGN_ISSUER_NOTES[sym] && !sec) record.note = FOREIGN_ISSUER_NOTES[sym];
         fundamentals[sym] = record;
