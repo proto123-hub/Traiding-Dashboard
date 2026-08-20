@@ -119,6 +119,33 @@ const CASES = [
         why: 'pe leg publishing from the agreeing cluster with the dissenter named',
     },
     {
+        file: 'fundamentals-trailing-audit-names-outlier.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: 'do not agree with the published value',
+        why: 'correct published value, audit trail naming the source that dissented',
+    },
+    {
+        file: 'fundamentals-forward-audit-missing.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: 'without a verifiedBy audit trail',
+        why: 'the forward leg had no audit-trail check at all',
+    },
+    {
+        file: 'fundamentals-forward-audit-names-outlier.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: true,
+        expect: 'do not agree with the published value',
+        why: 'forward audit trail naming the dissenting source',
+    },
+    {
+        file: 'fundamentals-forward-consensus.json',
+        run: (d) => checkFundamentals(d).fail,
+        shouldFail: false,
+        why: 'top-level forwardPE follows the basis entry, cluster and dissenter both named, forwardEps dropped with cnbc',
+    },
+    {
         file: 'risk-book-weight-stale-undeclared.json',
         run: (d) => checkBookWeights(d.riskScores, d.portfolio, d.adjudicationDate).fail,
         shouldFail: true,

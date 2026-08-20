@@ -1,0 +1,16 @@
+{
+  "note": "RECORDED GAP — the published value is CORRECT (20, the consensus), but the audit trail names cnbc, the source that said 30. Checking only that trailingVerifiedBy exists passed this. Must FAIL on both counts: fewer than 2 names, and a name that does not corroborate.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "fundamentals": {
+    "TSM": {
+      "trailingPE": 20,
+      "trailingVerified": true,
+      "trailingVerifiedBy": ["cnbc"],
+      "perSource": {
+        "cnbc": { "trailingPE": 30 },
+        "stockanalysis": { "trailingPE": 20 },
+        "sec-xbrl": { "trailingPE": 20.2 }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "note": "The corrected forward shape end to end: the basis entry publishes the consensus, names its cluster and its dissenter, and the top-level forwardPE follows the basis entry rather than re-picking cnbc's raw 30. forwardEps is null because cnbc — the only source that reports it — is outside the cluster. Must PASS.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "fundamentals": {
+    "GOOGL": {
+      "forwardPE": 20,
+      "forwardPEBasis": "NTM",
+      "forwardEps": null,
+      "forwardVerified": true,
+      "forwardPEByBasis": {
+        "NTM": {
+          "value": 20,
+          "verified": true,
+          "sourceCount": 3,
+          "verifiedBy": ["stockanalysis", "sec-xbrl"],
+          "outlierSources": ["cnbc"],
+          "perSource": { "cnbc": 30, "stockanalysis": 20, "sec-xbrl": 20.2 }
+        }
+      }
+    }
+  }
+}

@@ -156,6 +156,33 @@ export function trailingLegOf(record) {
     return { leg: null, values: {}, published: null };
 }
 
+/**
+ * An audit-trail field must name the sources that actually corroborate the
+ * published value — the same standard checkQuotes holds verifiedBy to.
+ *
+ * Asserting only that the field EXISTS is close to no check at all: a record
+ * publishing the correct consensus 20 while claiming trailingVerifiedBy
+ * ["cnbc"] (the source that said 30) passed, as did a verified forward basis
+ * carrying no verifiedBy whatsoever.
+ */
+export function auditTrailFaults(label, names, backing, published, tolerance, field) {
+    if (!Array.isArray(names)) {
+        return [`${label}: verified without a ${field} audit trail`];
+    }
+    const out = [];
+    if (names.length < 2) {
+        out.push(`${label}: ${field} lists ${names.length} source(s), needs 2+`);
+    }
+    const dissenting = names.filter(n => !backing.includes(n));
+    if (dissenting.length) {
+        out.push(
+            `${label}: ${field} names ${JSON.stringify(dissenting)}, which do not agree ` +
+            `with the published value ${published} within ${tolerance}`
+        );
+    }
+    return out;
+}
+
 export function checkFundamentals(fu) {
     const fail = [];
     const tol = fu.tolerance || {};
@@ -186,7 +213,11 @@ export function checkFundamentals(fu) {
                     `${sym} forwardPEByBasis.${name}: verified:true with ${n} sources but only ` +
                     `${backing.length} agree with the published value ${e.value} within ${fwdTol} (${spread})`
                 );
+                continue;
             }
+            fail.push(...auditTrailFaults(
+                `${sym} forwardPEByBasis.${name}`, e.verifiedBy, backing, e.value, fwdTol, 'verifiedBy'
+            ));
         }
 
         if (r.forwardVerified) {
@@ -233,8 +264,10 @@ export function checkFundamentals(fu) {
                     // The pe leg can see three sources, so the agreeing pair need
                     // not contain the priority pick; the scraper publishes from
                     // the cluster and must record which sources those were.
-                    if (leg === 'pe' && !Array.isArray(r.trailingVerifiedBy)) {
-                        fail.push(`${sym}: trailingVerified:true on the pe leg without a trailingVerifiedBy audit trail`);
+                    if (leg === 'pe' && backing.length >= 2) {
+                        fail.push(...auditTrailFaults(
+                            `${sym} trailing pe leg`, r.trailingVerifiedBy, backing, published, legTol, 'trailingVerifiedBy'
+                        ));
                     }
                     if (backing.length < 2) {
                         const spread = Object.entries(values).map(([k, v]) => `${k}=${v}`).join(', ');

@@ -728,21 +728,33 @@ async function runNasdaqPhase(stockSymbols, etfSymbols, failures) {
 // Back-compat top-level forwardPE/forwardPEBasis priority chain (design §2):
 // CNBC NTM -> stockanalysis assumed-NTM -> nearest NASDAQ FY-basis estimate.
 function resolveForwardPE(cnbc, sa, forwardPEByBasis) {
-    let forwardPE = null, forwardPEBasis = null, forwardEps = null, forwardPEBasisNote = null;
+    let forwardPEBasis = null, forwardEps = null, forwardPEBasisNote = null;
+    // These branches choose the BASIS only. Selecting the value here as well —
+    // re-reading cnbc.forwardPE / sa.forwardPE raw — would contradict the
+    // record's own forwardPEByBasis block whenever cnbc is the outlier the
+    // other sources disagree with: the basis entry would read the consensus 20
+    // while the top-level field read cnbc's 30, both under forwardVerified.
     if (cnbc && cnbc.forwardPE != null) {
-        forwardPE = cnbc.forwardPE; forwardPEBasis = 'NTM'; forwardEps = cnbc.forwardEps ?? null;
+        forwardPEBasis = 'NTM'; forwardEps = cnbc.forwardEps ?? null;
     } else if (sa && sa.forwardPE != null) {
-        forwardPE = sa.forwardPE; forwardPEBasis = 'NTM';
+        forwardPEBasis = 'NTM';
     } else {
         const fyBases = Object.keys(forwardPEByBasis).filter(b => b !== 'NTM').sort();
         if (fyBases.length) {
-            const nearest = fyBases[0];
-            forwardPE = forwardPEByBasis[nearest].value;
-            forwardPEBasis = nearest;
-            forwardPEBasisNote = `No NTM consensus available this cycle — showing ${nearest} (NASDAQ consensus) instead.`;
+            forwardPEBasis = fyBases[0];
+            forwardPEBasisNote = `No NTM consensus available this cycle — showing ${forwardPEBasis} (NASDAQ consensus) instead.`;
         }
     }
-    const forwardVerified = forwardPEBasis ? (forwardPEByBasis[forwardPEBasis]?.verified ?? false) : false;
+    const entry = forwardPEBasis ? forwardPEByBasis[forwardPEBasis] : null;
+    // Single source of truth: the basis entry, which already carries the
+    // consensus value when one exists and the priority pick when it does not.
+    const forwardPE = entry ? entry.value : null;
+    // forwardEps is cnbc's figure; it only describes the published P/E if cnbc
+    // is inside the cluster that produced it.
+    if (forwardEps != null && Array.isArray(entry?.verifiedBy) && !entry.verifiedBy.includes('cnbc')) {
+        forwardEps = null;
+    }
+    const forwardVerified = entry?.verified ?? false;
     return { forwardPE, forwardPEBasis, forwardEps, forwardPEBasisNote, forwardVerified };
 }
 
