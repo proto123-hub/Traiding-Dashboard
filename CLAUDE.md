@@ -200,7 +200,11 @@ above are the verification gate, plus loading the page and watching the console.
   long-lived branch, fetch and rebase; conflicts in `data/price-quotes.json`,
   `data/news-feed.json`, `reports/raw/`, `reports/validation/` should be
   resolved by taking the newer bot data or re-running the scripts — never
-  hand-merged.
+  hand-merged. **"Newer" means newer output of the same scraper.** If the
+  branch changes a scraper, `main`'s bot data is newer by clock but is the
+  old code's output — take the branch's, and let the bot regenerate after
+  merge. (2026-08-20: main's `price-quotes.json` was 43 min newer and
+  0/27 verified against the branch's 27/29.)
 - Never commit localStorage exports — they live in the user's browser. To
   persist, the user clicks "JSON 내보내기" and commits the contents of
   `data/assets-history.json` manually.
