@@ -223,12 +223,18 @@ above are the verification gate, plus loading the page and watching the console.
 
 ## Gotchas
 
-- **Quote sources drifted from the docs.** `data/README.md` and the
-  refresher/comparator agent files still say "Yahoo + Saveticker", but the
-  actual sources are **Stooq (primary) + NASDAQ public API + Yahoo v8 chart
-  (fallback)** for quotes and **Google News RSS** for headlines — Saveticker
-  403s non-browser UAs and Yahoo v7 requires crumb auth. The header comments
-  in `scripts/*.mjs` are authoritative on source selection and rate limits.
+- **The refresher/comparator agent files still name dead sources.**
+  `.claude/agents/refresher.md` and `.claude/agents/comparator.md` describe
+  "Yahoo + Saveticker". All three of those are gone: Saveticker 403s
+  non-browser UAs, and **Yahoo and Stooq were removed 2026-08-18** after a
+  runner-IP probe found Yahoo 429ing the first request of every run from a
+  freshly warmed cookie, and Stooq's endpoint returning a branded 404 on both
+  stooq.com and the .pl mirror (`reports/validation/2026-08-18-source-probe.md`).
+  The live roster is **NASDAQ + Cboe + CNBC** for quotes, **CNBC + SEC XBRL +
+  stockanalysis + NASDAQ** for fundamentals, and **Google News RSS** for
+  headlines. `data/README.md` was corrected in that pass; the two agent files
+  were not. The header comments in `scripts/*.mjs` are authoritative on source
+  selection and rate limits.
 - **`data/news-feed.json` is multi-MB** (cron-appended). Never read it whole
   into context — slice with `node -e` / `grep` by ticker or date.
 - **`valuation-dashboard-v3.6.html` is legacy.** It predates `index.html` and
