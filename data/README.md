@@ -42,12 +42,15 @@ files directly at boot via `fetch()`, inside `bootValuations()`:
 Required (missing/failed ⇒ panel shows a load-error row, matching prior
 behavior):
 - `data/valuations.json`      — FV bands + currentPrice
-- `data/risk-scores.json`     — verdict + score + coverage (all 22 tickers)
+- `data/risk-scores.json`     — verdict + score + coverage (22 of the 24
+  tickers; PANW and SNDK were added to the universe 2026-08-19 and are not
+  scored yet — same gap in valuations.json and analyst-targets.json)
 - `data/portfolio-current.json` — held symbol set
 - `data/sector-map.json`      — sector label lookup
 - `data/price-quotes.json`    — price + changePct + verified (+ optional
 extended{} block, not yet consumed by index.html — see §6)
-- `data/tickers-universe.json` — the 22-ticker universe (name/sector/held/theme)
+- `data/tickers-universe.json` — the 24-ticker universe (name/sector/held/theme)
+  plus 5 indices, so `price-quotes.json` carries 29 rows
 
 Optional / progressive enhancement (missing ⇒ that column/detail-block renders
 `—` or `N/A`, the rest of the panel still works):
@@ -352,7 +355,7 @@ read it directly (documented, not implemented — see the design doc §2).
 Owner: **validator**, regenerated (full overwrite, not appended) each cycle by
 slicing `data/news-feed.json`. **`index.html` must never fetch
 `data/news-feed.json` directly** — only this derived file, which stays small
-enough for the browser (3-5 items × 22 tickers ≈ 100 items max).
+enough for the browser (3-5 items × 24 tickers ≈ 100 items max).
 ```jsonc
 {
   "note": "Derived by validator agent each cycle from data/news-feed.json (never fetched directly by index.html — that file is multi-MB). Regenerated wholesale, not appended. Selection: up to maxItemsPerTicker items per ticker, verified:true items first (most recent), backfilled with verified:false items if fewer than maxItemsPerTicker verified items exist.",

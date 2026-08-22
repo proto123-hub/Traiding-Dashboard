@@ -20,7 +20,7 @@
 //   stooq.pl mirror — a styled 404 from Stooq's own template means the path
 //   itself is gone, not that we're being fingerprinted. Structurally dead.
 // Roster is now NASDAQ + Cboe + CNBC — all key-less, all cover the full
-// 27-symbol universe except DXY (single-source, CNBC-only — see the
+// 29-symbol universe except DXY (single-source, CNBC-only — see the
 // coverage table below). If a future probe finds Yahoo/Stooq alive again,
 // re-add behind the same probe-then-integrate discipline; don't restore the
 // old code from git history blind — it also read the wrong NASDAQ/Cboe
@@ -34,7 +34,7 @@
 // Rate parameters: Cboe conc 4, 8s timeout, 1 retry (2s) on 5xx/network only
 // (no retry on 404 = symbol not covered). NASDAQ: unchanged (concurrency 3,
 // 3-assetclass fallback, 16s timeout). CNBC: ONE batched request covering
-// all 27 symbols, 8s timeout, 1 retry. Expected runtime ≈2 min worst case
+// all 29 symbols, 8s timeout, 1 retry. Expected runtime ≈2 min worst case
 // (well under the 8-minute job timeout and the 5-minute design budget) —
 // removing Yahoo's up-to-90s backoff phase and Stooq's mirror-retry phase
 // is the main saving.
@@ -301,7 +301,7 @@ async function fetchNasdaqOne(sym, signal) {
 }
 
 // CNBC restQuote — unofficial partner endpoint (no key, no SLA), now
-// first-class for the full 27-symbol universe (promoted from an
+// first-class for the full 29-symbol universe (promoted from an
 // indices-only gap filler — see header comment). Session-tagged natively:
 // last/previous_day_closing is the regular close, ExtendedMktQuote is a
 // live pre/after-hours print.
@@ -359,7 +359,7 @@ function extractCnbcSession(row) {
     return { curmktstatus: row.curmktstatus, regular, extended };
 }
 
-// One batched request covers all 27 symbols (URL length ~200 chars,
+// One batched request covers all 29 symbols (URL length ~200 chars,
 // trivially fine). Per-symbol misses inside the response are recorded as
 // failures by the caller rather than failing the whole request.
 async function fetchCnbcBatchOnce(symbols, signal) {
@@ -463,7 +463,7 @@ async function main() {
         }
     })));
 
-    // CNBC — one batched request, 1 retry. Full 27-symbol coverage (promoted
+    // CNBC — one batched request, 1 retry. Full 29-symbol coverage (promoted
     // from indices-only) — per-symbol misses inside the batch are recorded
     // individually rather than failing the whole request.
     let cnbcBatchOk = false;

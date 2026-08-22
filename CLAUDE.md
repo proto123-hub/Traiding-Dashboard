@@ -139,8 +139,10 @@ planner → (architect* → builder*) → collector → validator → evaluator 
 
 ### Lane 2 — Automated refresh (GitHub Actions + refresher/comparator agents)
 
-`data-refresh.yml` runs the three scripts twice each weekday (pre-market +
+`data-refresh.yml` runs five scripts twice each weekday (pre-market +
 post-close) and commits changed data as `data-refresh-bot` **directly to main**.
+Quotes, news, verify and yields run on both slots; fundamentals only on the
+post-close slot.
 The `refresher` agent runs the same scripts interactively ("quotes look stale");
 the `comparator` agent diffs any two quote feeds (e.g. Kapture import vs scrape).
 Refresh updates `currentPrice`-type fields only — **FV bands never move on a
@@ -179,7 +181,11 @@ price refresh**; that requires the evaluator.
 python3 -m http.server 8765
 
 # Run the refresh pipeline manually (same as CI)
-node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs
+node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs \
+  && node scripts/scrape-yields.mjs && node scripts/scrape-fundamentals.mjs
+
+# Validator: fixtures first, then the committed data layer (what CI runs)
+node scripts/test/validate-data.test.mjs && node scripts/validate-data.mjs
 
 # Validate JSON
 find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
@@ -188,8 +194,15 @@ find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.
 node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].forEach((m,i)=>{try{new Function('async function __(){'+m[1]+'}');console.log('script',i,'OK')}catch(e){console.log('script',i,e.message)}})"
 ```
 
-There is no test suite or linter — the JSON-validate and script-syntax checks
-above are the verification gate, plus loading the page and watching the console.
+There is no linter. The verification gate is `scripts/validate-data.mjs` —
+read-only integrity checks over the committed data layer — plus its fixture
+suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
+every push and PR. The fixtures run **first**: a green pass over live data
+proves nothing if the checks themselves have been weakened, so each of the 25
+fixtures is a shape this repo actually shipped and each must-fail case pins the
+expected failure *reason*. Add a fixture with every new invariant. The
+JSON-validate and script-syntax checks above still apply, plus loading the page
+and watching the console.
 
 ## Git workflow
 
