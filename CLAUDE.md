@@ -197,10 +197,12 @@ node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.mat
 There is no linter. The verification gate is `scripts/validate-data.mjs` —
 read-only integrity checks over the committed data layer — plus its fixture
 suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
-every push and PR. The fixtures run **first**: a green pass over live data
+every PR and on every push except to `main`. The fixtures run **first**: a green pass over live data
 proves nothing if the checks themselves have been weakened, so each of the 25
-fixtures is a shape this repo actually shipped and each must-fail case pins the
-expected failure *reason*. Add a fixture with every new invariant. The
+fixtures is either a recorded shape this repo shipped (14) or a minimal
+construction of a defect path the code actually permitted (11, each verified by
+reproducing `fail: []` against the pre-fix check), and each must-fail case pins
+the expected failure *reason*. Add a fixture with every new invariant. The
 JSON-validate and script-syntax checks above still apply, plus loading the page
 and watching the console.
 

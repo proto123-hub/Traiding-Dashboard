@@ -225,7 +225,7 @@ below the schema block.
 ```
 `coverage` is additive and **supersedes** the prior "Only held positions get a
 risk score — peer-reference tickers stay valuation-only" rule. Going forward,
-all 22 universe tickers get a `scores` entry; held tickers keep the existing
+every universe ticker is meant to get a `scores` entry; held tickers keep the existing
 full contract (`coverage:"full"`), watch-only tickers get a deliberately
 smaller contract (`coverage:"informational"` — score/verdict/risks[] only, no
 trade-recommendation fields). Backward compatible: the 6 existing held entries
@@ -355,7 +355,7 @@ read it directly (documented, not implemented — see the design doc §2).
 Owner: **validator**, regenerated (full overwrite, not appended) each cycle by
 slicing `data/news-feed.json`. **`index.html` must never fetch
 `data/news-feed.json` directly** — only this derived file, which stays small
-enough for the browser (3-5 items × 24 tickers ≈ 100 items max).
+enough for the browser (up to 5 items × 24 tickers = 120 items max).
 ```jsonc
 {
   "note": "Derived by validator agent each cycle from data/news-feed.json (never fetched directly by index.html — that file is multi-MB). Regenerated wholesale, not appended. Selection: up to maxItemsPerTicker items per ticker, verified:true items first (most recent), backfilled with verified:false items if fewer than maxItemsPerTicker verified items exist.",

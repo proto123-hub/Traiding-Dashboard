@@ -1,12 +1,23 @@
 #!/usr/bin/env node
 // Regression fixtures for scripts/validate-data.mjs.
 //
-// Every fixture under fixtures/ is a shape this repo actually shipped, not an
-// invented edge case. The point is not that the checks reject SOMETHING — an
-// obviously-wrong value like price 999 is rejected by a check that is too weak
-// to catch the real bug. Each must-fail fixture is the real data, and the
-// `expect` substring pins WHY it fails, so a check cannot be weakened later
-// while still passing on a technicality.
+// Fixtures come in two kinds, and the distinction matters:
+//
+//   RECORDED (14) — a shape this repo actually shipped, e.g. the 2026-08-18
+//     GOOGL row that published NASDAQ's outlier under a verified flag, or the
+//     KLAC band left 10x high across a split. The note on each says RECORDED.
+//   CONSTRUCTED (11) — a minimal instance of a defect path the code actually
+//     permitted, built to the real schema. Each was validated by reproducing
+//     `fail: []` against the pre-fix check before the fix landed, so it pins a
+//     hole that existed rather than an imagined one.
+//
+// Neither kind is an invented edge case, but only the first is literally
+// shipped data — do not describe the whole set as "shapes this repo shipped".
+//
+// The point is not that the checks reject SOMETHING — an obviously-wrong value
+// like price 999 is rejected by a check too weak to catch the real bug. Each
+// must-fail fixture's `expect` substring pins WHY it fails, so a check cannot
+// be weakened later while still passing on a technicality.
 //
 // Run: node scripts/test/validate-data.test.mjs
 
