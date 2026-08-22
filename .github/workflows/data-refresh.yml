@@ -26,20 +26,36 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Scrape quotes (Yahoo + Saveticker)
+      - name: Scrape quotes (nasdaq+cboe+cnbc)
         run: node scripts/scrape-quotes.mjs
 
-      - name: Scrape news (Saveticker)
+      - name: Scrape news (Google News RSS)
         run: node scripts/scrape-news.mjs
         continue-on-error: true
 
       - name: Verify quotes (cross-source)
         run: node scripts/verify-quotes.mjs
 
+      - name: Scrape fundamentals (cnbc+sec-xbrl+stockanalysis+nasdaq)
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 21 * * 1-5'
+        run: node scripts/scrape-fundamentals.mjs
+        continue-on-error: true
+
+      - name: Scrape yields (treasury+mof+eurostat)
+        # Runs on BOTH weekday cron slots, unlike fundamentals above — each
+        # source updates once daily at most, so the pre-market run simply
+        # re-fetches yesterday's already-stored value and no-ops via the
+        # upsert-by-date rule (a same-value re-write is a no-op diff).
+        run: node scripts/scrape-yields.mjs
+        continue-on-error: true
+
       - name: Validate JSON
         run: |
-          for f in data/*.json; do
-            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "OK $f"
+          # Recursive: data/history/ and any future subdirectory must be checked
+          # too. A non-recursive data/*.json glob would pass while shipping a
+          # corrupt data/history/yields-2026.json.
+          find data -name '*.json' -print0 | while IFS= read -r -d '' f; do
+            node -e "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))" "$f" && echo "OK $f"
           done
 
       - name: Commit & push if changed
@@ -50,6 +66,43 @@ jobs:
           fi
           git config user.name 'data-refresh-bot'
           git config user.email 'bot@users.noreply.github.com'
-          git add data/price-quotes.json data/news-feed.json reports/raw/ reports/validation/
+          # Stage the whole data/ tree, not an enumerated list: every file added
+          # since this line was written (fundamentals.json, and now data/history/*)
+          # had to be remembered here or it silently never got committed.
+          git add data/ reports/raw/ reports/validation/
           git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
+          # A push landing mid-run otherwise loses the whole refresh to a
+          # rejected non-fast-forward (seen 2026-08-18). Rebasing was the first
+          # fix, but it fails too: two refresh runs regenerate the SAME files, so
+          # the replay hits content conflicts in all ten of them and exits 1
+          # (seen 2026-08-19). Instead of merging generated data, replay it —
+          # take origin's tree wholesale, drop this run's regenerated files on
+          # top, and commit that. Nothing can conflict because nothing is merged.
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push rejected (attempt $i) — replaying this run's output onto origin"
+            tmp=$(mktemp -d)
+            git archive HEAD data reports | tar -x -C "$tmp"
+            git fetch origin "$GITHUB_REF_NAME"
+            git reset --hard "origin/$GITHUB_REF_NAME"
+            # news-feed.json is the one append-only file here; overwriting it
+            # would drop whatever the other run appended, so union by item id.
+            if [ -f data/news-feed.json ] && [ -f "$tmp/data/news-feed.json" ]; then
+              node -e "
+                const fs=require('fs');
+                const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+                const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+                const m=new Map();
+                (a.items||[]).forEach(i=>m.set(i.id,i));
+                (b.items||[]).forEach(i=>{if(!m.has(i.id))m.set(i.id,i)});
+                fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...m.values()]},null,2)+'\n');
+              " data/news-feed.json "$tmp/data/news-feed.json"
+            fi
+            cp -r "$tmp"/data "$tmp"/reports .
+            rm -rf "$tmp"
+            git add data/ reports/raw/ reports/validation/
+            if git diff --cached --quiet; then echo "origin already has this data"; exit 0; fi
+            git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
+            sleep $((i * 3))
+          done
           git push

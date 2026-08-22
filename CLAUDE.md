@@ -28,6 +28,13 @@ This repo is the working dashboard behind Daniel's **LLM Wiki Trading OS**
   (Codex) sessions, plus a GitHub Actions bot. Follow the conventions in this
   file strictly and append to `SESSION_LOG.md` so cross-tool sessions can
   reconstruct state.
+- **Work-start declaration (착수 선언)**: before beginning any multi-step
+  session, append a one-line start entry to `SESSION_LOG.md` (mark it `⏳`)
+  naming the scope and branch, and push it early. Append the completion
+  summary as a separate line when done — never edit the start line (the log
+  is append-only). A tool seeing another tool's open `⏳` entry must not
+  start overlapping work. (Added 2026-08-18 after a Claude/Codex duplicate
+  implementation of the watchlist view.)
 
 ## Coding Behavior — Karpathy Guidelines
 
@@ -132,8 +139,10 @@ planner → (architect* → builder*) → collector → validator → evaluator 
 
 ### Lane 2 — Automated refresh (GitHub Actions + refresher/comparator agents)
 
-`data-refresh.yml` runs the three scripts twice each weekday (pre-market +
+`data-refresh.yml` runs five scripts twice each weekday (pre-market +
 post-close) and commits changed data as `data-refresh-bot` **directly to main**.
+Quotes, news, verify and yields run on both slots; fundamentals only on the
+post-close slot.
 The `refresher` agent runs the same scripts interactively ("quotes look stale");
 the `comparator` agent diffs any two quote feeds (e.g. Kapture import vs scrape).
 Refresh updates `currentPrice`-type fields only — **FV bands never move on a
@@ -172,17 +181,30 @@ price refresh**; that requires the evaluator.
 python3 -m http.server 8765
 
 # Run the refresh pipeline manually (same as CI)
-node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs
+node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs \
+  && node scripts/scrape-yields.mjs && node scripts/scrape-fundamentals.mjs
+
+# Validator: fixtures first, then the committed data layer (what CI runs)
+node scripts/test/validate-data.test.mjs && node scripts/validate-data.mjs
 
 # Validate JSON
-for f in data/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f'))" && echo OK $f; done
+find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
 
 # Syntax-check inline scripts
 node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].forEach((m,i)=>{try{new Function('async function __(){'+m[1]+'}');console.log('script',i,'OK')}catch(e){console.log('script',i,e.message)}})"
 ```
 
-There is no test suite or linter — the JSON-validate and script-syntax checks
-above are the verification gate, plus loading the page and watching the console.
+There is no linter. The verification gate is `scripts/validate-data.mjs` —
+read-only integrity checks over the committed data layer — plus its fixture
+suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
+every PR and on every push except to `main`. The fixtures run **first**: a green pass over live data
+proves nothing if the checks themselves have been weakened, so each of the 25
+fixtures is either a recorded shape this repo shipped (14) or a minimal
+construction of a defect path the code actually permitted (11, each verified by
+reproducing `fail: []` against the pre-fix check), and each must-fail case pins
+the expected failure *reason*. Add a fixture with every new invariant. The
+JSON-validate and script-syntax checks above still apply, plus loading the page
+and watching the console.
 
 ## Git workflow
 
@@ -193,7 +215,11 @@ above are the verification gate, plus loading the page and watching the console.
   long-lived branch, fetch and rebase; conflicts in `data/price-quotes.json`,
   `data/news-feed.json`, `reports/raw/`, `reports/validation/` should be
   resolved by taking the newer bot data or re-running the scripts — never
-  hand-merged.
+  hand-merged. **"Newer" means newer output of the same scraper.** If the
+  branch changes a scraper, `main`'s bot data is newer by clock but is the
+  old code's output — take the branch's, and let the bot regenerate after
+  merge. (2026-08-20: main's `price-quotes.json` was 43 min newer and
+  0/27 verified against the branch's 27/29.)
 - Never commit localStorage exports — they live in the user's browser. To
   persist, the user clicks "JSON 내보내기" and commits the contents of
   `data/assets-history.json` manually.
@@ -212,12 +238,18 @@ above are the verification gate, plus loading the page and watching the console.
 
 ## Gotchas
 
-- **Quote sources drifted from the docs.** `data/README.md` and the
-  refresher/comparator agent files still say "Yahoo + Saveticker", but the
-  actual sources are **Stooq (primary) + NASDAQ public API + Yahoo v8 chart
-  (fallback)** for quotes and **Google News RSS** for headlines — Saveticker
-  403s non-browser UAs and Yahoo v7 requires crumb auth. The header comments
-  in `scripts/*.mjs` are authoritative on source selection and rate limits.
+- **The refresher/comparator agent files still name dead sources.**
+  `.claude/agents/refresher.md` and `.claude/agents/comparator.md` describe
+  "Yahoo + Saveticker". All three of those are gone: Saveticker 403s
+  non-browser UAs, and **Yahoo and Stooq were removed 2026-08-18** after a
+  runner-IP probe found Yahoo 429ing the first request of every run from a
+  freshly warmed cookie, and Stooq's endpoint returning a branded 404 on both
+  stooq.com and the .pl mirror (`reports/validation/2026-08-18-source-probe.md`).
+  The live roster is **NASDAQ + Cboe + CNBC** for quotes, **CNBC + SEC XBRL +
+  stockanalysis + NASDAQ** for fundamentals, and **Google News RSS** for
+  headlines. `data/README.md` was corrected in that pass; the two agent files
+  were not. The header comments in `scripts/*.mjs` are authoritative on source
+  selection and rate limits.
 - **`data/news-feed.json` is multi-MB** (cron-appended). Never read it whole
   into context — slice with `node -e` / `grep` by ticker or date.
 - **`valuation-dashboard-v3.6.html` is legacy.** It predates `index.html` and

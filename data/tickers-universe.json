@@ -1,34 +1,265 @@
 {
   "note": "Watchlist + analysis universe. Add tickers here to make them visible to collector/evaluator agents.",
   "tickers": [
-    { "symbol": "GOOGL", "name": "Alphabet",                  "sector": "MegaCap-Platform",  "held": true,  "theme": ["custom-silicon", "ai-cloud", "regulatory-risk"] },
-    { "symbol": "CLS",   "name": "Celestica",                 "sector": "Electronics-Mfg",   "held": true,  "theme": ["ai-server", "hyperscaler-capex"] },
-    { "symbol": "AVGO",  "name": "Broadcom",                  "sector": "Semis-Custom",      "held": true,  "theme": ["custom-silicon", "ai-networking"] },
-    { "symbol": "MRVL",  "name": "Marvell",                   "sector": "Semis-Custom",      "held": true,  "theme": ["custom-silicon", "optical"] },
-    { "symbol": "MU",    "name": "Micron",                    "sector": "Semis-Memory",      "held": true,  "theme": ["hbm", "ai-memory"] },
-    { "symbol": "TSM",   "name": "TSMC",                      "sector": "Semis-Foundry",     "held": false, "theme": ["2nm", "cowos"] },
-    { "symbol": "PLTR",  "name": "Palantir",                  "sector": "Software-AI",       "held": false, "theme": ["gov-ai", "aip"] },
-    { "symbol": "TSMU",  "name": "T-Rex 2X Long TSMC",        "sector": "ETF-Leveraged",     "held": false, "theme": ["2x-tsm"] },
-    { "symbol": "NVDA",  "name": "NVIDIA",                    "sector": "Semis-GPU",         "held": false, "theme": ["blackwell", "rubin", "cuda"] },
-    { "symbol": "AMD",   "name": "AMD",                       "sector": "Semis-CPU-GPU",     "held": false, "theme": ["epyc", "mi325x"] },
-    { "symbol": "ARM",   "name": "Arm Holdings",              "sector": "Semis-IP",          "held": false, "theme": ["ip-royalty", "agi-cpu"] },
-    { "symbol": "AMAT",  "name": "Applied Materials",         "sector": "Semis-Equip",       "held": false, "theme": ["deposition"] },
-    { "symbol": "LRCX",  "name": "Lam Research",              "sector": "Semis-Equip",       "held": false, "theme": ["etch", "high-na"] },
-    { "symbol": "KLAC",  "name": "KLA Corporation",           "sector": "Semis-Equip",       "held": false, "theme": ["inspection"] },
-    { "symbol": "MSFT",  "name": "Microsoft",                 "sector": "MegaCap-Platform",  "held": false, "theme": ["azure-ai", "copilot"] },
-    { "symbol": "META",  "name": "Meta",                      "sector": "MegaCap-Platform",  "held": false, "theme": ["mtia", "ads-ai"] },
-    { "symbol": "TSLA",  "name": "Tesla",                     "sector": "Auto-Tech",         "held": false, "theme": ["fsd", "energy"] },
-    { "symbol": "ORCL",  "name": "Oracle",                    "sector": "Software-Cloud",    "held": false, "theme": ["oci-ai"] },
-    { "symbol": "SNOW",  "name": "Snowflake",                 "sector": "Software-Data",     "held": false, "theme": ["ai-data-cloud"] },
-    { "symbol": "CRWD",  "name": "CrowdStrike",               "sector": "Software-Security", "held": false, "theme": ["xdr"] },
-    { "symbol": "INTC",  "name": "Intel",                     "sector": "Semis-IDM",         "held": false, "theme": ["18a", "foundry-turnaround"] },
-    { "symbol": "SOXL",  "name": "Direxion Daily Semi 3x",    "sector": "ETF-Leveraged",     "held": true,  "theme": ["3x-semis", "leveraged-basket"] }
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet",
+      "sector": "MegaCap-Platform",
+      "held": true,
+      "theme": [
+        "custom-silicon",
+        "ai-cloud",
+        "regulatory-risk"
+      ]
+    },
+    {
+      "symbol": "CLS",
+      "name": "Celestica",
+      "sector": "Electronics-Mfg",
+      "held": true,
+      "theme": [
+        "ai-server",
+        "hyperscaler-capex"
+      ]
+    },
+    {
+      "symbol": "AVGO",
+      "name": "Broadcom",
+      "sector": "Semis-Custom",
+      "held": true,
+      "theme": [
+        "custom-silicon",
+        "ai-networking"
+      ]
+    },
+    {
+      "symbol": "MRVL",
+      "name": "Marvell",
+      "sector": "Semis-Custom",
+      "held": true,
+      "theme": [
+        "custom-silicon",
+        "optical"
+      ]
+    },
+    {
+      "symbol": "MU",
+      "name": "Micron",
+      "sector": "Semis-Memory",
+      "held": true,
+      "theme": [
+        "hbm",
+        "ai-memory"
+      ]
+    },
+    {
+      "symbol": "TSM",
+      "name": "TSMC",
+      "sector": "Semis-Foundry",
+      "held": false,
+      "theme": [
+        "2nm",
+        "cowos"
+      ]
+    },
+    {
+      "symbol": "PLTR",
+      "name": "Palantir",
+      "sector": "Software-AI",
+      "held": false,
+      "theme": [
+        "gov-ai",
+        "aip"
+      ]
+    },
+    {
+      "symbol": "TSMU",
+      "name": "T-Rex 2X Long TSMC",
+      "sector": "ETF-Leveraged",
+      "held": false,
+      "theme": [
+        "2x-tsm"
+      ]
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA",
+      "sector": "Semis-GPU",
+      "held": false,
+      "theme": [
+        "blackwell",
+        "rubin",
+        "cuda"
+      ]
+    },
+    {
+      "symbol": "AMD",
+      "name": "AMD",
+      "sector": "Semis-CPU-GPU",
+      "held": false,
+      "theme": [
+        "epyc",
+        "mi325x"
+      ]
+    },
+    {
+      "symbol": "ARM",
+      "name": "Arm Holdings",
+      "sector": "Semis-IP",
+      "held": false,
+      "theme": [
+        "ip-royalty",
+        "agi-cpu"
+      ]
+    },
+    {
+      "symbol": "AMAT",
+      "name": "Applied Materials",
+      "sector": "Semis-Equip",
+      "held": false,
+      "theme": [
+        "deposition"
+      ]
+    },
+    {
+      "symbol": "LRCX",
+      "name": "Lam Research",
+      "sector": "Semis-Equip",
+      "held": false,
+      "theme": [
+        "etch",
+        "high-na"
+      ]
+    },
+    {
+      "symbol": "KLAC",
+      "name": "KLA Corporation",
+      "sector": "Semis-Equip",
+      "held": false,
+      "theme": [
+        "inspection"
+      ]
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "sector": "MegaCap-Platform",
+      "held": false,
+      "theme": [
+        "azure-ai",
+        "copilot"
+      ]
+    },
+    {
+      "symbol": "META",
+      "name": "Meta",
+      "sector": "MegaCap-Platform",
+      "held": false,
+      "theme": [
+        "mtia",
+        "ads-ai"
+      ]
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla",
+      "sector": "Auto-Tech",
+      "held": false,
+      "theme": [
+        "fsd",
+        "energy"
+      ]
+    },
+    {
+      "symbol": "ORCL",
+      "name": "Oracle",
+      "sector": "Software-Cloud",
+      "held": false,
+      "theme": [
+        "oci-ai"
+      ]
+    },
+    {
+      "symbol": "SNOW",
+      "name": "Snowflake",
+      "sector": "Software-Data",
+      "held": false,
+      "theme": [
+        "ai-data-cloud"
+      ]
+    },
+    {
+      "symbol": "CRWD",
+      "name": "CrowdStrike",
+      "sector": "Software-Security",
+      "held": false,
+      "theme": [
+        "xdr"
+      ]
+    },
+    {
+      "symbol": "INTC",
+      "name": "Intel",
+      "sector": "Semis-IDM",
+      "held": false,
+      "theme": [
+        "18a",
+        "foundry-turnaround"
+      ]
+    },
+    {
+      "symbol": "SOXL",
+      "name": "Direxion Daily Semi 3x",
+      "sector": "ETF-Leveraged",
+      "held": true,
+      "theme": [
+        "3x-semis",
+        "leveraged-basket"
+      ]
+    },
+    {
+      "symbol": "PANW",
+      "name": "Palo Alto Networks",
+      "sector": "Software-Security",
+      "held": false,
+      "theme": [
+        "platformization",
+        "network-security",
+        "agentic-soc"
+      ]
+    },
+    {
+      "symbol": "SNDK",
+      "name": "SanDisk",
+      "sector": "Semis-Storage",
+      "held": false,
+      "theme": [
+        "nand",
+        "enterprise-ssd",
+        "ai-storage"
+      ]
+    }
   ],
   "indices": [
-    { "symbol": "SPX",   "label": "S&P 500" },
-    { "symbol": "NDX",   "label": "Nasdaq 100" },
-    { "symbol": "VIX",   "label": "VIX" },
-    { "symbol": "DXY",   "label": "DXY" },
-    { "symbol": "US10Y", "label": "10Y Yield" }
+    {
+      "symbol": "SPX",
+      "label": "S&P 500"
+    },
+    {
+      "symbol": "NDX",
+      "label": "Nasdaq 100"
+    },
+    {
+      "symbol": "VIX",
+      "label": "VIX"
+    },
+    {
+      "symbol": "DXY",
+      "label": "DXY"
+    },
+    {
+      "symbol": "US10Y",
+      "label": "10Y Yield"
+    }
   ]
 }
