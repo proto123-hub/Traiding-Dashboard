@@ -382,6 +382,37 @@ export function checkBookWeights(riskScores, portfolio, adjudicationDate, maxSta
     return { fail, staleDays };
 }
 
+/**
+ * news-feed.json is append-only and merged from two writers — the cron bot on
+ * main and this branch — so the same item id can arrive twice. The workflow's
+ * replay path unions by id and so does a hand-resolved conflict, but git's
+ * TEXTUAL auto-merge does neither: when the file merges cleanly, two records
+ * with the same id and different `collectedAt` are different lines, so both
+ * survive. That is how 2026-08-24 produced a duplicate META item (collected
+ * 08-19 and re-collected 08-24) through a merge that reported no conflict.
+ *
+ * Nothing else reads this file closely enough to notice, which is the whole
+ * reason it needs an assertion rather than a convention.
+ */
+export function checkNewsFeed(feed) {
+    const fail = [];
+    const items = feed?.items;
+    if (!Array.isArray(items)) return { fail: ['news-feed.json has no items array'], count: 0 };
+    const seen = new Map();
+    for (const [i, it] of items.entries()) {
+        if (it?.id == null) { fail.push(`news-feed.json: item at index ${i} has no id`); continue; }
+        if (seen.has(it.id)) {
+            fail.push(
+                `news-feed.json: duplicate id "${it.id}" at indexes ${seen.get(it.id)} and ${i} ` +
+                `— append-only merges must union by id, not concatenate`
+            );
+        } else {
+            seen.set(it.id, i);
+        }
+    }
+    return { fail, count: items.length };
+}
+
 // --- runner ---------------------------------------------------------------
 
 async function readJson(p) { return JSON.parse(await readFile(p, 'utf8')); }
@@ -470,6 +501,15 @@ async function main() {
         ok(`book weights: portfolio asOf ${pf.asOf} is ${r.staleDays}d behind session ${session} (${rs.portfolioBasis?.status || 'no status'})`);
     } catch (e) {
         if (e.code === 'ENOENT') warn.push('risk-scores or portfolio-current absent — skipped'); else throw e;
+    }
+
+    console.log('\n[7] news-feed id uniqueness');
+    try {
+        const nf = checkNewsFeed(await readJson('data/news-feed.json'));
+        record(nf.fail);
+        ok(`${nf.count} items, every id unique`);
+    } catch (e) {
+        if (e.code === 'ENOENT') warn.push('data/news-feed.json absent — skipped'); else throw e;
     }
 
     console.log('');

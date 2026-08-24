@@ -198,9 +198,9 @@ There is no linter. The verification gate is `scripts/validate-data.mjs` —
 read-only integrity checks over the committed data layer — plus its fixture
 suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
 every PR and on every push except to `main`. The fixtures run **first**: a green pass over live data
-proves nothing if the checks themselves have been weakened, so each of the 25
-fixtures is either a recorded shape this repo shipped (14) or a minimal
-construction of a defect path the code actually permitted (11, each verified by
+proves nothing if the checks themselves have been weakened, so each of the 27
+fixtures is either a recorded shape this repo shipped (15) or a minimal
+construction of a defect path the code actually permitted (12, each verified by
 reproducing `fail: []` against the pre-fix check), and each must-fail case pins
 the expected failure *reason*. Add a fixture with every new invariant. The
 JSON-validate and script-syntax checks above still apply, plus loading the page

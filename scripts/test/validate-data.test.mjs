@@ -3,10 +3,10 @@
 //
 // Fixtures come in two kinds, and the distinction matters:
 //
-//   RECORDED (14) — a shape this repo actually shipped, e.g. the 2026-08-18
+//   RECORDED (15) — a shape this repo actually shipped, e.g. the 2026-08-18
 //     GOOGL row that published NASDAQ's outlier under a verified flag, or the
 //     KLAC band left 10x high across a split. The note on each says RECORDED.
-//   CONSTRUCTED (11) — a minimal instance of a defect path the code actually
+//   CONSTRUCTED (12) — a minimal instance of a defect path the code actually
 //     permitted, built to the real schema. Each was validated by reproducing
 //     `fail: []` against the pre-fix check before the fix landed, so it pins a
 //     hole that existed rather than an imagined one.
@@ -22,7 +22,7 @@
 // Run: node scripts/test/validate-data.test.mjs
 
 import { readFile } from 'node:fs/promises';
-import { checkQuotes, checkFundamentals, checkBands, checkBookWeights } from '../validate-data.mjs';
+import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNewsFeed } from '../validate-data.mjs';
 
 const DIR = new URL('./fixtures/', import.meta.url);
 const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8'));
@@ -190,6 +190,19 @@ const CASES = [
         shouldFail: true,
         expect: 'must be "BROKER-REFRESH-REQUIRED"',
         why: 'staleness declared away rather than declared',
+    },
+    {
+        file: 'news-feed-duplicate-id.json',
+        run: (d) => checkNewsFeed(d.feed).fail,
+        shouldFail: true,
+        expect: 'duplicate id',
+        why: "git's textual auto-merge kept both copies of one item; a clean merge is not a deduped merge",
+    },
+    {
+        file: 'news-feed-unique.json',
+        run: (d) => checkNewsFeed(d.feed).fail,
+        shouldFail: false,
+        why: 'union-by-id keeping the first occurrence',
     },
     {
         file: 'valuations-presplit-band.json',
