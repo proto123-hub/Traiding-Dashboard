@@ -1,9 +1,12 @@
 # Relay verification — SK Hynix 40조 자사주 소각 / 삼성 파운드리 단가 / 8-19 반도체 급락
 
+<!-- VAULT-WRITE target="01_Daily_Market/2026-08-19.md" from="## §7." to="## 이 저장소 쪽 연결" -->
+
 > **볼트 기록 대기 (VAULT-WRITE-PENDING).** 이 세션은 원격 컨테이너라
-> `D:\Obsidian\Trading_OS\Trading_OS`에 접근할 수 없다. 아래 §7 블록을
-> `01_Daily_Market/2026-08-19.md`에 **그대로 append** 하면 canon이 된다.
-> 게이지 DB 미러링도 함께 pending.
+> `D:\Obsidian\Trading_OS\Trading_OS`에 접근할 수 없다. 위 마커에 따라
+> `scripts/local/sync-vault.mjs`를 **local Claude Code에서** 실행하면 아래 §7
+> 블록이 `01_Daily_Market/2026-08-19.md`에 append 되어 canon이 된다. 수동으로
+> 붙여넣어도 결과는 같다. 게이지 DB 미러링은 여전히 pending.
 
 ---
 

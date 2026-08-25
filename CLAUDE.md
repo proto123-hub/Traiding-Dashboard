@@ -110,6 +110,9 @@ Strong success criteria let me loop independently. Weak criteria ("make it work"
 │   ├── scrape-quotes.mjs         # quotes → data/price-quotes.json + reports/raw/ drop
 │   ├── scrape-news.mjs           # headlines → data/news-feed.json (verified=false)
 │   ├── verify-quotes.mjs         # cross-source verify pass → reports/validation/ drop
+│   ├── validate-data.mjs         # read-only integrity gate (no network, no writes)
+│   ├── test/                     # fixture suite — runs BEFORE the live pass in CI
+│   ├── local/sync-vault.mjs      # LOCAL ONLY — reports → Obsidian vault, one-way
 │   └── lib/io.mjs                # readJson / writeJsonAtomic / timeouts / semaphore
 ├── .github/workflows/data-refresh.yml  # cron 11:00 & 21:00 UTC weekdays → commits to main
 ├── .claude/agents/               # 9 subagents (see orchestration below)
@@ -223,6 +226,49 @@ and watching the console.
 - Never commit localStorage exports — they live in the user's browser. To
   persist, the user clicks "JSON 내보내기" and commits the contents of
   `data/assets-history.json` manually.
+
+## Repo and vault — one boundary, one direction
+
+The Obsidian vault (`D:\Obsidian\Trading_OS\Trading_OS`) and this repo are
+**not** two halves of one store, and must not be merged:
+
+- **Repo** — the data pipeline, the dashboard, and the analyst reports. Most of
+  it is machine-written: cron-scraped data, bot commits, generated drops.
+- **Vault** — canon. Hand-authored, where judgments live, and the thing the
+  standing quality bar ("fact-verification based") is ultimately about.
+
+The verification discipline depends on those staying distinguishable. A
+cron-written price table sitting inside the knowledge base would be
+indistinguishable from a stamped conclusion the moment someone reads it a month
+later.
+
+**Data flows repo → vault only.** The interpreter's `reports/YYYY-MM/*.md` and
+relay-canon blocks go out to the vault; nothing in the vault flows back into
+generated data. `scripts/local/sync-vault.mjs` implements exactly that and
+nothing more.
+
+A report opts in by carrying one marker near its top:
+
+```
+<!-- VAULT-WRITE target="01_Daily_Market/2026-08-19.md" from="## §7." to="## 이 저장소 쪽 연결" -->
+```
+
+The sync appends the named block with a provenance comment and skips any target
+that already carries it, so re-running is safe and vault-side edits survive.
+
+### What runs where
+
+| | remote session / CI | local Claude Code |
+|---|---|---|
+| scrapers, validator, fixtures | yes | yes |
+| dashboard (`python3 -m http.server`) | yes | yes |
+| **vault sync** | **no — no D: drive** | **yes, only here** |
+
+Vault access is the only thing local can do that a remote session cannot.
+Everything else in this repo is zero-dependency Node and a static HTML file, so
+it behaves identically in both. `scripts/local/` is excluded from
+`data-refresh.yml` on purpose and exits non-zero when the vault is unreachable —
+in CI that exit is the guard working, not a failure.
 
 ## Known non-goals
 
