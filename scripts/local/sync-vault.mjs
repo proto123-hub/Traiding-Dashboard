@@ -37,12 +37,21 @@
 //     and a full rewrite would discard concurrent edits
 //
 // NOT AUTOMATED, DELIBERATELY: this writes into a store whose value is that it
-// is hand-authored. Run --dry-run first, read what it intends to do, and only
-// then run it for real. Nothing here should ever be put on a schedule.
+// is hand-authored. Nothing here should ever be put on a schedule.
+//
+// PINNED TO DRY RUN. Writing is implemented and reachable in code, but the
+// entry point refuses to do it. The rails above are the ones a read-only audit
+// asked for; they are not yet the ones Trading OS governance requires of a
+// canon writer, and the gap is not small — the fingerprint accepts any ONE of
+// three markers rather than all three, containment is lexical so a Windows
+// junction inside the vault still escapes it, appendFile races a concurrent
+// Obsidian save, and there is no target allowlist, no approval reference, and
+// no receipt of what was written. Until those exist and have behavioural tests
+// of their own, this reports what it WOULD do and stops. Un-pinning is
+// Daniel's call, not a follow-up commit's.
 //
 // Usage:
-//   node scripts/local/sync-vault.mjs --dry-run  # ALWAYS run this first
-//   node scripts/local/sync-vault.mjs            # write, after reading the above
+//   node scripts/local/sync-vault.mjs            # report intent (the only mode)
 //   TRADING_OS_VAULT=/path/to/vault node scripts/local/sync-vault.mjs
 
 import { readFile, writeFile, appendFile, readdir, mkdir, access } from 'node:fs/promises';
@@ -52,7 +61,11 @@ import { execFileSync } from 'node:child_process';
 
 const DEFAULT_VAULT = 'D:\\Obsidian\\Trading_OS\\Trading_OS';
 const VAULT = process.env.TRADING_OS_VAULT || DEFAULT_VAULT;
-const DRY_RUN = process.argv.includes('--dry-run');
+// Not a flag. See the header: the write path exists, and the entry point does
+// not reach it. `--dry-run` is still accepted so the documented invocation
+// keeps working, but passing nothing changes nothing.
+const DRY_RUN = true;
+const WRITE_REQUESTED = !process.argv.includes('--dry-run');
 
 // Files that identify a real Trading_OS vault. Writing canon into whatever
 // happens to sit at the configured path is not acceptable for a store whose
@@ -238,9 +251,17 @@ async function main() {
     }
 
     console.log(
-        `\nsync-vault: ${written} written, ${skipped} already present, ${blocked} blocked, ` +
-        `${failed} failed${DRY_RUN ? '  (dry run — nothing changed)' : ''}`
+        `\nsync-vault: ${written} would be written, ${skipped} already present, ${blocked} blocked, ` +
+        `${failed} failed  (dry run — nothing changed)`
     );
+    if (WRITE_REQUESTED) {
+        console.log(
+            `\nThis script is pinned to dry run and did not write. The vault rails it\n` +
+            `carries are not yet the ones Trading OS governance requires of a canon\n` +
+            `writer — see the header for the specific gaps. Un-pinning is a decision,\n` +
+            `not a flag.`
+        );
+    }
     if (failed || blocked) process.exit(1);
 }
 

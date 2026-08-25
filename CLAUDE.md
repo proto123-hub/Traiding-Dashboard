@@ -187,8 +187,9 @@ python3 -m http.server 8765
 node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs \
   && node scripts/scrape-yields.mjs && node scripts/scrape-fundamentals.mjs
 
-# Validator: fixtures first, then the committed data layer (what CI runs)
-node scripts/test/validate-data.test.mjs && node scripts/validate-data.mjs
+# Tests first, then the committed data layer (what CI runs)
+node scripts/test/validate-data.test.mjs && node scripts/test/scrape-news.test.mjs \
+  && node scripts/validate-data.mjs
 
 # Validate JSON
 find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
@@ -198,14 +199,26 @@ node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.mat
 ```
 
 There is no linter. The verification gate is `scripts/validate-data.mjs` —
-read-only integrity checks over the committed data layer — plus its fixture
-suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
-every PR and on every push except to `main`. The fixtures run **first**: a green pass over live data
-proves nothing if the checks themselves have been weakened, so each of the 28
-fixtures is either a recorded shape this repo shipped (16) or a minimal
-construction of a defect path the code actually permitted (12, each verified by
-reproducing `fail: []` against the pre-fix check), and each must-fail case pins
-the expected failure *reason*. Add a fixture with every new invariant. The
+read-only integrity checks over the committed data layer — plus two test suites
+in `scripts/test/`, and `.github/workflows/validate.yml` runs all three on every
+PR and on every push except to `main`.
+
+The tests run **first**: a green pass over live data proves nothing if the
+checks themselves have been weakened.
+
+- `validate-data.test.mjs` covers the READER — 29 cases over 28 fixture files,
+  each either a recorded shape this repo shipped (16) or a minimal construction
+  of a defect path the code actually permitted (12, each verified by reproducing
+  `fail: []` against the pre-fix check). Every must-fail case pins the expected
+  failure *reason*, so a check cannot be weakened and still pass on a
+  technicality. One case is not a fixture at all but a wiring assertion over
+  `data-refresh.yml`.
+- `scrape-news.test.mjs` covers the WRITER, which had no tests at all while it
+  shipped three ways to destroy the feed inside a run that exited 0. It runs no
+  network: the fail-closed cases refuse before the scrape, and the append case
+  drives `main()` against a stubbed `fetch`.
+
+Add a case with every new invariant, on whichever side owns it. The
 JSON-validate and script-syntax checks above still apply, plus loading the page
 and watching the console.
 
@@ -256,13 +269,23 @@ A report opts in by carrying one marker near its top:
 The sync appends the named block with a provenance comment and skips any target
 that already carries it, so re-running is safe and vault-side edits survive.
 
+**It is currently pinned to dry run and writes nothing.** The write path is
+implemented; the entry point does not reach it. The rails it carries came from a
+read-only audit, and they are not yet what Trading OS governance requires of a
+canon writer — the vault fingerprint accepts any one of three markers rather
+than all three, containment is lexical so a Windows junction inside the vault
+still escapes it, `appendFile` races a concurrent Obsidian save, and there is no
+target allowlist, no approval reference and no receipt of what landed. Run it to
+see what it *would* do. Un-pinning is Daniel's decision and needs those rails
+plus behavioural tests of their own — not a follow-up commit.
+
 ### What runs where
 
 | | remote session / CI | local Claude Code |
 |---|---|---|
 | scrapers, validator, fixtures | yes | yes |
 | dashboard (`python3 -m http.server`) | yes | yes |
-| **vault sync** | **no — no D: drive** | **yes, only here** |
+| **vault sync (dry run only)** | **no — no D: drive** | **yes, only here** |
 
 Vault access is the only thing local can do that a remote session cannot.
 Everything else in this repo is zero-dependency Node and a static HTML file, so

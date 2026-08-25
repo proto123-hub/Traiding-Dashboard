@@ -235,15 +235,35 @@ const CASES = [
             // in a nearby comment satisfied — so deleting the actual command
             // left the check green. A check that passes on prose is the same
             // defect it was written to catch.
-            const invokes = (cmd) => new RegExp(`^\\s*node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm').test(wf);
-            if (!invokes('scripts/dedupe-news-feed.mjs')) {
+            // `run: node x.mjs` (a one-line step) and a bare `node x.mjs`
+            // (a line inside `run: |`) are both invocations; a mention in prose
+            // is not.
+            const invokes = (hay, cmd) =>
+                new RegExp(`^\\s*(run:\\s+)?node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm').test(hay);
+
+            // Scope to the retry loop. Searching the whole file was the same
+            // mistake one level up: the pre-commit integrity step is also a
+            // bare `node scripts/validate-data.mjs`, so it satisfied the
+            // re-validation assertion on its own and the replay path could have
+            // dropped its copy with the check still green. The two are separate
+            // invariants over two different trees.
+            const loopStart = wf.indexOf('for i in 1 2 3; do');
+            const loopEnd = wf.indexOf('\n          done', loopStart);
+            if (loopStart < 0 || loopEnd < 0) return ['cannot locate the push-retry loop in data-refresh.yml'];
+            const replay = wf.slice(loopStart, loopEnd);
+            const beforeLoop = wf.slice(0, loopStart);
+
+            if (!invokes(replay, 'scripts/dedupe-news-feed.mjs')) {
                 bad.push('replay path does not invoke scripts/dedupe-news-feed.mjs');
             }
-            if (/\(a\.items\|\|\[\]\)\.forEach\(i=>m\.set/.test(wf)) {
+            if (/\(a\.items\|\|\[\]\)\.forEach\(i=>m\.set/.test(replay)) {
                 bad.push('an inline origin-first Map merge is back in the workflow');
             }
-            if (!invokes('scripts/validate-data.mjs')) {
+            if (!invokes(replay, 'scripts/validate-data.mjs')) {
                 bad.push('replayed tree is committed without re-validation');
+            }
+            if (!invokes(beforeLoop, 'scripts/validate-data.mjs')) {
+                bad.push('the first-attempt tree is committed without validation — the bot is exempt again');
             }
             return bad;
         },

@@ -50,5 +50,12 @@ jobs:
       - name: Validator regression fixtures
         run: node scripts/test/validate-data.test.mjs
 
+      # The reader has fixtures; the WRITER had none, and every defect it
+      # shipped — a rebuilt feed, a coalesced null, a truthy "0" — exited 0.
+      # Runs no network: every case either refuses before the scrape or drives
+      # main() against a stubbed fetch.
+      - name: News writer regression tests
+        run: node scripts/test/scrape-news.test.mjs
+
       - name: Data integrity
         run: node scripts/validate-data.mjs

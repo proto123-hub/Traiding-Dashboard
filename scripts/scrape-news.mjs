@@ -62,6 +62,50 @@ async function fetchGoogleNews(symbol, signal) {
     return parseRssItems(xml, MAX_PER_TICKER);
 }
 
+/**
+ * Fail-closed shape check, run BEFORE any scraping.
+ *
+ * `feed.items = feed.items || []` was the whole of this, and it is the shape a
+ * silent history loss takes: `{"items": null}` parses, so the loud
+ * does-not-parse branch never fires; the coalesce then turns 9,046 records into
+ * `[]`, the run appends the day's headlines and exits 0. Corruption that
+ * happens to be valid JSON must be as loud as corruption that is not.
+ *
+ * Returns a list of faults; empty means the object is safe to append to.
+ */
+export function feedShapeFaults(feed) {
+    const out = [];
+    if (feed === null || typeof feed !== 'object' || Array.isArray(feed)) {
+        out.push(`top level is ${Array.isArray(feed) ? 'an array' : feed === null ? 'null' : typeof feed}, expected an object`);
+        return out;
+    }
+    if (!('items' in feed)) out.push('no "items" key');
+    else if (!Array.isArray(feed.items)) {
+        out.push(`"items" is ${feed.items === null ? 'null' : typeof feed.items}, expected an array`);
+    }
+    return out;
+}
+
+/**
+ * Continuity gate: every id read must still be present in what is written.
+ *
+ * The previous version compared `feed.items.length` before and after a push
+ * into that same array, so the two lengths were the same number read twice and
+ * the branch could not fire. Comparing ID SETS on the object actually handed to
+ * the writer is checkable: it fires if a future edit rebuilds `items` by
+ * filter, map, or assignment instead of appending to it.
+ */
+export function continuityFaults(beforeIds, afterItems) {
+    const after = new Set((afterItems || []).map(i => i && i.id));
+    const missing = [...beforeIds].filter(id => !after.has(id));
+    if (!missing.length) return [];
+    return [
+        `refusing to write data/news-feed.json: ${missing.length} of ${beforeIds.size} ids read ` +
+        `are absent from what would be written (e.g. ${missing.slice(0, 3).map(i => JSON.stringify(i)).join(', ')}). ` +
+        `An append-only feed cannot lose records.`
+    ];
+}
+
 async function main() {
     const universe = await readJson('data/tickers-universe.json');
     const tickers = (universe.tickers || []).map(t => t.symbol);
@@ -82,7 +126,10 @@ async function main() {
                 `continue: this run would replace the whole feed with today's headlines.`
             );
         }
-        if (!process.env.NEWS_FEED_BOOTSTRAP) {
+        // `!process.env.NEWS_FEED_BOOTSTRAP` let NEWS_FEED_BOOTSTRAP=0 through:
+        // env vars are strings and "0" is truthy. An opt-in this destructive
+        // takes exactly the one value that spells it.
+        if (process.env.NEWS_FEED_BOOTSTRAP !== '1') {
             throw new Error(
                 'data/news-feed.json is missing. It is a committed file, so absence means a ' +
                 'bad checkout or a deleted file, not a first run. Set NEWS_FEED_BOOTSTRAP=1 to ' +
@@ -91,11 +138,22 @@ async function main() {
         }
         feed = { items: [] };
     }
-    if (!feed.note) feed.note = 'Owned by collector agent; verified field set by validator. Each item must have ≥2 cross-sources to be verified=true.';
-    feed.items = feed.items || [];
 
-    const startingCount = feed.items.length;
-    const existingIds = new Set(feed.items.map(i => i.id));
+    // Before the network, not after: a run that has already spent 24 fetches is
+    // under pressure to write something, and this is the point at which the
+    // feed is still exactly what was on disk.
+    const shape = feedShapeFaults(feed);
+    if (shape.length) {
+        throw new Error(
+            `data/news-feed.json parses but is not a news feed: ${shape.join('; ')}. Refusing to ` +
+            `continue: this run would replace the whole feed with today's headlines.`
+        );
+    }
+
+    if (!feed.note) feed.note = 'Owned by collector agent; verified field set by validator. Each item must have ≥2 cross-sources to be verified=true.';
+
+    const startingIds = new Set(feed.items.map(i => i.id));
+    const existingIds = new Set(startingIds);
     const sem = new Semaphore(CONCURRENCY);
     const collected = [];
     const failures = [];
@@ -131,17 +189,10 @@ async function main() {
     })));
 
     if (collected.length > 0) {
-        feed.items.push(...collected);
-        // Continuity gate: this file is append-only, so the count can only grow.
-        // A shrink means the feed being written is not a superset of the one
-        // read, which is the shape a silent history loss takes.
-        if (feed.items.length < startingCount) {
-            throw new Error(
-                `refusing to write data/news-feed.json: ${startingCount} items read, ` +
-                `${feed.items.length} about to be written. An append-only feed cannot shrink.`
-            );
-        }
-        await writeJsonAtomic('data/news-feed.json', feed);
+        const outgoing = { ...feed, items: [...feed.items, ...collected] };
+        const faults = continuityFaults(startingIds, outgoing.items);
+        if (faults.length) throw new Error(faults.join(' '));
+        await writeJsonAtomic('data/news-feed.json', outgoing);
     }
 
     if (collected.length > 0 || failures.length > 0) {
@@ -158,4 +209,10 @@ async function main() {
     console.log(`scrape-news: appended ${collected.length} items across ${tickers.length} tickers, ${failures.length} failures`);
 }
 
-main().catch(e => { console.error('fatal:', e); process.exit(1); });
+// Direct-invocation guard, same reason as validate-data.mjs: importing this to
+// drive main() against a stubbed fetch in scripts/test/ must not scrape.
+if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+    main().catch(e => { console.error('fatal:', e.message || e); process.exit(1); });
+}
+
+export { main };
