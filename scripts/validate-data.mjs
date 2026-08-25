@@ -504,13 +504,13 @@ async function main() {
     }
 
     console.log('\n[7] news-feed id uniqueness');
-    try {
-        const nf = checkNewsFeed(await readJson('data/news-feed.json'));
-        record(nf.fail);
-        ok(`${nf.count} items, every id unique`);
-    } catch (e) {
-        if (e.code === 'ENOENT') warn.push('data/news-feed.json absent — skipped'); else throw e;
-    }
+    // Absence is a failure, not a warning: this file is committed, the
+    // dashboard's news-latest slice is derived from it, and a "skipped" line
+    // in a green run is exactly the silent-pass shape this validator exists
+    // to remove.
+    const nf = checkNewsFeed(await readJson('data/news-feed.json'));
+    record(nf.fail);
+    ok(`${nf.count} items, every id unique`);
 
     console.log('');
     warn.forEach(w => console.log(`  warn ${w}`));

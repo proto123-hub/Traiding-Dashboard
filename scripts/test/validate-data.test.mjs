@@ -3,7 +3,7 @@
 //
 // Fixtures come in two kinds, and the distinction matters:
 //
-//   RECORDED (15) — a shape this repo actually shipped, e.g. the 2026-08-18
+//   RECORDED (16) — a shape this repo actually shipped, e.g. the 2026-08-18
 //     GOOGL row that published NASDAQ's outlier under a verified flag, or the
 //     KLAC band left 10x high across a split. The note on each says RECORDED.
 //   CONSTRUCTED (12) — a minimal instance of a defect path the code actually
@@ -23,6 +23,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNewsFeed } from '../validate-data.mjs';
+import { dedupeByEarliest } from '../dedupe-news-feed.mjs';
 
 const DIR = new URL('./fixtures/', import.meta.url);
 const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8'));
@@ -203,6 +204,20 @@ const CASES = [
         run: (d) => checkNewsFeed(d.feed).fail,
         shouldFail: false,
         why: 'union-by-id keeping the first occurrence',
+    },
+    {
+        file: 'news-feed-earliest-wins.json',
+        run: (d) => {
+            const out = dedupeByEarliest(d.items);
+            const bad = [];
+            if (out.length !== d.expect.count) bad.push(`collapsed to ${out.length}, expected ${d.expect.count}`);
+            for (const it of out) {
+                if (it.which === 'later') bad.push(`id "${it.id}" retained the later copy (${it.collectedAt})`);
+            }
+            return bad;
+        },
+        shouldFail: false,
+        why: 'earliest collectedAt wins regardless of input order — array order is not a rule',
     },
     {
         file: 'valuations-presplit-band.json',

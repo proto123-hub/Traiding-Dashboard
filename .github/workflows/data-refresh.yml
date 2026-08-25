@@ -58,6 +58,14 @@ jobs:
             node -e "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))" "$f" && echo "OK $f"
           done
 
+      # validate.yml carries branches-ignore:[main], so nothing the bot writes to
+      # main is covered by it. Without this the cron is the one writer no
+      # integrity check ever sees — and it is the writer that produced the
+      # duplicate news-feed id on 2026-08-24. Read-only; fails the run rather
+      # than committing a feed that violates an invariant.
+      - name: Data integrity (the bot is not exempt)
+        run: node scripts/validate-data.mjs
+
       - name: Commit & push if changed
         run: |
           if git diff --quiet data/ reports/raw/ reports/validation/; then

@@ -1,0 +1,11 @@
+{
+  "note": "RECORDED GAP — 2026-08-24. Two ids retained a collectedAt three minutes LATER than their first observation, because the dedupe kept whichever copy git had ordered first rather than whichever was seen first. `collectedAt` means when a run first saw the item, so array order is not a rule. Input here is deliberately later-first: the earliest must win regardless.",
+  "items": [
+    { "id": "a", "ticker": "AVGO", "collectedAt": "2026-08-19T11:23:46Z", "which": "later" },
+    { "id": "a", "ticker": "AVGO", "collectedAt": "2026-08-19T11:20:57Z", "which": "earliest" },
+    { "id": "b", "ticker": "META", "collectedAt": "2026-08-19T11:20:57Z", "which": "earliest" },
+    { "id": "b", "ticker": "META", "collectedAt": "2026-08-19T11:23:46Z", "which": "later" },
+    { "id": "c", "ticker": "MRVL", "collectedAt": "2026-08-21T21:25:18Z", "which": "only" }
+  ],
+  "expect": { "count": 3, "allEarliest": true }
+}

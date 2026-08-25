@@ -201,8 +201,8 @@ There is no linter. The verification gate is `scripts/validate-data.mjs` —
 read-only integrity checks over the committed data layer — plus its fixture
 suite in `scripts/test/`, and `.github/workflows/validate.yml` runs both on
 every PR and on every push except to `main`. The fixtures run **first**: a green pass over live data
-proves nothing if the checks themselves have been weakened, so each of the 27
-fixtures is either a recorded shape this repo shipped (15) or a minimal
+proves nothing if the checks themselves have been weakened, so each of the 28
+fixtures is either a recorded shape this repo shipped (16) or a minimal
 construction of a defect path the code actually permitted (12, each verified by
 reproducing `fail: []` against the pre-fix check), and each must-fail case pins
 the expected failure *reason*. Add a fixture with every new invariant. The
@@ -297,7 +297,14 @@ in CI that exit is the guard working, not a failure.
   were not. The header comments in `scripts/*.mjs` are authoritative on source
   selection and rate limits.
 - **`data/news-feed.json` is multi-MB** (cron-appended). Never read it whole
-  into context — slice with `node -e` / `grep` by ticker or date.
+  into context — slice with `node -e` / `grep` by ticker or date. When two
+  writers merge it, run `node scripts/dedupe-news-feed.mjs` — **including
+  when git reports no conflict**, because a clean textual merge keeps both
+  copies of an id whose `collectedAt` differs. The rule is earliest
+  `collectedAt` wins, not first-in-array: `collectedAt` records when a run
+  first saw the item, and array order is whatever git chose. Validator check
+  [7] asserts the result (ids unique) but cannot assert the retention — once
+  the later copy is dropped, the evidence it existed is gone.
 - **`valuation-dashboard-v3.6.html` is legacy.** It predates `index.html` and
   is kept for reference; new work goes in `index.html` only.
 - **Never edit `data/price-quotes.json` by hand** — always go through the
