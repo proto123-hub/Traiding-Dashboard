@@ -24,6 +24,7 @@
 import { readFile } from 'node:fs/promises';
 import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNewsFeed } from '../validate-data.mjs';
 import { dedupeByEarliest } from '../dedupe-news-feed.mjs';
+import { readFileSync } from 'node:fs';
 
 const DIR = new URL('./fixtures/', import.meta.url);
 const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8'));
@@ -218,6 +219,36 @@ const CASES = [
         },
         shouldFail: false,
         why: 'earliest collectedAt wins regardless of input order — array order is not a rule',
+    },
+    {
+        // Not a data fixture: a wiring assertion. dedupe-news-feed.mjs was
+        // written, tested, documented — and never called from the production
+        // path, which kept its own origin-first merge and its own bug. The rule
+        // existing is not the rule running.
+        file: 'news-feed-unique.json',
+        label: 'data-refresh.yml calls the shared dedupe, not its own',
+        run: () => {
+            const wf = readFileSync('.github/workflows/data-refresh.yml', 'utf8');
+            const bad = [];
+            // Match an INVOCATION, not a mention. The first version of this
+            // check used wf.includes(), which the word "dedupe-news-feed.mjs"
+            // in a nearby comment satisfied — so deleting the actual command
+            // left the check green. A check that passes on prose is the same
+            // defect it was written to catch.
+            const invokes = (cmd) => new RegExp(`^\\s*node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm').test(wf);
+            if (!invokes('scripts/dedupe-news-feed.mjs')) {
+                bad.push('replay path does not invoke scripts/dedupe-news-feed.mjs');
+            }
+            if (/\(a\.items\|\|\[\]\)\.forEach\(i=>m\.set/.test(wf)) {
+                bad.push('an inline origin-first Map merge is back in the workflow');
+            }
+            if (!invokes('scripts/validate-data.mjs')) {
+                bad.push('replayed tree is committed without re-validation');
+            }
+            return bad;
+        },
+        shouldFail: false,
+        why: 'the production writer uses the shared rule and re-validates what it replays',
     },
     {
         file: 'valuations-presplit-band.json',

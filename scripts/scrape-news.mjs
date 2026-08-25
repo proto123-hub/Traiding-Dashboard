@@ -66,11 +66,35 @@ async function main() {
     const universe = await readJson('data/tickers-universe.json');
     const tickers = (universe.tickers || []).map(t => t.symbol);
 
-    let feed = { items: [] };
-    try { feed = await readJson('data/news-feed.json'); } catch { /* first run */ }
+    // A bare catch here treated three different situations identically: a
+    // genuine first run, a missing file, and a CORRUPT one. Removing the
+    // committed 9,046-item feed and re-running produced a fresh 24-item file
+    // and a green validator pass — the entire history gone inside a run that
+    // reported success. Absence and corruption now fail loudly; bootstrapping
+    // an empty feed is possible but must be asked for.
+    let feed;
+    try {
+        feed = await readJson('data/news-feed.json');
+    } catch (e) {
+        if (e.code !== 'ENOENT') {
+            throw new Error(
+                `data/news-feed.json exists but does not parse (${e.message}). Refusing to ` +
+                `continue: this run would replace the whole feed with today's headlines.`
+            );
+        }
+        if (!process.env.NEWS_FEED_BOOTSTRAP) {
+            throw new Error(
+                'data/news-feed.json is missing. It is a committed file, so absence means a ' +
+                'bad checkout or a deleted file, not a first run. Set NEWS_FEED_BOOTSTRAP=1 to ' +
+                'create one deliberately.'
+            );
+        }
+        feed = { items: [] };
+    }
     if (!feed.note) feed.note = 'Owned by collector agent; verified field set by validator. Each item must have ≥2 cross-sources to be verified=true.';
     feed.items = feed.items || [];
 
+    const startingCount = feed.items.length;
     const existingIds = new Set(feed.items.map(i => i.id));
     const sem = new Semaphore(CONCURRENCY);
     const collected = [];
@@ -108,6 +132,15 @@ async function main() {
 
     if (collected.length > 0) {
         feed.items.push(...collected);
+        // Continuity gate: this file is append-only, so the count can only grow.
+        // A shrink means the feed being written is not a superset of the one
+        // read, which is the shape a silent history loss takes.
+        if (feed.items.length < startingCount) {
+            throw new Error(
+                `refusing to write data/news-feed.json: ${startingCount} items read, ` +
+                `${feed.items.length} about to be written. An append-only feed cannot shrink.`
+            );
+        }
         await writeJsonAtomic('data/news-feed.json', feed);
     }
 

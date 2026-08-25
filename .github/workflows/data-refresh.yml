@@ -94,20 +94,30 @@ jobs:
             git fetch origin "$GITHUB_REF_NAME"
             git reset --hard "origin/$GITHUB_REF_NAME"
             # news-feed.json is the one append-only file here; overwriting it
-            # would drop whatever the other run appended, so union by item id.
+            # would drop whatever the other run appended, so both sides are
+            # concatenated and then collapsed by scripts/dedupe-news-feed.mjs.
+            #
+            # This used to be an inline origin-first Map merge, which kept
+            # whichever copy it saw first rather than the earliest-collected
+            # one — the same "first occurrence" mistake the helper exists to
+            # end. The helper is the single definition of the rule; do not
+            # reintroduce a second one here.
             if [ -f data/news-feed.json ] && [ -f "$tmp/data/news-feed.json" ]; then
               node -e "
                 const fs=require('fs');
                 const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
                 const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
-                const m=new Map();
-                (a.items||[]).forEach(i=>m.set(i.id,i));
-                (b.items||[]).forEach(i=>{if(!m.has(i.id))m.set(i.id,i)});
-                fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...m.values()]},null,2)+'\n');
+                fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...(a.items||[]),...(b.items||[])]},null,2)+'\n');
               " data/news-feed.json "$tmp/data/news-feed.json"
             fi
             cp -r "$tmp"/data "$tmp"/reports .
             rm -rf "$tmp"
+            # Collapse by the shared rule (earliest collectedAt wins), then
+            # re-validate: the replayed tree is a DIFFERENT tree from the one
+            # the integrity step above checked, and it was previously committed
+            # without any check at all.
+            node scripts/dedupe-news-feed.mjs
+            node scripts/validate-data.mjs
             git add data/ reports/raw/ reports/validation/
             if git diff --cached --quiet; then echo "origin already has this data"; exit 0; fi
             git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
