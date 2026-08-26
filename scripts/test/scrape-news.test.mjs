@@ -28,15 +28,15 @@
 // passed pre-fix too — they are there to keep the paths that already worked
 // from being lost to a later edit, not as evidence of a bug.
 //
-// Three later cases are not fixtures at all. `main() runs the continuity gate`
+// Two later cases are not fixtures at all. `main() runs the continuity gate`
 // mutates a copy of the writer, because deleting the continuityFaults() CALL
 // from main() left this suite green — the unit cases exercise the helper and
 // the append case loses nothing either way, so between them they proved the
-// rule exists, not that the writer runs it. `the harness scrubs every env var`
-// and the ambient-bootstrap case pin the harness instead of the code: the
-// suite inherited NEWS_FEED_BOOTSTRAP from the environment it was run in, so a
-// shell that exported =1 turned the fail-closed cases green-by-accident and
-// took the suite to 1/14 red for a reason unrelated to any of them.
+// rule exists, not that the writer runs it. The ambient-bootstrap case pins
+// the harness instead of the code: the suite inherited NEWS_FEED_BOOTSTRAP
+// from the environment it was run in, so a shell that exported =1 turned the
+// fail-closed cases green-by-accident and took the suite to 1/14 red for a
+// reason unrelated to any of them.
 //
 // Run: node scripts/test/scrape-news.test.mjs
 
@@ -201,9 +201,13 @@ const SCRIPTS = [
     {
         // `ambient` poisons THIS process's environment for the duration of the
         // spawn — the state a developer shell or a CI job that exported the
-        // variable leaves behind. envFor() has to scrub at spawn time for this
-        // to refuse; a harness that snapshots one clean env at startup passes
-        // every other case here while still not being hermetic.
+        // variable leaves behind. What this pins is the invariant that matters:
+        // an ambient NEWS_FEED_BOOTSTRAP does not reach a subprocess that did
+        // not ask for it. It does NOT pin how envFor() achieves that — a
+        // harness snapshotting one clean environment at startup passes this
+        // case too (verified). envFor() computes per spawn anyway, because that
+        // also covers a variable exported after startup, but no case here
+        // distinguishes the two and this comment should not imply one does.
         label: 'ambient NEWS_FEED_BOOTSTRAP=1 does not reach a case that did not ask for it',
         feed: null,
         env: {},
@@ -213,16 +217,16 @@ const SCRIPTS = [
     },
 ];
 
-// WRITER_ENV is only as good as its coverage: a new variable added to
-// scrape-news.mjs would be inherited again, and nothing would notice until a
-// case went red for a reason unrelated to its code.
-{
-    const label = 'the harness scrubs every env var the writer reads';
-    const read = [...(await readFile(SCRIPT, 'utf8')).matchAll(/process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g)].map(m => m[1]);
-    const missed = [...new Set(read)].filter(k => !WRITER_ENV.includes(k));
-    if (missed.length) fail(label, `scrape-news.mjs reads ${missed.join(', ')}, which every spawn inherits — add to WRITER_ENV`);
-    else ok(label, 'no variable the writer reads survives into a spawned case');
-}
+// WRITER_ENV's coverage is not asserted here, deliberately. A scan for
+// `process.env.X` over the writer's source cannot deliver what such an
+// assertion would claim: it reads dot notation only, so `process.env['X']` and
+// `const { X } = process.env` are invisible to it, and it cannot tell a read
+// from a mention — scrape-news.mjs names process.env.NEWS_FEED_BOOTSTRAP in a
+// comment explaining the old truthiness bug, which the scan counts. A check
+// that passes on prose and misses two real syntaxes is the shape of defect
+// this suite exists to remove, not to add. The ambient case below pins the
+// regression that matters directly; a new variable is covered by adding it to
+// WRITER_ENV and a case that exercises it.
 
 for (const c of SCRIPTS) {
     const dir = await scratch(c.feed);
@@ -314,8 +318,8 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
 // this copies the writer into a temp tree and applies the edit the gate exists
 // to catch: `items` rebuilt by assignment instead of appended to, which is how
 // a filter or a map would arrive. With the call in place the run throws and the
-// bytes on disk are untouched; without it the same mutant writes a 2-item feed
-// over a 4-item one and returns normally.
+// bytes on disk are untouched; without it the same mutant writes a 1-item feed
+// over the 2-item one on disk and returns normally.
 
 {
     const label = 'main() runs the continuity gate, not just the helper';
