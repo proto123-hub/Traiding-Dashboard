@@ -238,8 +238,10 @@ const CASES = [
             // `run: node x.mjs` (a one-line step) and a bare `node x.mjs`
             // (a line inside `run: |`) are both invocations; a mention in prose
             // is not.
-            const invokes = (hay, cmd) =>
-                new RegExp(`^\\s*(run:\\s+)?node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm').test(hay);
+            const cmdRe = (cmd) =>
+                new RegExp(`^\\s*(run:\\s+)?node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm');
+            const invokes = (hay, cmd) => cmdRe(cmd).test(hay);
+            const at = (hay, re) => { const m = re.exec(hay); return m ? m.index : -1; };
 
             // Scope to the retry loop. Searching the whole file was the same
             // mistake one level up: the pre-commit integrity step is also a
@@ -265,10 +267,40 @@ const CASES = [
             if (!invokes(beforeLoop, 'scripts/validate-data.mjs')) {
                 bad.push('the first-attempt tree is committed without validation — the bot is exempt again');
             }
+
+            // Presence is not order, and until now this check asserted only
+            // presence: moving `node scripts/validate-data.mjs` above the
+            // replay left it green. That order validates the tree the replay is
+            // about to overwrite — precisely the tree the pre-commit integrity
+            // step already checked — and commits the replayed one unchecked,
+            // which is the hole this case exists to close. Dedupe after the
+            // validator is the same defect one step along: the feed committed
+            // would not be the feed checked. The SEQUENCE is the invariant.
+            const SEQUENCE = [
+                ["replay origin's tree", /^\s*cp -r "\$tmp"\/data\b/m],
+                ['dedupe', cmdRe('scripts/dedupe-news-feed.mjs')],
+                ['re-validate', cmdRe('scripts/validate-data.mjs')],
+                ['stage', /^\s*git add /m],
+                ['commit', /^\s*git commit /m],
+            ].map(([name, re]) => [name, at(replay, re)]);
+
+            for (const [name, i] of SEQUENCE) {
+                if (i < 0) bad.push(`replay path has no ${name} step`);
+            }
+            for (let i = 1; i < SEQUENCE.length; i++) {
+                const [prev, prevAt] = SEQUENCE[i - 1];
+                const [next, nextAt] = SEQUENCE[i];
+                if (prevAt >= 0 && nextAt >= 0 && nextAt < prevAt) {
+                    bad.push(
+                        `${next} runs before ${prev} in the replay path — the order must be ` +
+                        `replay -> dedupe -> re-validate -> stage/commit`
+                    );
+                }
+            }
             return bad;
         },
         shouldFail: false,
-        why: 'the production writer uses the shared rule and re-validates what it replays',
+        why: 'the production writer uses the shared rule and re-validates what it replays, in that order',
     },
     {
         file: 'valuations-presplit-band.json',

@@ -28,18 +28,46 @@
 // passed pre-fix too — they are there to keep the paths that already worked
 // from being lost to a later edit, not as evidence of a bug.
 //
+// Three later cases are not fixtures at all. `main() runs the continuity gate`
+// mutates a copy of the writer, because deleting the continuityFaults() CALL
+// from main() left this suite green — the unit cases exercise the helper and
+// the append case loses nothing either way, so between them they proved the
+// rule exists, not that the writer runs it. `the harness scrubs every env var`
+// and the ambient-bootstrap case pin the harness instead of the code: the
+// suite inherited NEWS_FEED_BOOTSTRAP from the environment it was run in, so a
+// shell that exported =1 turned the fail-closed cases green-by-accident and
+// took the suite to 1/14 red for a reason unrelated to any of them.
+//
 // Run: node scripts/test/scrape-news.test.mjs
 
-import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { feedShapeFaults, continuityFaults } from '../scrape-news.mjs';
 
 const run = promisify(execFile);
 const REPO = process.cwd();
 const SCRIPT = join(REPO, 'scripts/scrape-news.mjs');
+
+// The writer's environment is what half these cases are ABOUT, so it cannot be
+// inherited. `{ ...process.env }` meant a shell exporting NEWS_FEED_BOOTSTRAP=1
+// bootstrapped the missing feed the `no bootstrap` case requires to be refused:
+// that case exited 0 and the suite went 1/14 red without a line of code
+// changing. Each spawn gets the parent environment minus everything the writer
+// reads, plus only what its own case sets — computed per spawn, not snapshotted,
+// so a variable set after startup is scrubbed too.
+const WRITER_ENV = ['NEWS_FEED_BOOTSTRAP'];
+const envFor = (over = {}) => {
+    const env = { ...process.env, ...over };
+    for (const k of WRITER_ENV) if (!(k in over)) delete env[k];
+    return env;
+};
+// The in-process cases below call main() in THIS process, which reads this
+// object directly.
+for (const k of WRITER_ENV) delete process.env[k];
 
 const UNIVERSE = { tickers: [{ symbol: 'CLS' }] };
 const FEED = {
@@ -62,8 +90,9 @@ async function scratch(feedText) {
 const exists = async (p) => { try { await access(p); return true; } catch { return false; } };
 
 let bad = 0;
-const fail = (label, msg) => { console.log(`  FAIL ${label}: ${msg}`); bad++; };
-const ok = (label, why) => console.log(`  ok   ${label} — ${why}`);
+let ran = 0;
+const fail = (label, msg) => { ran++; console.log(`  FAIL ${label}: ${msg}`); bad++; };
+const ok = (label, why) => { ran++; console.log(`  ok   ${label} — ${why}`); };
 
 // ---------------------------------------------------------------- unit gates
 
@@ -169,17 +198,51 @@ const SCRIPTS = [
         expect: 'is not a news feed',
         why: 'the gate runs before the network, while the feed is still what was on disk',
     },
+    {
+        // `ambient` poisons THIS process's environment for the duration of the
+        // spawn — the state a developer shell or a CI job that exported the
+        // variable leaves behind. envFor() has to scrub at spawn time for this
+        // to refuse; a harness that snapshots one clean env at startup passes
+        // every other case here while still not being hermetic.
+        label: 'ambient NEWS_FEED_BOOTSTRAP=1 does not reach a case that did not ask for it',
+        feed: null,
+        env: {},
+        ambient: { NEWS_FEED_BOOTSTRAP: '1' },
+        expect: 'is missing',
+        why: 'the environment the suite runs in cannot decide the outcome of a fail-closed case',
+    },
 ];
+
+// WRITER_ENV is only as good as its coverage: a new variable added to
+// scrape-news.mjs would be inherited again, and nothing would notice until a
+// case went red for a reason unrelated to its code.
+{
+    const label = 'the harness scrubs every env var the writer reads';
+    const read = [...(await readFile(SCRIPT, 'utf8')).matchAll(/process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g)].map(m => m[1]);
+    const missed = [...new Set(read)].filter(k => !WRITER_ENV.includes(k));
+    if (missed.length) fail(label, `scrape-news.mjs reads ${missed.join(', ')}, which every spawn inherits — add to WRITER_ENV`);
+    else ok(label, 'no variable the writer reads survives into a spawned case');
+}
 
 for (const c of SCRIPTS) {
     const dir = await scratch(c.feed);
     const target = join(dir, 'data/news-feed.json');
+    const restore = Object.entries(c.ambient || {}).map(([k, v]) => {
+        const had = process.env[k];
+        process.env[k] = v;
+        return [k, had];
+    });
     let code = 0, stderr = '';
     try {
-        await run(process.execPath, [SCRIPT], { cwd: dir, env: { ...process.env, ...c.env } });
+        await run(process.execPath, [SCRIPT], { cwd: dir, env: envFor(c.env) });
     } catch (e) {
         code = e.code;
         stderr = `${e.stderr || ''}${e.stdout || ''}`;
+    } finally {
+        for (const [k, had] of restore) {
+            if (had === undefined) delete process.env[k];
+            else process.env[k] = had;
+        }
     }
     if (code === 0) {
         fail(c.label, 'exited 0 — the run reported success');
@@ -238,10 +301,72 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
     }
 }
 
-const total = UNIT.length + SCRIPTS.length + 1;
+// ------------------------------------------ the gate is wired, not just present
+//
+// Deleting the continuityFaults() call from main() left every case above green.
+// The unit cases call the helper directly; the append case is a clean append
+// that loses nothing whether the gate runs or not. Together they pin the rule's
+// existence, which is exactly what dedupe-news-feed.mjs also had while the
+// production path kept its own merge and its own bug — written, tested,
+// documented, called from nowhere.
+//
+// The call is only observable when the write path actually loses a record, so
+// this copies the writer into a temp tree and applies the edit the gate exists
+// to catch: `items` rebuilt by assignment instead of appended to, which is how
+// a filter or a map would arrive. With the call in place the run throws and the
+// bytes on disk are untouched; without it the same mutant writes a 2-item feed
+// over a 4-item one and returns normally.
+
+{
+    const label = 'main() runs the continuity gate, not just the helper';
+    const APPEND = 'items: [...feed.items, ...collected]';
+    const REBUILD = 'items: [...collected]';
+    const source = await readFile(SCRIPT, 'utf8');
+
+    if (!source.includes(APPEND)) {
+        fail(label, `scrape-news.mjs no longer contains ${JSON.stringify(APPEND)} — this case mutates that expression and has to be updated with it`);
+    } else {
+        const dir = await scratch(JSON.stringify(FEED, null, 2) + '\n');
+        const before = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        await mkdir(join(dir, 'scripts/lib'), { recursive: true });
+        await copyFile(join(REPO, 'scripts/lib/io.mjs'), join(dir, 'scripts/lib/io.mjs'));
+        const mutant = join(dir, 'scripts/scrape-news.mjs');
+        await writeFile(mutant, source.replace(APPEND, REBUILD), 'utf8');
+
+        const realFetch = globalThis.fetch;
+        const realCwd = process.cwd();
+        globalThis.fetch = async () => new Response(RSS(['Epsilon headline']), {
+            status: 200, headers: { 'content-type': 'application/rss+xml' },
+        });
+        let threw = null;
+        try {
+            process.chdir(dir);
+            const mod = await import(pathToFileURL(mutant).href);
+            await mod.main();
+        } catch (e) {
+            threw = e;
+        } finally {
+            process.chdir(realCwd);
+            globalThis.fetch = realFetch;
+        }
+
+        const after = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        if (!threw) {
+            fail(label, 'a write that drops every id already on disk completed — main() does not run continuityFaults()');
+        } else if (!String(threw.message).includes('An append-only feed cannot lose records')) {
+            fail(label, `threw, but not the continuity fault — got: ${threw.message}`);
+        } else if (after !== before) {
+            fail(label, 'refused, but the file on disk changed — an exception that still wrote is not a refusal');
+        } else {
+            ok(label, 'the rule the helper defines is the rule the writer enforces');
+        }
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
 console.log('');
 if (bad) {
-    console.log(`scrape-news.test: ${bad}/${total} FAILURES`);
+    console.log(`scrape-news.test: ${bad}/${ran} FAILURES`);
     process.exit(1);
 }
-console.log(`scrape-news.test: ${total}/${total} passed`);
+console.log(`scrape-news.test: ${ran}/${ran} passed`);
