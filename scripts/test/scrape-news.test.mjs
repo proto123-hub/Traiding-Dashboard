@@ -357,12 +357,19 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
         else if (feed.items.length !== 1) fail(label, `expected the 1 collected item, got ${feed.items.length}`);
         else if (feed.items[0].verified !== false) fail(label, 'a bootstrapped item is not validator-stamped and must carry verified:false');
         // Not `!feed.note`: that passes on any non-empty string, so replacing
-        // the ownership note with "x" left this green. What the note has to do
-        // is tell the next reader who owns the file and what `verified` means
-        // in it, so assert that rather than its truthiness.
+        // the ownership note with "x" left this green. Nor the presence of the
+        // two words: a note reading "Owned by validator; verified set by
+        // collector" contains both and states the opposite of the pipeline —
+        // that too left this green. The note's whole job is the DIRECTION, so
+        // the direction is what is asserted: the collector owns the file, and
+        // `verified` is the validator's to set. A reader who has that backwards
+        // would read an unstamped feed as adjudicated.
         else if (typeof feed.note !== 'string') fail(label, `note is ${typeof feed.note}, expected a string`);
-        else if (!/collector/i.test(feed.note) || !/validator/i.test(feed.note)) {
-            fail(label, `the note does not name the collector as owner and the validator as the source of \`verified\` — got ${JSON.stringify(feed.note)}`);
+        else if (!/owned by (the )?collector/i.test(feed.note)) {
+            fail(label, `the note does not name the collector as the file's owner — got ${JSON.stringify(feed.note)}`);
+        }
+        else if (!/verified[^.]*\bset by (the )?validator/i.test(feed.note)) {
+            fail(label, `the note does not name the validator as what sets \`verified\` — got ${JSON.stringify(feed.note)}`);
         }
         else ok(label, 'the deliberate opt-in still produces a feed the shape gate accepts');
     }

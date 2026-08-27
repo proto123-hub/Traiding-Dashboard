@@ -325,9 +325,22 @@ const CASES = [
             const replayStaged = staged(replay, 'the replay path');
             if (!firstStaged) bad.push('the first-attempt commit stages nothing — no `git add` before the retry loop');
             if (firstStaged && replayStaged) {
-                const sweep = [...firstStaged, ...replayStaged].find(p => p === '.' || p === '-A' || p === '--all');
-                if (sweep) {
-                    bad.push(`\`git add ${sweep}\` sweeps the whole tree — stage the generated paths, not everything`);
+                // Enumerating the sweeps to reject was the wrong shape: the
+                // list held `.`, `-A` and `--all`, and `git add -u` walked
+                // straight through it on both sides. `-u` is worse than the
+                // ones that were listed, not milder — it stages every tracked
+                // change in the repository AND silently omits new output, which
+                // is the exact failure `git add data/` exists to prevent. What
+                // separates a safe argument from an unsafe one is not which
+                // flag it is: it is that a path list must contain paths.
+                const notAPath = [...firstStaged, ...replayStaged]
+                    .find(p => p.startsWith('-') || p === '.' || p === '..');
+                if (notAPath) {
+                    bad.push(
+                        `\`git add ${notAPath}\` stages by rule rather than by path — it sweeps changes this ` +
+                        `workflow never produced, and an option like -u also omits new output entirely. ` +
+                        `Stage the generated paths.`
+                    );
                 } else if (firstStaged.join(' ') !== replayStaged.join(' ')) {
                     bad.push(
                         `the two commits stage different paths — first attempt [${firstStaged.join(' ')}], ` +
@@ -335,10 +348,24 @@ const CASES = [
                     );
                 }
             }
+
+            // SEQUENCE above orders the replay path only, and the first-attempt
+            // block has the same invariant: moving its `git add` below its
+            // `git commit` left this check green while the commit captured
+            // nothing the run produced. Every commit in this workflow stages
+            // first — assert it wherever a commit happens, not just in the
+            // block that was reviewed most.
+            const firstAdd = at(beforeLoop, /^\s*git add /m);
+            const firstCommit = at(beforeLoop, /^\s*git commit /m);
+            if (firstCommit < 0) {
+                bad.push('the first-attempt block never commits');
+            } else if (firstAdd >= 0 && firstCommit < firstAdd) {
+                bad.push('the first-attempt commit runs before its `git add` — it commits nothing this run produced');
+            }
             return bad;
         },
         shouldFail: false,
-        why: 'the production writer uses the shared rule and re-validates what it replays, in that order, staging the same paths both times',
+        why: 'the production writer uses the shared rule and re-validates what it replays, in that order, staging paths — the same ones — before each commit',
     },
     {
         file: 'valuations-presplit-band.json',
