@@ -38,6 +38,11 @@
 // fail-closed cases green-by-accident and took the suite to 1/14 red for a
 // reason unrelated to any of them.
 //
+// `NEWS_FEED_BOOTSTRAP=1 creates the feed it is asked for` is neither a
+// reproduction nor a harness case: it covers the one branch four other cases
+// only ever refuse, so the escape hatch is not left as the single path in this
+// file that nothing executes.
+//
 // Run: node scripts/test/scrape-news.test.mjs
 
 import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm, access } from 'node:fs/promises';
@@ -303,6 +308,58 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
         globalThis.fetch = realFetch;
         await rm(dir, { recursive: true, force: true });
     }
+}
+
+// ------------------------------- the bootstrap opt-in, on the path that takes it
+//
+// Four cases above prove NEWS_FEED_BOOTSTRAP does not create a feed: three
+// refuse without it, and one proves an ambient value cannot supply it. None
+// shows the opt-in still WORKS when it is asked for deliberately. An escape
+// hatch fail-closed from four directions and never once exercised is as likely
+// to be broken as any other untested path, and it would be found broken on the
+// day a genuinely bad checkout needs it. In-process against the stubbed fetch,
+// because a bootstrap run has to reach the write to prove anything and the
+// subprocess cases reach no network.
+
+{
+    const label = 'NEWS_FEED_BOOTSTRAP=1 creates the feed it is asked for';
+    const dir = await scratch(null);
+    const target = join(dir, 'data/news-feed.json');
+    const realFetch = globalThis.fetch;
+    const realCwd = process.cwd();
+    globalThis.fetch = async () => new Response(RSS(['Zeta headline']), {
+        status: 200, headers: { 'content-type': 'application/rss+xml' },
+    });
+    process.env.NEWS_FEED_BOOTSTRAP = '1';
+    let threw = null;
+    try {
+        process.chdir(dir);
+        const { main } = await import('../scrape-news.mjs');
+        await main();
+    } catch (e) {
+        threw = e;
+    } finally {
+        process.chdir(realCwd);
+        globalThis.fetch = realFetch;
+        delete process.env.NEWS_FEED_BOOTSTRAP;
+    }
+
+    if (threw) {
+        fail(label, `the opt-in was taken and the run still refused: ${threw.message}`);
+    } else if (!await exists(target)) {
+        fail(label, 'exited without creating data/news-feed.json — the opt-in does nothing');
+    } else {
+        let feed = null;
+        try { feed = JSON.parse(await readFile(target, 'utf8')); } catch (e) { fail(label, `wrote a file that does not parse: ${e.message}`); }
+        const faults = feed === null ? ['unparsed'] : feedShapeFaults(feed);
+        if (feed === null) { /* already failed */ }
+        else if (faults.length) fail(label, `the feed it created is one its own shape gate rejects: ${faults.join('; ')}`);
+        else if (feed.items.length !== 1) fail(label, `expected the 1 collected item, got ${feed.items.length}`);
+        else if (feed.items[0].verified !== false) fail(label, 'a bootstrapped item is not validator-stamped and must carry verified:false');
+        else if (!feed.note) fail(label, 'created without the note that says who owns the file');
+        else ok(label, 'the deliberate opt-in still produces a feed the shape gate accepts');
+    }
+    await rm(dir, { recursive: true, force: true });
 }
 
 // ------------------------------------------ the gate is wired, not just present

@@ -297,10 +297,36 @@ const CASES = [
                     );
                 }
             }
+
+            // Order is still only half of it: the replay path's `git add` could
+            // stage a narrower set than the first-attempt commit stages, and
+            // the replayed tree would be committed short of the difference —
+            // the same silent partial that enumerated filenames produced until
+            // `git add data/` replaced them. Neither list is hard-coded here.
+            // What is asserted is that the two cannot drift apart, and that
+            // neither degrades into a sweep of the whole tree.
+            const staged = (hay) => {
+                const m = /^\s*git add ([^\n]+)$/m.exec(hay);
+                return m ? m[1].trim().split(/\s+/).sort() : null;
+            };
+            const firstStaged = staged(beforeLoop);
+            const replayStaged = staged(replay);
+            if (!firstStaged) bad.push('the first-attempt commit stages nothing — no `git add` before the retry loop');
+            if (firstStaged && replayStaged) {
+                const sweep = [...firstStaged, ...replayStaged].find(p => p === '.' || p === '-A' || p === '--all');
+                if (sweep) {
+                    bad.push(`\`git add ${sweep}\` sweeps the whole tree — stage the generated paths, not everything`);
+                } else if (firstStaged.join(' ') !== replayStaged.join(' ')) {
+                    bad.push(
+                        `the two commits stage different paths — first attempt [${firstStaged.join(' ')}], ` +
+                        `replay [${replayStaged.join(' ')}]; the replayed tree would be committed short of the difference`
+                    );
+                }
+            }
             return bad;
         },
         shouldFail: false,
-        why: 'the production writer uses the shared rule and re-validates what it replays, in that order',
+        why: 'the production writer uses the shared rule and re-validates what it replays, in that order, staging the same paths both times',
     },
     {
         file: 'valuations-presplit-band.json',
