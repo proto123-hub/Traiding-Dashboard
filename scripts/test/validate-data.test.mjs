@@ -298,74 +298,87 @@ const CASES = [
                 }
             }
 
-            // Order is still only half of it: the replay path's `git add` could
-            // stage a narrower set than the first-attempt commit stages, and
-            // the replayed tree would be committed short of the difference —
-            // the same silent partial that enumerated filenames produced until
-            // `git add data/` replaced them. Neither list is hard-coded here.
-            // What is asserted is that the two cannot drift apart, and that
-            // neither degrades into a sweep of the whole tree.
-            // Collect EVERY `git add` in the block, not the first. An earlier
-            // version used .exec(), which returns one match — so appending
-            // `git add -A` after a safe first line left this green, and the
-            // effective staged set is the UNION of every add that runs. A
-            // check that reads one line of a block cannot speak for the block.
+            // Three rounds of this check tried to name what is FORBIDDEN —
+            // first `.`/`-A`/`--all`, then any option-style token — and each
+            // list was walked around in turn: `git add -u`, then `git add :/`,
+            // which is a pathspec rather than an option and selects all 431
+            // tracked files. A blacklist is the wrong shape for a set this
+            // small and this stable. The workflow produces exactly three output
+            // paths, so that is the contract, stated once and compared exactly.
+            //
+            // Hard-coding it is the point: adding a fourth output path to the
+            // pipeline should be a deliberate act that updates this line too,
+            // the way `data/history/*` had to be remembered in the workflow
+            // before `git add data/` replaced the enumerated filenames.
+            const APPROVED = ['data/', 'reports/raw/', 'reports/validation/'];
+            const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+            const sorted = [...APPROVED].sort();
+
+            // Every `git add` in the block, not the first: `.exec()` returned
+            // one match, so an appended `git add -A` after a safe first line
+            // left this green while the effective staged set is the union.
             const staged = (hay, label) => {
                 const adds = [...hay.matchAll(/^\s*git add ([^\n]+)$/mg)].map(m => m[1].trim());
-                if (adds.length === 0) return null;
+                if (adds.length === 0) {
+                    bad.push(`${label} stages nothing — it has no \`git add\``);
+                    return;
+                }
                 if (adds.length > 1) {
                     bad.push(
                         `${label} runs ${adds.length} \`git add\` commands (${adds.map(a => JSON.stringify(a)).join(', ')}) — ` +
-                        `the effective staged set is their union, which this check cannot compare. Stage once.`
+                        `stage once, so what is staged is readable from one line`
                     );
                 }
-                return adds.join(' ').split(/\s+/).sort();
+                const args = adds.join(' ').split(/\s+/).sort();
+                if (!same(args, sorted)) {
+                    bad.push(
+                        `${label} stages [${args.join(' ')}], not the approved output paths ` +
+                        `[${sorted.join(' ')}] — anything wider stages changes this workflow never produced, ` +
+                        `anything narrower commits its output short`
+                    );
+                }
             };
-            const firstStaged = staged(beforeLoop, 'the first-attempt commit');
-            const replayStaged = staged(replay, 'the replay path');
-            if (!firstStaged) bad.push('the first-attempt commit stages nothing — no `git add` before the retry loop');
-            if (firstStaged && replayStaged) {
-                // Enumerating the sweeps to reject was the wrong shape: the
-                // list held `.`, `-A` and `--all`, and `git add -u` walked
-                // straight through it on both sides. `-u` is worse than the
-                // ones that were listed, not milder — it stages every tracked
-                // change in the repository AND silently omits new output, which
-                // is the exact failure `git add data/` exists to prevent. What
-                // separates a safe argument from an unsafe one is not which
-                // flag it is: it is that a path list must contain paths.
-                const notAPath = [...firstStaged, ...replayStaged]
-                    .find(p => p.startsWith('-') || p === '.' || p === '..');
-                if (notAPath) {
-                    bad.push(
-                        `\`git add ${notAPath}\` stages by rule rather than by path — it sweeps changes this ` +
-                        `workflow never produced, and an option like -u also omits new output entirely. ` +
-                        `Stage the generated paths.`
-                    );
-                } else if (firstStaged.join(' ') !== replayStaged.join(' ')) {
-                    bad.push(
-                        `the two commits stage different paths — first attempt [${firstStaged.join(' ')}], ` +
-                        `replay [${replayStaged.join(' ')}]; the replayed tree would be committed short of the difference`
-                    );
-                }
+            staged(beforeLoop, 'the first-attempt commit');
+            staged(replay, 'the replay path');
+
+            // The same three paths gate whether the step runs at all. A guard
+            // narrower than what is staged makes a run that produced only the
+            // ungated path exit before committing it.
+            const guard = /^\s*if git diff --quiet ([^;\n]+); then$/m.exec(beforeLoop);
+            if (!guard) {
+                bad.push('the change-detection guard is gone — the step no longer decides whether there is anything to commit');
+            } else if (!same(guard[1].trim().split(/\s+/).sort(), sorted)) {
+                bad.push(
+                    `the change-detection guard reads [${guard[1].trim()}] while the commit stages ` +
+                    `[${sorted.join(' ')}] — output under a path the guard does not watch would exit before it is committed`
+                );
             }
 
-            // SEQUENCE above orders the replay path only, and the first-attempt
-            // block has the same invariant: moving its `git add` below its
-            // `git commit` left this check green while the commit captured
-            // nothing the run produced. Every commit in this workflow stages
-            // first — assert it wherever a commit happens, not just in the
-            // block that was reviewed most.
+            // The first-attempt block carries the whole order, not just part of
+            // it. `stage < commit` alone left the validator free to run AFTER
+            // the commit, which validates a tree that is already written. Both
+            // blocks now assert validate -> stage -> commit.
+            const firstValidate = at(beforeLoop, cmdRe('scripts/validate-data.mjs'));
             const firstAdd = at(beforeLoop, /^\s*git add /m);
             const firstCommit = at(beforeLoop, /^\s*git commit /m);
             if (firstCommit < 0) {
                 bad.push('the first-attempt block never commits');
-            } else if (firstAdd >= 0 && firstCommit < firstAdd) {
-                bad.push('the first-attempt commit runs before its `git add` — it commits nothing this run produced');
+            } else {
+                if (firstValidate >= 0 && firstValidate > firstCommit) {
+                    bad.push('the first-attempt tree is validated after it is committed — the check cannot stop what has already been written');
+                }
+                if (firstAdd >= 0 && firstCommit < firstAdd) {
+                    bad.push('the first-attempt commit runs before its `git add` — it commits nothing this run produced');
+                }
+                if (firstValidate >= 0 && firstAdd >= 0 && firstValidate > firstAdd) {
+                    bad.push('the first-attempt tree is staged before it is validated — stage what passed, not what is about to be checked');
+                }
             }
+
             return bad;
         },
         shouldFail: false,
-        why: 'the production writer uses the shared rule and re-validates what it replays, in that order, staging paths — the same ones — before each commit',
+        why: 'both commits validate, then stage exactly the approved output paths, then commit — and the guard watches the same three'
     },
     {
         file: 'valuations-presplit-band.json',

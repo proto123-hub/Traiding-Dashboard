@@ -74,6 +74,13 @@ const envFor = (over = {}) => {
 // object directly.
 for (const k of WRITER_ENV) delete process.env[k];
 
+// The note scrape-news.mjs writes into a feed that has none. Held here as a
+// whole string so a reworded note fails loudly rather than quietly satisfying
+// a pattern — see the bootstrap case below for why patterns were not enough.
+const EXPECTED_NOTE =
+    'Owned by collector agent; verified field set by validator. ' +
+    'Each item must have \u22652 cross-sources to be verified=true.';
+
 const UNIVERSE = { tickers: [{ symbol: 'CLS' }] };
 const FEED = {
     note: 'Owned by collector agent',
@@ -356,20 +363,24 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
         else if (faults.length) fail(label, `the feed it created is one its own shape gate rejects: ${faults.join('; ')}`);
         else if (feed.items.length !== 1) fail(label, `expected the 1 collected item, got ${feed.items.length}`);
         else if (feed.items[0].verified !== false) fail(label, 'a bootstrapped item is not validator-stamped and must carry verified:false');
-        // Not `!feed.note`: that passes on any non-empty string, so replacing
-        // the ownership note with "x" left this green. Nor the presence of the
-        // two words: a note reading "Owned by validator; verified set by
-        // collector" contains both and states the opposite of the pipeline —
-        // that too left this green. The note's whole job is the DIRECTION, so
-        // the direction is what is asserted: the collector owns the file, and
-        // `verified` is the validator's to set. A reader who has that backwards
-        // would read an unstamped feed as adjudicated.
+        // Compared whole, not matched. Three weaker versions of this line each
+        // passed a note that had lost its meaning: `!feed.note` accepted "x";
+        // requiring the words "collector" and "validator" accepted "Owned by
+        // validator; verified set by collector", which states the pipeline
+        // backwards; requiring the phrases accepted "Not owned by collector;
+        // verified is not set by validator", which contains both phrases inside
+        // a negation. Every one of those is a pattern trying to describe a
+        // sentence, and a sentence has more ways to be wrong than a pattern has
+        // ways to say so.
+        //
+        // The note is a contract with whoever opens this file a month from now:
+        // it says who owns it and that `verified` is not the collector's to
+        // set. So it is pinned as a contract — exactly, byte for byte. Rewording
+        // it is fine and should update this constant in the same commit; that
+        // is the review this line exists to force.
         else if (typeof feed.note !== 'string') fail(label, `note is ${typeof feed.note}, expected a string`);
-        else if (!/owned by (the )?collector/i.test(feed.note)) {
-            fail(label, `the note does not name the collector as the file's owner — got ${JSON.stringify(feed.note)}`);
-        }
-        else if (!/verified[^.]*\bset by (the )?validator/i.test(feed.note)) {
-            fail(label, `the note does not name the validator as what sets \`verified\` — got ${JSON.stringify(feed.note)}`);
+        else if (feed.note !== EXPECTED_NOTE) {
+            fail(label, `the note is not the one this feed's readers are promised.\n         expected ${JSON.stringify(EXPECTED_NOTE)}\n         got      ${JSON.stringify(feed.note)}`);
         }
         else ok(label, 'the deliberate opt-in still produces a feed the shape gate accepts');
     }
