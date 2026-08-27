@@ -1,20 +1,23 @@
 {
   "agent": "comparator",
-  "runAt": "2026-08-27T00:30:45Z",
+  "runAt": "2026-08-27T20:53:49Z",
   "asOfDate": "2026-08-27",
   "tolerance": 0.002,
   "summary": {
-    "verified": 0,
-    "failed": 27,
+    "verified": 1,
+    "failed": 26,
     "total": 27
   },
   "compare": [
     {
       "symbol": "GOOGL",
-      "status": "single-source",
-      "sources": [
-        "nasdaq"
-      ]
+      "status": "verified",
+      "deltaPct": 0.00015,
+      "tolerance": 0.002,
+      "sources": {
+        "yahoo": 340.65,
+        "nasdaq": 340.7
+      }
     },
     {
       "symbol": "CLS",
@@ -32,10 +35,13 @@
     },
     {
       "symbol": "MRVL",
-      "status": "single-source",
-      "sources": [
-        "nasdaq"
-      ]
+      "status": "mismatch",
+      "deltaPct": 0.00907,
+      "tolerance": 0.002,
+      "sources": {
+        "yahoo": 241.45,
+        "nasdaq": 239.28
+      }
     },
     {
       "symbol": "MU",
