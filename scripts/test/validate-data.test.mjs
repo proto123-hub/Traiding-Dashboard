@@ -305,12 +305,24 @@ const CASES = [
             // `git add data/` replaced them. Neither list is hard-coded here.
             // What is asserted is that the two cannot drift apart, and that
             // neither degrades into a sweep of the whole tree.
-            const staged = (hay) => {
-                const m = /^\s*git add ([^\n]+)$/m.exec(hay);
-                return m ? m[1].trim().split(/\s+/).sort() : null;
+            // Collect EVERY `git add` in the block, not the first. An earlier
+            // version used .exec(), which returns one match — so appending
+            // `git add -A` after a safe first line left this green, and the
+            // effective staged set is the UNION of every add that runs. A
+            // check that reads one line of a block cannot speak for the block.
+            const staged = (hay, label) => {
+                const adds = [...hay.matchAll(/^\s*git add ([^\n]+)$/mg)].map(m => m[1].trim());
+                if (adds.length === 0) return null;
+                if (adds.length > 1) {
+                    bad.push(
+                        `${label} runs ${adds.length} \`git add\` commands (${adds.map(a => JSON.stringify(a)).join(', ')}) — ` +
+                        `the effective staged set is their union, which this check cannot compare. Stage once.`
+                    );
+                }
+                return adds.join(' ').split(/\s+/).sort();
             };
-            const firstStaged = staged(beforeLoop);
-            const replayStaged = staged(replay);
+            const firstStaged = staged(beforeLoop, 'the first-attempt commit');
+            const replayStaged = staged(replay, 'the replay path');
             if (!firstStaged) bad.push('the first-attempt commit stages nothing — no `git add` before the retry loop');
             if (firstStaged && replayStaged) {
                 const sweep = [...firstStaged, ...replayStaged].find(p => p === '.' || p === '-A' || p === '--all');

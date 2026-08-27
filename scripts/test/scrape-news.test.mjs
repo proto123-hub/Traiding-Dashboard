@@ -356,7 +356,14 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
         else if (faults.length) fail(label, `the feed it created is one its own shape gate rejects: ${faults.join('; ')}`);
         else if (feed.items.length !== 1) fail(label, `expected the 1 collected item, got ${feed.items.length}`);
         else if (feed.items[0].verified !== false) fail(label, 'a bootstrapped item is not validator-stamped and must carry verified:false');
-        else if (!feed.note) fail(label, 'created without the note that says who owns the file');
+        // Not `!feed.note`: that passes on any non-empty string, so replacing
+        // the ownership note with "x" left this green. What the note has to do
+        // is tell the next reader who owns the file and what `verified` means
+        // in it, so assert that rather than its truthiness.
+        else if (typeof feed.note !== 'string') fail(label, `note is ${typeof feed.note}, expected a string`);
+        else if (!/collector/i.test(feed.note) || !/validator/i.test(feed.note)) {
+            fail(label, `the note does not name the collector as owner and the validator as the source of \`verified\` — got ${JSON.stringify(feed.note)}`);
+        }
         else ok(label, 'the deliberate opt-in still produces a feed the shape gate accepts');
     }
     await rm(dir, { recursive: true, force: true });
