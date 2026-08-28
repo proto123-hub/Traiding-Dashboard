@@ -28,18 +28,58 @@
 // passed pre-fix too — they are there to keep the paths that already worked
 // from being lost to a later edit, not as evidence of a bug.
 //
+// Two later cases are not fixtures at all. `main() runs the continuity gate`
+// mutates a copy of the writer, because deleting the continuityFaults() CALL
+// from main() left this suite green — the unit cases exercise the helper and
+// the append case loses nothing either way, so between them they proved the
+// rule exists, not that the writer runs it. The ambient-bootstrap case pins
+// the harness instead of the code: the suite inherited NEWS_FEED_BOOTSTRAP
+// from the environment it was run in, so a shell that exported =1 turned the
+// fail-closed cases green-by-accident and took the suite to 1/14 red for a
+// reason unrelated to any of them.
+//
+// `NEWS_FEED_BOOTSTRAP=1 creates the feed it is asked for` is neither a
+// reproduction nor a harness case: it covers the one branch four other cases
+// only ever refuse, so the escape hatch is not left as the single path in this
+// file that nothing executes.
+//
 // Run: node scripts/test/scrape-news.test.mjs
 
-import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { feedShapeFaults, continuityFaults } from '../scrape-news.mjs';
 
 const run = promisify(execFile);
 const REPO = process.cwd();
 const SCRIPT = join(REPO, 'scripts/scrape-news.mjs');
+
+// The writer's environment is what half these cases are ABOUT, so it cannot be
+// inherited. `{ ...process.env }` meant a shell exporting NEWS_FEED_BOOTSTRAP=1
+// bootstrapped the missing feed the `no bootstrap` case requires to be refused:
+// that case exited 0 and the suite went 1/14 red without a line of code
+// changing. Each spawn gets the parent environment minus everything the writer
+// reads, plus only what its own case sets — computed per spawn, not snapshotted,
+// so a variable set after startup is scrubbed too.
+const WRITER_ENV = ['NEWS_FEED_BOOTSTRAP'];
+const envFor = (over = {}) => {
+    const env = { ...process.env, ...over };
+    for (const k of WRITER_ENV) if (!(k in over)) delete env[k];
+    return env;
+};
+// The in-process cases below call main() in THIS process, which reads this
+// object directly.
+for (const k of WRITER_ENV) delete process.env[k];
+
+// The note scrape-news.mjs writes into a feed that has none. Held here as a
+// whole string so a reworded note fails loudly rather than quietly satisfying
+// a pattern — see the bootstrap case below for why patterns were not enough.
+const EXPECTED_NOTE =
+    'Owned by collector agent; verified field set by validator. ' +
+    'Each item must have \u22652 cross-sources to be verified=true.';
 
 const UNIVERSE = { tickers: [{ symbol: 'CLS' }] };
 const FEED = {
@@ -62,8 +102,9 @@ async function scratch(feedText) {
 const exists = async (p) => { try { await access(p); return true; } catch { return false; } };
 
 let bad = 0;
-const fail = (label, msg) => { console.log(`  FAIL ${label}: ${msg}`); bad++; };
-const ok = (label, why) => console.log(`  ok   ${label} — ${why}`);
+let ran = 0;
+const fail = (label, msg) => { ran++; console.log(`  FAIL ${label}: ${msg}`); bad++; };
+const ok = (label, why) => { ran++; console.log(`  ok   ${label} — ${why}`); };
 
 // ---------------------------------------------------------------- unit gates
 
@@ -169,17 +210,55 @@ const SCRIPTS = [
         expect: 'is not a news feed',
         why: 'the gate runs before the network, while the feed is still what was on disk',
     },
+    {
+        // `ambient` poisons THIS process's environment for the duration of the
+        // spawn — the state a developer shell or a CI job that exported the
+        // variable leaves behind. What this pins is the invariant that matters:
+        // an ambient NEWS_FEED_BOOTSTRAP does not reach a subprocess that did
+        // not ask for it. It does NOT pin how envFor() achieves that — a
+        // harness snapshotting one clean environment at startup passes this
+        // case too (verified). envFor() computes per spawn anyway, because that
+        // also covers a variable exported after startup, but no case here
+        // distinguishes the two and this comment should not imply one does.
+        label: 'ambient NEWS_FEED_BOOTSTRAP=1 does not reach a case that did not ask for it',
+        feed: null,
+        env: {},
+        ambient: { NEWS_FEED_BOOTSTRAP: '1' },
+        expect: 'is missing',
+        why: 'the environment the suite runs in cannot decide the outcome of a fail-closed case',
+    },
 ];
+
+// WRITER_ENV's coverage is not asserted here, deliberately. A scan for
+// `process.env.X` over the writer's source cannot deliver what such an
+// assertion would claim: it reads dot notation only, so `process.env['X']` and
+// `const { X } = process.env` are invisible to it, and it cannot tell a read
+// from a mention — scrape-news.mjs names process.env.NEWS_FEED_BOOTSTRAP in a
+// comment explaining the old truthiness bug, which the scan counts. A check
+// that passes on prose and misses two real syntaxes is the shape of defect
+// this suite exists to remove, not to add. The ambient case below pins the
+// regression that matters directly; a new variable is covered by adding it to
+// WRITER_ENV and a case that exercises it.
 
 for (const c of SCRIPTS) {
     const dir = await scratch(c.feed);
     const target = join(dir, 'data/news-feed.json');
+    const restore = Object.entries(c.ambient || {}).map(([k, v]) => {
+        const had = process.env[k];
+        process.env[k] = v;
+        return [k, had];
+    });
     let code = 0, stderr = '';
     try {
-        await run(process.execPath, [SCRIPT], { cwd: dir, env: { ...process.env, ...c.env } });
+        await run(process.execPath, [SCRIPT], { cwd: dir, env: envFor(c.env) });
     } catch (e) {
         code = e.code;
         stderr = `${e.stderr || ''}${e.stdout || ''}`;
+    } finally {
+        for (const [k, had] of restore) {
+            if (had === undefined) delete process.env[k];
+            else process.env[k] = had;
+        }
     }
     if (code === 0) {
         fail(c.label, 'exited 0 — the run reported success');
@@ -238,10 +317,142 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
     }
 }
 
-const total = UNIT.length + SCRIPTS.length + 1;
+// ------------------------------- the bootstrap opt-in, on the path that takes it
+//
+// Four cases above prove NEWS_FEED_BOOTSTRAP does not create a feed: three
+// refuse without it, and one proves an ambient value cannot supply it. None
+// shows the opt-in still WORKS when it is asked for deliberately. An escape
+// hatch fail-closed from four directions and never once exercised is as likely
+// to be broken as any other untested path, and it would be found broken on the
+// day a genuinely bad checkout needs it. In-process against the stubbed fetch,
+// because a bootstrap run has to reach the write to prove anything and the
+// subprocess cases reach no network.
+
+{
+    const label = 'NEWS_FEED_BOOTSTRAP=1 creates the feed it is asked for';
+    const dir = await scratch(null);
+    const target = join(dir, 'data/news-feed.json');
+    const realFetch = globalThis.fetch;
+    const realCwd = process.cwd();
+    globalThis.fetch = async () => new Response(RSS(['Zeta headline']), {
+        status: 200, headers: { 'content-type': 'application/rss+xml' },
+    });
+    process.env.NEWS_FEED_BOOTSTRAP = '1';
+    let threw = null;
+    try {
+        process.chdir(dir);
+        const { main } = await import('../scrape-news.mjs');
+        await main();
+    } catch (e) {
+        threw = e;
+    } finally {
+        process.chdir(realCwd);
+        globalThis.fetch = realFetch;
+        delete process.env.NEWS_FEED_BOOTSTRAP;
+    }
+
+    if (threw) {
+        fail(label, `the opt-in was taken and the run still refused: ${threw.message}`);
+    } else if (!await exists(target)) {
+        fail(label, 'exited without creating data/news-feed.json — the opt-in does nothing');
+    } else {
+        let feed = null;
+        try { feed = JSON.parse(await readFile(target, 'utf8')); } catch (e) { fail(label, `wrote a file that does not parse: ${e.message}`); }
+        const faults = feed === null ? ['unparsed'] : feedShapeFaults(feed);
+        if (feed === null) { /* already failed */ }
+        else if (faults.length) fail(label, `the feed it created is one its own shape gate rejects: ${faults.join('; ')}`);
+        else if (feed.items.length !== 1) fail(label, `expected the 1 collected item, got ${feed.items.length}`);
+        else if (feed.items[0].verified !== false) fail(label, 'a bootstrapped item is not validator-stamped and must carry verified:false');
+        // Compared whole, not matched. Three weaker versions of this line each
+        // passed a note that had lost its meaning: `!feed.note` accepted "x";
+        // requiring the words "collector" and "validator" accepted "Owned by
+        // validator; verified set by collector", which states the pipeline
+        // backwards; requiring the phrases accepted "Not owned by collector;
+        // verified is not set by validator", which contains both phrases inside
+        // a negation. Every one of those is a pattern trying to describe a
+        // sentence, and a sentence has more ways to be wrong than a pattern has
+        // ways to say so.
+        //
+        // The note is a contract with whoever opens this file a month from now:
+        // it says who owns it and that `verified` is not the collector's to
+        // set. So it is pinned as a contract — exactly, byte for byte. Rewording
+        // it is fine and should update this constant in the same commit; that
+        // is the review this line exists to force.
+        else if (typeof feed.note !== 'string') fail(label, `note is ${typeof feed.note}, expected a string`);
+        else if (feed.note !== EXPECTED_NOTE) {
+            fail(label, `the note is not the one this feed's readers are promised.\n         expected ${JSON.stringify(EXPECTED_NOTE)}\n         got      ${JSON.stringify(feed.note)}`);
+        }
+        else ok(label, 'the deliberate opt-in still produces a feed the shape gate accepts');
+    }
+    await rm(dir, { recursive: true, force: true });
+}
+
+// ------------------------------------------ the gate is wired, not just present
+//
+// Deleting the continuityFaults() call from main() left every case above green.
+// The unit cases call the helper directly; the append case is a clean append
+// that loses nothing whether the gate runs or not. Together they pin the rule's
+// existence, which is exactly what dedupe-news-feed.mjs also had while the
+// production path kept its own merge and its own bug — written, tested,
+// documented, called from nowhere.
+//
+// The call is only observable when the write path actually loses a record, so
+// this copies the writer into a temp tree and applies the edit the gate exists
+// to catch: `items` rebuilt by assignment instead of appended to, which is how
+// a filter or a map would arrive. With the call in place the run throws and the
+// bytes on disk are untouched; without it the same mutant writes a 1-item feed
+// over the 2-item one on disk and returns normally.
+
+{
+    const label = 'main() runs the continuity gate, not just the helper';
+    const APPEND = 'items: [...feed.items, ...collected]';
+    const REBUILD = 'items: [...collected]';
+    const source = await readFile(SCRIPT, 'utf8');
+
+    if (!source.includes(APPEND)) {
+        fail(label, `scrape-news.mjs no longer contains ${JSON.stringify(APPEND)} — this case mutates that expression and has to be updated with it`);
+    } else {
+        const dir = await scratch(JSON.stringify(FEED, null, 2) + '\n');
+        const before = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        await mkdir(join(dir, 'scripts/lib'), { recursive: true });
+        await copyFile(join(REPO, 'scripts/lib/io.mjs'), join(dir, 'scripts/lib/io.mjs'));
+        const mutant = join(dir, 'scripts/scrape-news.mjs');
+        await writeFile(mutant, source.replace(APPEND, REBUILD), 'utf8');
+
+        const realFetch = globalThis.fetch;
+        const realCwd = process.cwd();
+        globalThis.fetch = async () => new Response(RSS(['Epsilon headline']), {
+            status: 200, headers: { 'content-type': 'application/rss+xml' },
+        });
+        let threw = null;
+        try {
+            process.chdir(dir);
+            const mod = await import(pathToFileURL(mutant).href);
+            await mod.main();
+        } catch (e) {
+            threw = e;
+        } finally {
+            process.chdir(realCwd);
+            globalThis.fetch = realFetch;
+        }
+
+        const after = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        if (!threw) {
+            fail(label, 'a write that drops every id already on disk completed — main() does not run continuityFaults()');
+        } else if (!String(threw.message).includes('An append-only feed cannot lose records')) {
+            fail(label, `threw, but not the continuity fault — got: ${threw.message}`);
+        } else if (after !== before) {
+            fail(label, 'refused, but the file on disk changed — an exception that still wrote is not a refusal');
+        } else {
+            ok(label, 'the rule the helper defines is the rule the writer enforces');
+        }
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
 console.log('');
 if (bad) {
-    console.log(`scrape-news.test: ${bad}/${total} FAILURES`);
+    console.log(`scrape-news.test: ${bad}/${ran} FAILURES`);
     process.exit(1);
 }
-console.log(`scrape-news.test: ${total}/${total} passed`);
+console.log(`scrape-news.test: ${ran}/${ran} passed`);
