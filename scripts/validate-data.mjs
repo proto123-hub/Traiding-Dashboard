@@ -22,6 +22,7 @@
 // overwrote live data.)
 
 import { readFile, readdir } from 'node:fs/promises';
+import { NEWS_FEED_NOTE } from './lib/io.mjs';
 import { fileURLToPath } from 'node:url';
 
 const DEFAULT_TOLERANCE = { equity: 0.002, index: 0.005, fx: 0.001 };
@@ -405,12 +406,16 @@ export function checkNewsFeed(feed) {
     // is wrong no run repairs it: replacing it with "x" left the whole gate
     // green. A feed whose 9,000 items are stamped by a rule the file no longer
     // states is exactly the kind of quiet drift this validator exists to catch.
-    if (typeof feed?.note !== 'string' || !feed.note.trim()) {
-        fail.push(`news-feed.json: note is ${feed?.note === undefined ? 'absent' : JSON.stringify(feed?.note)} — it must say who owns the file and what verified means`);
-    } else if (!/collector/i.test(feed.note) || !/validator/i.test(feed.note)) {
+    // Exact, not a word search. Searching for "collector" and "validator"
+    // accepted `Owned by validator; verified set by collector` and `Collector
+    // does not own this file; validator does not set verified` — an inversion
+    // and a negation of the contract, each containing every word the check
+    // wanted. The note IS the contract, so the only safe comparison is equality
+    // against the one definition of it.
+    if (feed?.note !== NEWS_FEED_NOTE) {
         fail.push(
-            `news-feed.json: note does not name the collector as owner and the validator as the ` +
-            `source of \`verified\` — got ${JSON.stringify(feed.note)}`
+            `news-feed.json: note is not the canonical contract. expected ${JSON.stringify(NEWS_FEED_NOTE)}, ` +
+            `got ${feed?.note === undefined ? 'absent' : JSON.stringify(feed.note)}`
         );
     }
     const seen = new Map();

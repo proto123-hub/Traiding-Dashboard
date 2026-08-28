@@ -1,6 +1,18 @@
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+/**
+ * The exact note data/news-feed.json must carry. It lives here because three
+ * places need to agree on it and a word-search does not make them agree: a
+ * check for "collector" and "validator" accepted "Owned by validator; verified
+ * set by collector" and "Collector does not own this file", which invert and
+ * negate the contract while satisfying every word in it. The value is the
+ * contract, so it is one constant and compared exactly.
+ */
+export const NEWS_FEED_NOTE =
+    'Owned by collector agent; verified field set by validator. ' +
+    'Each item must have \u22652 cross-sources to be verified=true.';
+
 export async function readJson(path) {
     const buf = await readFile(path, 'utf8');
     return JSON.parse(buf);

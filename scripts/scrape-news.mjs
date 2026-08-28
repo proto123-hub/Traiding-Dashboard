@@ -8,7 +8,7 @@
 // per-publisher `source` field — which is actually richer than saveticker's
 // pre-aggregated feed for the validator's >=2-source check.
 
-import { readJson, writeJsonAtomic, nowIso, todayUtc, withTimeout, Semaphore, slugify } from './lib/io.mjs';
+import { readJson, writeJsonAtomic, nowIso, todayUtc, withTimeout, Semaphore, slugify, NEWS_FEED_NOTE } from './lib/io.mjs';
 
 const TIMEOUT_MS = 8000;
 const CONCURRENCY = 4;
@@ -150,7 +150,10 @@ async function main() {
         );
     }
 
-    if (!feed.note) feed.note = 'Owned by collector agent; verified field set by validator. Each item must have ≥2 cross-sources to be verified=true.';
+    // Set unconditionally, not `if (!feed.note)`. The old form meant a wrong
+    // committed value was never repaired by any run — which is why replacing it
+    // with "x" survived indefinitely. The note is a fixed contract, not data.
+    feed.note = NEWS_FEED_NOTE;
 
     const startingIds = new Set(feed.items.map(i => i.id));
     const existingIds = new Set(startingIds);

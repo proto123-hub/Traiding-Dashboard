@@ -36,6 +36,7 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { feedShapeFaults, continuityFaults } from '../scrape-news.mjs';
+import { NEWS_FEED_NOTE } from '../lib/io.mjs';
 
 const run = promisify(execFile);
 const REPO = process.cwd();
@@ -224,8 +225,11 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
         if (lost.length) fail(label, `lost ${JSON.stringify(lost)}`);
         else if (after.items.length !== FEED.items.length + 2) {
             fail(label, `expected ${FEED.items.length + 2} items, got ${after.items.length}`);
-        } else if (after.note !== FEED.note) {
-            fail(label, 'the note field did not survive the write');
+        } else if (after.note !== NEWS_FEED_NOTE) {
+            // The note is a contract, not data: the writer now sets it on every
+            // run rather than only when absent, because the old form meant a
+            // wrong committed value was never repaired.
+            fail(label, `the written note is not the canonical contract — got ${JSON.stringify(after.note)}`);
         } else {
             ok(label, 'the written feed is a superset of the one read, keys and all');
         }

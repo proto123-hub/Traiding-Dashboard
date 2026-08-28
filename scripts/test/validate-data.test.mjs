@@ -24,7 +24,10 @@
 import { readFile } from 'node:fs/promises';
 import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNewsFeed } from '../validate-data.mjs';
 import { dedupeByEarliest } from '../dedupe-news-feed.mjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const DIR = new URL('./fixtures/', import.meta.url);
 const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8'));
@@ -210,8 +213,22 @@ const CASES = [
         file: 'news-feed-note-placeholder.json',
         run: (d) => checkNewsFeed(d.feed).fail,
         shouldFail: true,
-        expect: 'does not name the collector as owner',
-        why: 'the writer sets the note only when ABSENT, so a wrong committed value is never repaired and nothing read it',
+        expect: 'note is not the canonical contract',
+        why: 'the writer set the note only when ABSENT, so a wrong committed value was never repaired and nothing read it',
+    },
+    {
+        file: 'news-feed-note-inverted.json',
+        run: (d) => checkNewsFeed(d.feed).fail,
+        shouldFail: true,
+        expect: 'note is not the canonical contract',
+        why: 'roles swapped — every word the old search wanted, stating the opposite of the contract',
+    },
+    {
+        file: 'news-feed-note-negated.json',
+        run: (d) => checkNewsFeed(d.feed).fail,
+        shouldFail: true,
+        expect: 'note is not the canonical contract',
+        why: 'both claims denied with both words present — a word-search cannot tell this from the real thing',
     },
     {
         file: 'news-feed-earliest-wins.json',
@@ -273,22 +290,61 @@ const CASES = [
                 bad.push('the first-attempt tree is committed without validation — the bot is exempt again');
             }
 
-            // The change guard must see UNTRACKED files. `git diff` does not:
-            // a run whose only output was a new file exited reporting "no
-            // changes" and never reached its own `git add`. That is the normal
-            // shape of a news run that appends nothing but still drops
-            // reports/raw/<date>-google-news.json, and of the first run of a
-            // new year. Asserted on the command, because the behaviour lives in
-            // git rather than in this repo's code — the reproduction is in the
-            // commit message.
-            const guard = /if\s+(\[ -z "\$\(git status --porcelain[^)]*\)" \]|git diff[^;]*);\s*then/.exec(beforeLoop);
-            if (!guard) {
+            // The change guard decides whether anything is committed at all,
+            // and it must see UNTRACKED files — a run whose only output is a
+            // new file must not exit reporting "no changes" before reaching its
+            // own `git add`. Extracted and RUN against a scratch repository
+            // rather than pattern-matched: the first version of this check was
+            // a regex, and adding `--untracked-files=no` to the very command it
+            // matched left it green while hiding exactly the file it exists to
+            // catch. A check on the text of a command cannot speak for what the
+            // command does.
+            const guardLine = /^\s*if\s+(.+?);\s*then\s*$/m.exec(beforeLoop);
+            if (!guardLine) {
                 bad.push('cannot find the change guard before the retry loop — it decides whether anything is committed at all');
-            } else if (/git diff/.test(guard[1])) {
-                bad.push(
-                    '`git diff` as the change guard ignores untracked files, so a run whose only output ' +
-                    'is a NEW file exits reporting "no changes" and never stages it — use `git status --porcelain`'
-                );
+            } else {
+                const scratch = mkdtempSync(join(tmpdir(), 'guard-'));
+                try {
+                    const git = (...a) => execFileSync('git', a, { cwd: scratch, stdio: 'pipe' });
+                    git('init', '-q', '.');
+                    git('config', 'user.email', 't@t');
+                    git('config', 'user.name', 't');
+                    // Every path the guard names must exist, or git exits
+                    // fatal on the pathspec and the run below proves nothing.
+                    // The first version of this test created only two of the
+                    // three, so reverting the guard to `git diff` errored out
+                    // and was scored as "proceeds" — passing for exactly the
+                    // wrong reason.
+                    for (const d of ['data', 'reports/raw', 'reports/validation']) {
+                        mkdirSync(join(scratch, d), { recursive: true });
+                        writeFileSync(join(scratch, d, '.keep'), '');
+                    }
+                    writeFileSync(join(scratch, 'data/seed.json'), '{}\n');
+                    git('add', '-A');
+                    git('commit', '-qm', 'seed');
+                    // The case the guard got wrong: output that is ONLY a new file.
+                    writeFileSync(join(scratch, 'reports/raw/2026-08-28-google-news.json'), '{"failures":[]}\n');
+                    // Exit 0 => guard true => the workflow exits without committing.
+                    // Exit 1 => guard false => it proceeds to `git add`.
+                    // Anything else is git failing to run the guard at all, which
+                    // is its own defect and must not read as "proceeds".
+                    let status = 0;
+                    try {
+                        execFileSync('bash', ['-c', guardLine[1]], { cwd: scratch, stdio: 'pipe' });
+                    } catch (e) {
+                        status = e.status ?? -1;
+                    }
+                    if (status !== 0 && status !== 1) {
+                        bad.push(`the change guard \`${guardLine[1]}\` exited ${status} — it does not run against the paths it names`);
+                    } else if (status === 0) {
+                        bad.push(
+                            `the change guard \`${guardLine[1]}\` reports "no changes" for a run whose only output is a ` +
+                            `new untracked file, so the workflow exits before its own \`git add\` and that output is never committed`
+                        );
+                    }
+                } finally {
+                    rmSync(scratch, { recursive: true, force: true });
+                }
             }
             return bad;
         },
