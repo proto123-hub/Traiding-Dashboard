@@ -68,7 +68,14 @@ jobs:
 
       - name: Commit & push if changed
         run: |
-          if git diff --quiet data/ reports/raw/ reports/validation/; then
+          # `git diff --quiet` does not see untracked files, so a run whose only
+          # output was a NEW file exited here reporting "no changes" and the
+          # file was never committed — the later `git add` never ran. That is
+          # the normal shape of a news run that appends nothing but still drops
+          # reports/raw/<date>-google-news.json with its failures, and of the
+          # first run of a new year, whose data/history/yields-<year>.json does
+          # not exist yet. --porcelain lists untracked paths too.
+          if [ -z "$(git status --porcelain -- data/ reports/raw/ reports/validation/)" ]; then
             echo "no changes — skipping commit"
             exit 0
           fi

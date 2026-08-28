@@ -207,6 +207,13 @@ const CASES = [
         why: 'union-by-id keeping the first occurrence',
     },
     {
+        file: 'news-feed-note-placeholder.json',
+        run: (d) => checkNewsFeed(d.feed).fail,
+        shouldFail: true,
+        expect: 'does not name the collector as owner',
+        why: 'the writer sets the note only when ABSENT, so a wrong committed value is never repaired and nothing read it',
+    },
+    {
         file: 'news-feed-earliest-wins.json',
         run: (d) => {
             const out = dedupeByEarliest(d.items);
@@ -264,6 +271,24 @@ const CASES = [
             }
             if (!invokes(beforeLoop, 'scripts/validate-data.mjs')) {
                 bad.push('the first-attempt tree is committed without validation — the bot is exempt again');
+            }
+
+            // The change guard must see UNTRACKED files. `git diff` does not:
+            // a run whose only output was a new file exited reporting "no
+            // changes" and never reached its own `git add`. That is the normal
+            // shape of a news run that appends nothing but still drops
+            // reports/raw/<date>-google-news.json, and of the first run of a
+            // new year. Asserted on the command, because the behaviour lives in
+            // git rather than in this repo's code — the reproduction is in the
+            // commit message.
+            const guard = /if\s+(\[ -z "\$\(git status --porcelain[^)]*\)" \]|git diff[^;]*);\s*then/.exec(beforeLoop);
+            if (!guard) {
+                bad.push('cannot find the change guard before the retry loop — it decides whether anything is committed at all');
+            } else if (/git diff/.test(guard[1])) {
+                bad.push(
+                    '`git diff` as the change guard ignores untracked files, so a run whose only output ' +
+                    'is a NEW file exits reporting "no changes" and never stages it — use `git status --porcelain`'
+                );
             }
             return bad;
         },

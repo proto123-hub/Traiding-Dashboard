@@ -398,6 +398,21 @@ export function checkNewsFeed(feed) {
     const fail = [];
     const items = feed?.items;
     if (!Array.isArray(items)) return { fail: ['news-feed.json has no items array'], count: 0 };
+
+    // The note is the only thing in this file that tells a reader who owns it
+    // and what `verified` means here, and nothing was checking it. The writer
+    // sets it only when absent (`if (!feed.note)`), so once the committed value
+    // is wrong no run repairs it: replacing it with "x" left the whole gate
+    // green. A feed whose 9,000 items are stamped by a rule the file no longer
+    // states is exactly the kind of quiet drift this validator exists to catch.
+    if (typeof feed?.note !== 'string' || !feed.note.trim()) {
+        fail.push(`news-feed.json: note is ${feed?.note === undefined ? 'absent' : JSON.stringify(feed?.note)} — it must say who owns the file and what verified means`);
+    } else if (!/collector/i.test(feed.note) || !/validator/i.test(feed.note)) {
+        fail.push(
+            `news-feed.json: note does not name the collector as owner and the validator as the ` +
+            `source of \`verified\` — got ${JSON.stringify(feed.note)}`
+        );
+    }
     const seen = new Map();
     for (const [i, it] of items.entries()) {
         if (it?.id == null) { fail.push(`news-feed.json: item at index ${i} has no id`); continue; }
