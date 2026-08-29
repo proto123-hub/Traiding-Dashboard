@@ -153,6 +153,7 @@ async function main() {
     // Set unconditionally, not `if (!feed.note)`. The old form meant a wrong
     // committed value was never repaired by any run — which is why replacing it
     // with "x" survived indefinitely. The note is a fixed contract, not data.
+    const noteWasWrong = feed.note !== NEWS_FEED_NOTE;
     feed.note = NEWS_FEED_NOTE;
 
     const startingIds = new Set(feed.items.map(i => i.id));
@@ -191,7 +192,13 @@ async function main() {
         }
     })));
 
-    if (collected.length > 0) {
+    // `collected.length > 0` alone was not enough: assigning the note in memory
+    // repairs nothing if the file is never written, so a run that collected no
+    // headlines exited 0 and left a wrong note on disk. The validator fails
+    // closed on it either way, but "the writer repairs it" was only true of
+    // runs that happened to find news. A note-only repair is now a reason to
+    // write on its own.
+    if (collected.length > 0 || noteWasWrong) {
         const outgoing = { ...feed, items: [...feed.items, ...collected] };
         const faults = continuityFaults(startingIds, outgoing.items);
         if (faults.length) throw new Error(faults.join(' '));

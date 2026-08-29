@@ -242,7 +242,44 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
     }
 }
 
-const total = UNIT.length + SCRIPTS.length + 1;
+// ----------------------------------- a note-only repair still reaches the disk
+//
+// `feed.note = NEWS_FEED_NOTE` runs on every invocation, but the write was
+// gated on `collected.length > 0` — so a run that found no headlines repaired
+// the note in memory and exited 0 with the wrong bytes still on disk. The
+// validator fails closed on that either way; what was false is the claim that
+// the writer fixes it. This drives main() with a stub that yields NOTHING.
+
+{
+    const label = 'a run that collects no headlines still repairs a wrong note';
+    const dir = await scratch(JSON.stringify({ ...FEED, note: 'x' }, null, 2) + '\n');
+    const realFetch = globalThis.fetch;
+    const realCwd = process.cwd();
+    globalThis.fetch = async () => new Response(RSS([]), {
+        status: 200, headers: { 'content-type': 'application/rss+xml' },
+    });
+    try {
+        process.chdir(dir);
+        const { main } = await import('../scrape-news.mjs');
+        await main();
+        const after = JSON.parse(await readFile(join(dir, 'data/news-feed.json'), 'utf8'));
+        if (after.note !== NEWS_FEED_NOTE) {
+            fail(label, `collected nothing and left the note as ${JSON.stringify(after.note)} — the repair never reached the disk`);
+        } else if (after.items.length !== FEED.items.length) {
+            fail(label, `the repair changed the item count: ${FEED.items.length} -> ${after.items.length}`);
+        } else {
+            ok(label, 'the contract is restored on disk even by a run that found no news');
+        }
+    } catch (e) {
+        fail(label, `threw: ${e.message}`);
+    } finally {
+        process.chdir(realCwd);
+        globalThis.fetch = realFetch;
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
+const total = UNIT.length + SCRIPTS.length + 2;
 console.log('');
 if (bad) {
     console.log(`scrape-news.test: ${bad}/${total} FAILURES`);
