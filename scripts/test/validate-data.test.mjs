@@ -303,109 +303,117 @@ const CASES = [
             // every tracked modification, which is a different set from the
             // paths the `git add` above names — the enumerated staging becomes
             // decoration and anything else the job touched rides along.
-            // Scan the WHOLE command, not the first option token. `git commit
-            // -m "..." -a` and `git commit --all -m "..."` both auto-stage and
-            // both passed a check that only read the token right after
-            // `git commit`. Options do not have to come first.
+            // ALLOWLIST the one safe invocation instead of blacklisting the
+            // unsafe ones. Every blacklist round lost: first `-am`, then
+            // `-m "..." -a` and `--all`, then a quoted `"-a"`, a line
+            // continuation, and `--include <path>` — which in a scratch repo
+            // committed the staged data plus a previously unstaged CLAUDE.md.
+            // A regex is not a shell parser, so the only defensible rule is
+            // that each block holds exactly one `git commit` and it is
+            // literally the safe form.
+            const SAFE_COMMIT = /^[ \t]*git commit -m "data: scheduled refresh \$\(date -u \+%FT%TZ\)"[ \t]*$/;
             for (const [label, hay] of [['the first-attempt commit', beforeLoop], ['the replay path', replay]]) {
-                for (const m of hay.matchAll(/^\s*git commit\b(.*)$/mg)) {
-                    const opts = m[1].replace(/"[^"]*"/g, '""');   // ignore -a inside the message
-                    const hit = /(^|\s)--all(\s|$)/.test(opts) ? '--all'
-                        : (/(^|\s)-[A-Za-z]*a[A-Za-z]*(\s|$)/.exec(opts) || [])[0]?.trim();
-                    if (hit) {
-                        bad.push(`${label} uses \`git commit ${hit}\` — it stages every tracked modification, not the paths staged above`);
-                    }
+                const lines = hay.split('\n').filter(l => /(^|\s|;)git commit\b/.test(l));
+                if (lines.length !== 1) {
+                    bad.push(`${label} has ${lines.length} \`git commit\` lines — expected exactly one`);
+                } else if (!SAFE_COMMIT.test(lines[0])) {
+                    bad.push(
+                        `${label} is not the allowlisted commit form: got \`${lines[0].trim()}\` — ` +
+                        `anything but \`git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"\` ` +
+                        `can auto-stage or include paths the \`git add\` above did not`
+                    );
                 }
             }
 
-            // Identify the guard by its whole SHAPE — an `if` whose body is an
-            // echo and `exit 0` — not by the first `if` in the block. Matching
-            // the first `if` let three bypasses through: a dummy false `if`
-            // inserted ahead of the real guard, `if false; then`, and narrowing
-            // the paths to reports/raw/ so new data/history output went
-            // uncommitted. All three left this case green.
-            const guardBlock = /^([ \t]*)if\s+(.+?);\s*then\s*\n[ \t]*echo[^\n]*\n[ \t]*exit 0\s*\n[ \t]*fi\s*$/m.exec(beforeLoop);
-            const guardLine = guardBlock && { index: guardBlock.index, 1: guardBlock[2] };
-            if (!guardLine) {
-                bad.push('cannot find the change guard before the retry loop — an `if ...; then echo ...; exit 0; fi` that decides whether anything is committed at all');
-            } else if (guardLine.index > beforeLoop.search(/^\s*git commit\b/m)) {
-                bad.push('the change guard runs after `git commit` — a guard that cannot prevent the commit is not a guard');
+            // Exercise the guard IN PLACE. Every structural check was
+            // bypassable: matching the first `if` missed a decoy, matching the
+            // block shape missed that same block wrapped in an unreachable
+            // `if false`, and running the condition alone missed a guard
+            // narrowed to data/history/ and one using `git ls-files --others`,
+            // which ignores tracked edits entirely. So take the step's script
+            // up to its first `git commit`, run that prefix in a scratch
+            // repository, and see whether control actually reaches the commit.
+            const stepAt = wf.indexOf('- name: Commit & push if changed');
+            const runAt = stepAt < 0 ? -1 : wf.indexOf('run: |', stepAt);
+            if (runAt < 0) {
+                bad.push('cannot locate the "Commit & push if changed" step');
             } else {
+                const body = wf.slice(wf.indexOf('\n', runAt) + 1).split('\n').map(l => l.replace(/^ {10}/, ''));
+                const commitAt = body.findIndex(l => /^git commit\b/.test(l));
                 let haveBash = true;
                 try { execFileSync('bash', ['-c', 'exit 0'], { stdio: 'pipe' }); } catch { haveBash = false; }
-                if (!haveBash) {
+                if (commitAt < 0) {
+                    bad.push('the commit step has no top-level `git commit`');
+                } else if (!haveBash) {
                     // Not skipped. A check that cannot run has not passed, and
                     // "skipped inside a green run" is the shape this suite
-                    // exists to remove. On Windows the default PowerShell PATH
-                    // has no bash; adding Git's usr/bin (e.g.
-                    // C:\\Program Files\\Git\\usr\\bin) resolves it.
-                    bad.push('cannot verify the change guard: `bash` will not launch, so the guard was never executed — add Git Bash to PATH');
-                }
-                const scratch = haveBash ? mkdtempSync(join(tmpdir(), 'guard-')) : null;
-                if (!haveBash) { /* fall through to the finally-free path below */ }
-                try {
-                    if (!haveBash) throw new Error('bash unavailable');
-                    const git = (...a) => execFileSync('git', a, { cwd: scratch, stdio: 'pipe' });
-                    git('init', '-q', '.');
-                    git('config', 'user.email', 't@t');
-                    git('config', 'user.name', 't');
-                    // Every path the guard names must exist, or git exits
-                    // fatal on the pathspec and the run below proves nothing.
-                    // The first version of this test created only two of the
-                    // three, so reverting the guard to `git diff` errored out
-                    // and was scored as "proceeds" — passing for exactly the
-                    // wrong reason.
-                    for (const d of ['data', 'reports/raw', 'reports/validation']) {
-                        mkdirSync(join(scratch, d), { recursive: true });
-                        writeFileSync(join(scratch, d, '.keep'), '');
-                    }
-                    writeFileSync(join(scratch, 'data/seed.json'), '{}\n');
-                    git('add', '-A');
-                    git('commit', '-qm', 'seed');
-                    // Exit 0 => guard true => the workflow exits without committing.
-                    // Exit 1 => guard false => it proceeds to `git add`.
-                    // Anything else is git failing to run the guard at all,
-                    // which is its own defect and must not read as "proceeds".
-                    const runGuard = () => {
-                        try {
-                            execFileSync('bash', ['-c', guardLine[1]], { cwd: scratch, stdio: 'pipe' });
-                            return 0;
-                        } catch (e) { return e.status ?? -1; }
-                    };
-
-                    // A clean tree MUST skip. Without this, `if false; then` —
-                    // which never skips and commits on every run — passed.
-                    const clean = runGuard();
-                    if (clean !== 0) {
-                        bad.push(
-                            `the change guard \`${guardLine[1]}\` exited ${clean} on a CLEAN tree — it must report "no changes" ` +
-                            `when there are none, or every run commits`
-                        );
-                    }
-
-                    // New output in EACH scope must proceed. Narrowing the guard
-                    // to one path left new data/history output unprotected and
-                    // still passed a check that only tried reports/raw/.
-                    for (const rel of ['data/history/yields-2027.json', 'reports/raw/2026-08-28-google-news.json', 'reports/validation/2026-08-28-compare.json']) {
-                        mkdirSync(join(scratch, dirname(rel)), { recursive: true });
-                        writeFileSync(join(scratch, rel), '{}\n');
-                        const status = runGuard();
-                        rmSync(join(scratch, rel), { force: true });
-                        if (status !== 0 && status !== 1) {
-                            bad.push(`the change guard \`${guardLine[1]}\` exited ${status} — it does not run against the paths it names`);
-                        } else if (status === 0) {
-                            bad.push(
-                                `the change guard \`${guardLine[1]}\` reports "no changes" when the only output is a new ` +
-                                `untracked ${rel}, so the workflow exits before its own \`git add\` and that output is never committed`
-                            );
+                    // exists to remove. Windows PowerShell's default PATH has
+                    // no bash; add Git's usr/bin.
+                    bad.push('cannot verify the change guard: `bash` will not launch, so it was never executed — add Git Bash to PATH');
+                } else {
+                    const prefix = body.slice(0, commitAt).join('\n') + '\necho __REACHED_COMMIT__\n';
+                    const scratch = mkdtempSync(join(tmpdir(), 'guard-'));
+                    try {
+                        const git = (...a) => execFileSync('git', a, { cwd: scratch, stdio: 'pipe' });
+                        git('init', '-q', '.');
+                        git('config', 'user.email', 't@t');
+                        git('config', 'user.name', 't');
+                        // One committed file per scope INCLUDING data/ root — a
+                        // guard narrowed to data/history/ looks fine without it.
+                        const TRACKED = [
+                            'data/news-feed.json',
+                            'data/history/yields-2026.json',
+                            'reports/raw/2026-08-01-quotes.json',
+                            'reports/validation/2026-08-01-compare.json',
+                        ];
+                        for (const rel of TRACKED) {
+                            mkdirSync(join(scratch, dirname(rel)), { recursive: true });
+                            writeFileSync(join(scratch, rel), '{"seed":1}\n');
                         }
+                        writeFileSync(join(scratch, 'CLAUDE.md'), 'unrelated\n');
+                        git('add', '-A');
+                        git('commit', '-qm', 'seed');
+                        // --hard, and BEFORE clean. `git checkout -- .` restores
+                        // from the INDEX, and the prefix's own `git add` has
+                        // just staged the change — so the plain form left the
+                        // tree dirty and every later case reached the commit
+                        // trivially, which is why two untracked-blind guards
+                        // looked bound when they were not.
+                        const reset = () => { git('reset', '--hard', '-q'); git('clean', '-qfd'); };
+                        const reaches = () => execFileSync('bash', ['-c', prefix], { cwd: scratch, encoding: 'utf8' }).includes('__REACHED_COMMIT__');
+
+                        if (reaches()) bad.push('the commit step reaches `git commit` on a CLEAN tree — every run would commit');
+                        reset();
+
+                        for (const rel of TRACKED) {
+                            for (const [how, apply] of [
+                                ['modified', () => writeFileSync(join(scratch, rel), '{"seed":2}\n')],
+                                ['deleted', () => rmSync(join(scratch, rel))],
+                                ['joined by a new file', () => writeFileSync(join(scratch, dirname(rel), 'brand-new.json'), '{}\n')],
+                            ]) {
+                                mkdirSync(join(scratch, dirname(rel)), { recursive: true });
+                                apply();
+                                if (!reaches()) {
+                                    bad.push(`the commit step skips \`git commit\` when ${rel} is ${how} — that output would never be committed`);
+                                }
+                                reset();
+                            }
+                        }
+
+                        // And it must not stage anything outside its scopes.
+                        writeFileSync(join(scratch, 'data/news-feed.json'), '{"seed":3}\n');
+                        writeFileSync(join(scratch, 'CLAUDE.md'), 'touched by another step\n');
+                        reaches();
+                        const staged = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: scratch, encoding: 'utf8' }).split('\n').filter(Boolean);
+                        if (staged.includes('CLAUDE.md')) {
+                            bad.push('the commit step stages CLAUDE.md — it must stage only data/, reports/raw/ and reports/validation/');
+                        }
+                    } finally {
+                        rmSync(scratch, { recursive: true, force: true });
                     }
-                } catch (e) {
-                    if (e.message !== 'bash unavailable') throw e;
-                } finally {
-                    if (scratch) rmSync(scratch, { recursive: true, force: true });
                 }
             }
+
             return bad;
         },
         shouldFail: false,
