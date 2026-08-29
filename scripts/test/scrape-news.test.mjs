@@ -44,7 +44,13 @@ const SCRIPT = join(REPO, 'scripts/scrape-news.mjs');
 
 const UNIVERSE = { tickers: [{ symbol: 'CLS' }] };
 const FEED = {
-    note: 'Owned by collector agent',
+    // The CANONICAL note, not a paraphrase. With a wrong note here every case
+    // satisfied `noteWasWrong`, so the write happened for that reason and the
+    // `collected.length > 0` arm was never exercised on its own — mutating the
+    // condition to `if (noteWasWrong)` alone left the suite 15/15 green while
+    // silently discarding every headline a real run collects. A fixture that
+    // does not hold the contract cannot test code that branches on it.
+    note: NEWS_FEED_NOTE,
     items: [
         { id: '2026-08-01-cls-alpha', ticker: 'CLS', headline: 'Alpha', collectedAt: '2026-08-01T00:00:00Z' },
         { id: '2026-08-02-cls-beta', ticker: 'CLS', headline: 'Beta', collectedAt: '2026-08-02T00:00:00Z' },
