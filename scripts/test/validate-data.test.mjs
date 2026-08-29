@@ -299,12 +299,41 @@ const CASES = [
             // matched left it green while hiding exactly the file it exists to
             // catch. A check on the text of a command cannot speak for what the
             // command does.
+            // Reject commit-level auto-staging on BOTH commits. `-a` stages
+            // every tracked modification, which is a different set from the
+            // paths the `git add` above names — the enumerated staging becomes
+            // decoration and anything else the job touched rides along.
+            for (const [label, hay] of [['the first-attempt commit', beforeLoop], ['the replay path', replay]]) {
+                const autos = [...hay.matchAll(/^\s*git commit\s+(-[A-Za-z]+)/mg)]
+                    .map(m => m[1]).filter(f => /^-[a-zA-Z]*a/.test(f));
+                if (autos.length) {
+                    bad.push(`${label} uses \`git commit ${autos[0]}\` — -a stages every tracked modification, not the paths staged above`);
+                }
+            }
+
             const guardLine = /^\s*if\s+(.+?);\s*then\s*$/m.exec(beforeLoop);
             if (!guardLine) {
                 bad.push('cannot find the change guard before the retry loop — it decides whether anything is committed at all');
+            } else if (guardLine.index > beforeLoop.search(/^\s*git commit\b/m)) {
+                // Behaviour is not enough: a guard that runs AFTER the commit
+                // it is meant to prevent decides nothing. Moving it below
+                // `git commit` left this case green.
+                bad.push('the change guard runs after `git commit` — a guard that cannot prevent the commit is not a guard');
             } else {
-                const scratch = mkdtempSync(join(tmpdir(), 'guard-'));
+                let haveBash = true;
+                try { execFileSync('bash', ['-c', 'exit 0'], { stdio: 'pipe' }); } catch { haveBash = false; }
+                if (!haveBash) {
+                    // Not skipped. A check that cannot run has not passed, and
+                    // "skipped inside a green run" is the shape this suite
+                    // exists to remove. On Windows the default PowerShell PATH
+                    // has no bash; adding Git's usr/bin (e.g.
+                    // C:\\Program Files\\Git\\usr\\bin) resolves it.
+                    bad.push('cannot verify the change guard: `bash` will not launch, so the guard was never executed — add Git Bash to PATH');
+                }
+                const scratch = haveBash ? mkdtempSync(join(tmpdir(), 'guard-')) : null;
+                if (!haveBash) { /* fall through to the finally-free path below */ }
                 try {
+                    if (!haveBash) throw new Error('bash unavailable');
                     const git = (...a) => execFileSync('git', a, { cwd: scratch, stdio: 'pipe' });
                     git('init', '-q', '.');
                     git('config', 'user.email', 't@t');
@@ -342,8 +371,10 @@ const CASES = [
                             `new untracked file, so the workflow exits before its own \`git add\` and that output is never committed`
                         );
                     }
+                } catch (e) {
+                    if (e.message !== 'bash unavailable') throw e;
                 } finally {
-                    rmSync(scratch, { recursive: true, force: true });
+                    if (scratch) rmSync(scratch, { recursive: true, force: true });
                 }
             }
             return bad;
