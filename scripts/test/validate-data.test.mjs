@@ -26,7 +26,7 @@ import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNews
 import { dedupeByEarliest } from '../dedupe-news-feed.mjs';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const DIR = new URL('./fixtures/', import.meta.url);
@@ -303,21 +303,32 @@ const CASES = [
             // every tracked modification, which is a different set from the
             // paths the `git add` above names — the enumerated staging becomes
             // decoration and anything else the job touched rides along.
+            // Scan the WHOLE command, not the first option token. `git commit
+            // -m "..." -a` and `git commit --all -m "..."` both auto-stage and
+            // both passed a check that only read the token right after
+            // `git commit`. Options do not have to come first.
             for (const [label, hay] of [['the first-attempt commit', beforeLoop], ['the replay path', replay]]) {
-                const autos = [...hay.matchAll(/^\s*git commit\s+(-[A-Za-z]+)/mg)]
-                    .map(m => m[1]).filter(f => /^-[a-zA-Z]*a/.test(f));
-                if (autos.length) {
-                    bad.push(`${label} uses \`git commit ${autos[0]}\` — -a stages every tracked modification, not the paths staged above`);
+                for (const m of hay.matchAll(/^\s*git commit\b(.*)$/mg)) {
+                    const opts = m[1].replace(/"[^"]*"/g, '""');   // ignore -a inside the message
+                    const hit = /(^|\s)--all(\s|$)/.test(opts) ? '--all'
+                        : (/(^|\s)-[A-Za-z]*a[A-Za-z]*(\s|$)/.exec(opts) || [])[0]?.trim();
+                    if (hit) {
+                        bad.push(`${label} uses \`git commit ${hit}\` — it stages every tracked modification, not the paths staged above`);
+                    }
                 }
             }
 
-            const guardLine = /^\s*if\s+(.+?);\s*then\s*$/m.exec(beforeLoop);
+            // Identify the guard by its whole SHAPE — an `if` whose body is an
+            // echo and `exit 0` — not by the first `if` in the block. Matching
+            // the first `if` let three bypasses through: a dummy false `if`
+            // inserted ahead of the real guard, `if false; then`, and narrowing
+            // the paths to reports/raw/ so new data/history output went
+            // uncommitted. All three left this case green.
+            const guardBlock = /^([ \t]*)if\s+(.+?);\s*then\s*\n[ \t]*echo[^\n]*\n[ \t]*exit 0\s*\n[ \t]*fi\s*$/m.exec(beforeLoop);
+            const guardLine = guardBlock && { index: guardBlock.index, 1: guardBlock[2] };
             if (!guardLine) {
-                bad.push('cannot find the change guard before the retry loop — it decides whether anything is committed at all');
+                bad.push('cannot find the change guard before the retry loop — an `if ...; then echo ...; exit 0; fi` that decides whether anything is committed at all');
             } else if (guardLine.index > beforeLoop.search(/^\s*git commit\b/m)) {
-                // Behaviour is not enough: a guard that runs AFTER the commit
-                // it is meant to prevent decides nothing. Moving it below
-                // `git commit` left this case green.
                 bad.push('the change guard runs after `git commit` — a guard that cannot prevent the commit is not a guard');
             } else {
                 let haveBash = true;
@@ -351,25 +362,43 @@ const CASES = [
                     writeFileSync(join(scratch, 'data/seed.json'), '{}\n');
                     git('add', '-A');
                     git('commit', '-qm', 'seed');
-                    // The case the guard got wrong: output that is ONLY a new file.
-                    writeFileSync(join(scratch, 'reports/raw/2026-08-28-google-news.json'), '{"failures":[]}\n');
                     // Exit 0 => guard true => the workflow exits without committing.
                     // Exit 1 => guard false => it proceeds to `git add`.
-                    // Anything else is git failing to run the guard at all, which
-                    // is its own defect and must not read as "proceeds".
-                    let status = 0;
-                    try {
-                        execFileSync('bash', ['-c', guardLine[1]], { cwd: scratch, stdio: 'pipe' });
-                    } catch (e) {
-                        status = e.status ?? -1;
-                    }
-                    if (status !== 0 && status !== 1) {
-                        bad.push(`the change guard \`${guardLine[1]}\` exited ${status} — it does not run against the paths it names`);
-                    } else if (status === 0) {
+                    // Anything else is git failing to run the guard at all,
+                    // which is its own defect and must not read as "proceeds".
+                    const runGuard = () => {
+                        try {
+                            execFileSync('bash', ['-c', guardLine[1]], { cwd: scratch, stdio: 'pipe' });
+                            return 0;
+                        } catch (e) { return e.status ?? -1; }
+                    };
+
+                    // A clean tree MUST skip. Without this, `if false; then` —
+                    // which never skips and commits on every run — passed.
+                    const clean = runGuard();
+                    if (clean !== 0) {
                         bad.push(
-                            `the change guard \`${guardLine[1]}\` reports "no changes" for a run whose only output is a ` +
-                            `new untracked file, so the workflow exits before its own \`git add\` and that output is never committed`
+                            `the change guard \`${guardLine[1]}\` exited ${clean} on a CLEAN tree — it must report "no changes" ` +
+                            `when there are none, or every run commits`
                         );
+                    }
+
+                    // New output in EACH scope must proceed. Narrowing the guard
+                    // to one path left new data/history output unprotected and
+                    // still passed a check that only tried reports/raw/.
+                    for (const rel of ['data/history/yields-2027.json', 'reports/raw/2026-08-28-google-news.json', 'reports/validation/2026-08-28-compare.json']) {
+                        mkdirSync(join(scratch, dirname(rel)), { recursive: true });
+                        writeFileSync(join(scratch, rel), '{}\n');
+                        const status = runGuard();
+                        rmSync(join(scratch, rel), { force: true });
+                        if (status !== 0 && status !== 1) {
+                            bad.push(`the change guard \`${guardLine[1]}\` exited ${status} — it does not run against the paths it names`);
+                        } else if (status === 0) {
+                            bad.push(
+                                `the change guard \`${guardLine[1]}\` reports "no changes" when the only output is a new ` +
+                                `untracked ${rel}, so the workflow exits before its own \`git add\` and that output is never committed`
+                            );
+                        }
                     }
                 } catch (e) {
                     if (e.message !== 'bash unavailable') throw e;
