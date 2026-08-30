@@ -24,7 +24,7 @@
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 
 const REPO = process.cwd();
 const SCRIPT = join(REPO, 'scripts/commit-refresh.sh');
@@ -254,12 +254,22 @@ for (const rel of SCOPES) {
 
     writeFileSync(join(work, 'data/news-feed.json'), '{"items":[]}\n');
     writeFileSync(join(work, 'out-of-scope.txt'), 'must never be pushed\n');
+    // Under reports/ but outside the two scopes, and UNTRACKED — `git reset
+    // --hard` in the replay discards a tracked modification, so a modified
+    // brief.md is clean again by the time the replay stages and broadening the
+    // replay's staging alone stayed invisible. An untracked file survives the
+    // reset and is exactly what a swept `git add reports/` would pick up.
+    writeFileSync(join(work, 'reports/2026-08/draft-brief.md'), '# a human is drafting this\n');
     const r = run(work);
     const pushed = git(work, 'ls-tree', '-r', '--name-only', 'origin/main').split('\n');
     if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-200)}`);
-    else if (pushed.includes('out-of-scope.txt') || pushed.includes('.trace')) {
-        fail(label, `the replay pushed out-of-scope files: ${pushed.filter(f => !/^(data|reports|scripts|CLAUDE)/.test(f)).join(', ')}`);
-    } else ok(label, 'nothing outside data/, reports/raw/ and reports/validation/ reaches origin');
+    else {
+        const head = git(work, 'show', '--name-only', '--format=', 'HEAD').split('\n').filter(Boolean);
+        const leaked = head.filter(f => !/^(data|reports\/raw|reports\/validation)\//.test(f));
+        if (leaked.length) fail(label, `the replay committed out-of-scope ${JSON.stringify(leaked)}`);
+        else if (pushed.includes('out-of-scope.txt') || pushed.includes('.trace')) fail(label, 'an out-of-scope file reached origin');
+        else ok(label, 'nothing outside data/, reports/raw/ and reports/validation/ reaches origin');
+    }
     rmSync(root, { recursive: true, force: true });
 }
 
@@ -287,6 +297,88 @@ for (const rel of SCOPES) {
     if (r.status === 0) fail(label, 'the replay exited 0 with a validator that refuses the tree');
     else if (before !== after) fail(label, 'the replay pushed a tree the validator rejected');
     else ok(label, 'a rejected tree is never committed or pushed');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// -------------------------------------------------- TWO rejections in a row
+//
+// One rejection was not enough. With the delta recomputed from HEAD, the first
+// replay succeeds and the second claims the FIRST competitor's changes as this
+// run's own, replaying them over a later push and silently reverting it.
+//
+// The competing pushes come from a pre-receive hook on the bare origin that
+// rejects the first two pushes and advances main itself. That is deterministic:
+// an earlier version raced a detached process against the script's own backoff
+// and hung, and before that a setTimeout that could never fire — run() is
+// execFileSync, which blocks the event loop.
+
+{
+    const label = 'a second rejection does not revert the competitor it never saw';
+    const { root, origin, work } = scratch();
+    const target = 'reports/validation/2026-08-01-compare.json';
+    writeFileSync(join(origin, 'hooks', 'pre-receive'), `#!/bin/bash
+set -e
+n=$(cat "$GIT_DIR/rejects" 2>/dev/null || echo 0)
+if [ "$n" -ge 2 ]; then exit 0; fi
+n=$((n + 1)); echo "$n" > "$GIT_DIR/rejects"
+# Advance main with a competing change to a file the pushing run never touched.
+# Objects written during pre-receive land in the push QUARANTINE and are
+# discarded when the hook rejects, so the ref update would point at nothing.
+# Write to the real object store instead.
+unset GIT_QUARANTINE_PATH GIT_ALTERNATE_OBJECT_DIRECTORIES
+export GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"
+blob=$(printf '{"v":%d}\\n' "$((n + 1))" | git hash-object -w --stdin)
+export GIT_INDEX_FILE="$GIT_DIR/tmpidx"
+git read-tree refs/heads/main
+git update-index --add --cacheinfo "100644,$blob,${target}"
+tree=$(git write-tree)
+commit=$(git commit-tree "$tree" -p refs/heads/main -m "rival $n")
+git update-ref refs/heads/main "$commit"
+rm -f "$GIT_INDEX_FILE"
+echo "rejected by test hook (attempt $n)" >&2
+exit 1
+`);
+    execFileSync('chmod', ['+x', join(origin, 'hooks', 'pre-receive')]);
+
+    // This run changes something else entirely.
+    writeFileSync(join(work, 'data/history/yields-2026.json'), '{"mine":1}\n');
+    const r = run(work);
+
+    git(work, 'fetch', '-q', 'origin', 'main');
+    const finalCompare = git(work, 'show', `origin/main:${target}`);
+    const mine = git(work, 'show', 'origin/main:data/history/yields-2026.json');
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (!/attempt 2/.test(r.out)) fail(label, 'the hook did not reject twice — the second replay was never exercised');
+    else if (/"v":\s*2/.test(finalCompare)) {
+        fail(label, "the second replay reverted the later competitor to v2 — its delta was recomputed from a moved HEAD and claimed another run's change as this run's own");
+    } else if (!/"v":\s*3/.test(finalCompare)) {
+        fail(label, `expected the newest competitor's v3 to survive, got ${finalCompare.trim()}`);
+    } else if (!/"mine":\s*1/.test(mine)) {
+        fail(label, "this run's own output did not reach origin");
+    } else ok(label, "the frozen run commit keeps every retry's delta to this run's own output");
+    rmSync(root, { recursive: true, force: true });
+}
+
+// --------------------------------------------- mode and type survive a replay
+{
+    const label = 'a replay preserves file mode';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o'); git(other, 'config', 'user.name', 'o');
+    writeFileSync(join(other, 'data/news-feed.json'), '{"items":[]}\n');
+    git(other, 'commit', '-qam', 'origin moved'); git(other, 'push', '-q', 'origin', 'main');
+
+    // The file must be ADDED by this run. If it already exists on origin, the
+    // reset restores it with the right mode and a redirect that overwrites the
+    // bytes inherits it — the defect stays invisible.
+    writeFileSync(join(work, 'data/hook.sh'), '#!/bin/sh\necho hi\n');
+    execFileSync('chmod', ['+x', join(work, 'data/hook.sh')]);
+    const r = run(work);
+    const mode = git(work, 'ls-tree', 'HEAD', 'data/hook.sh').split(/\s+/)[0];
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-200)}`);
+    else if (mode !== '100755') fail(label, `data/hook.sh came back as mode ${mode}, expected 100755 — a redirect writes bytes and loses the entry's mode`);
+    else ok(label, 'the executable bit survives the replay');
     rmSync(root, { recursive: true, force: true });
 }
 

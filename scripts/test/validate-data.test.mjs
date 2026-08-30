@@ -266,6 +266,12 @@ const CASES = [
             // Invocation text is not reachability: `if: false` on the step
             // leaves the `run:` line exactly as it is while the writer never
             // runs. Assert the step carries no condition.
+            // Job level too: `if:` or `continue-on-error:` on the refresh JOB
+            // silences every step in it, and a step-only check reads green.
+            const job = wf.slice(wf.indexOf('  refresh:'), wf.indexOf('    steps:'));
+            if (/^\s{4}(if|continue-on-error)\s*:/m.test(job)) {
+                bad.push('the refresh job is conditional — `if:`/`continue-on-error:` at job level silences the writer while every step still reads correctly');
+            }
             const step = wf.slice(wf.indexOf('- name: Commit & push if changed'));
             const stepEnd = step.indexOf('\n      - name:', 1);
             const stepText = stepEnd < 0 ? step : step.slice(0, stepEnd);

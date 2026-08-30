@@ -53,6 +53,15 @@ ensure_scopes
 git add "${STAGE_PATHS[@]}"
 git commit -m "$MESSAGE"
 
+# This run's output, frozen. The replay below must re-derive its delta from a
+# commit that cannot move: recomputing it from HEAD worked for one rejection and
+# broke on the second, because by then HEAD is the replay commit and carries the
+# FIRST competing push's changes too. `BASE..HEAD` then claimed those as this
+# run's output and replayed them over a third push, silently reverting it —
+# reproduced against a real bare origin. BASE..RUN_COMMIT is the same delta on
+# every attempt.
+RUN_COMMIT=$(git rev-parse HEAD)
+
 # A push landing mid-run otherwise loses the whole refresh to a rejected
 # non-fast-forward (seen 2026-08-18). Rebasing was the first fix, but it fails
 # too: two refresh runs regenerate the SAME files, so the replay hits content
@@ -71,10 +80,9 @@ git commit -m "$MESSAGE"
 for i in 1 2 3; do
     if git push; then exit 0; fi
     echo "push rejected (attempt $i) — replaying this run's delta onto origin"
-    mine=$(git rev-parse HEAD)
     tmp=$(mktemp -d)
     # --no-renames: a rename would emit two paths and desync the read loop below.
-    git diff --name-status --no-renames -z "$BASE" "$mine" -- "${STAGE_PATHS[@]}" > "$tmp/delta"
+    git diff --name-status --no-renames -z "$BASE" "$RUN_COMMIT" -- "${STAGE_PATHS[@]}" > "$tmp/delta"
     git fetch origin "$GITHUB_REF_NAME"
     git reset --hard "origin/$GITHUB_REF_NAME"
 
@@ -93,7 +101,7 @@ for i in 1 2 3; do
                 # not reintroduce a second definition of the rule here.
                 if [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
                     cp "$path" "$tmp/origin-news-feed.json"
-                    git show "$mine:$path" > "$path"
+                    git checkout "$RUN_COMMIT" -- "$path"
                     node -e "
                       const fs=require('fs');
                       const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
@@ -101,8 +109,13 @@ for i in 1 2 3; do
                       fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...(a.items||[]),...(b.items||[])]},null,2)+'\n');
                     " "$tmp/origin-news-feed.json" "$path"
                 else
+                    # `git checkout <commit> -- <path>`, not `git show > file`:
+                    # a redirect writes bytes and loses the object's type and
+                    # mode, so a committed symlink came back as a regular file
+                    # and an executable bit would be dropped. Restoring through
+                    # git reproduces the entry faithfully.
                     mkdir -p "$(dirname "$path")"
-                    git show "$mine:$path" > "$path"
+                    git checkout "$RUN_COMMIT" -- "$path"
                 fi
                 ;;
         esac
