@@ -55,6 +55,12 @@ function scratch() {
         writeFileSync(join(work, rel), '{"seed":1}\n');
     }
     writeFileSync(join(work, 'CLAUDE.md'), 'unrelated\n');
+    // reports/ holds more than the two scopes the bot may write: the
+    // interpreter's reports/YYYY-MM/ briefs and reports/designs/ are
+    // hand-authored and must never ride along on a scheduled refresh. Seeded
+    // here so broadening STAGE_PATHS to `reports/` is visible.
+    mkdirSync(join(work, 'reports/2026-08'), { recursive: true });
+    writeFileSync(join(work, 'reports/2026-08/brief.md'), '# analyst brief\n');
     // The replay path runs these two.
     mkdirSync(join(work, 'scripts'), { recursive: true });
     // Stubs that RECORD they ran, so the replay case can assert both were
@@ -132,12 +138,13 @@ for (const rel of SCOPES) {
     writeFileSync(join(work, 'data/news-feed.json'), '{"seed":2}\n');
     writeFileSync(join(work, 'CLAUDE.md'), 'touched by another step\n');
     writeFileSync(join(work, 'index.html'), '<p>touched</p>\n');
+    writeFileSync(join(work, 'reports/2026-08/brief.md'), '# edited by a human\n');
     const r = run(work);
     const leaked = r.files.filter(f => !/^(data|reports\/raw|reports\/validation)\//.test(f));
     if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(0, 200)}`);
     else if (r.commits !== 1) fail(label, `made ${r.commits} commit(s), expected 1`);
     else if (leaked.length) fail(label, `committed out-of-scope ${JSON.stringify(leaked)} — only data/, reports/raw/ and reports/validation/ may be staged`);
-    else ok(label, 'CLAUDE.md and index.html stay out of the commit');
+    else ok(label, 'CLAUDE.md, index.html and the interpreter brief stay out of the commit');
     rmSync(root, { recursive: true, force: true });
 }
 
@@ -167,6 +174,119 @@ for (const rel of SCOPES) {
         fail(label, `the replay ran ${JSON.stringify(r.trace)} — it must dedupe then re-validate, or it commits a tree nothing checked`);
     }
     else ok(label, "origin's tree is taken wholesale, this run's output replayed on top, deduped then re-validated");
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ------------------------------------- replay must apply a DELTA, not a tree
+//
+// Overlaying an archive of the whole data/ and reports/ tree lost data three
+// ways, each reproduced against a real bare origin before this was written: a
+// file this run deleted came back, a file origin modified that this run never
+// touched was overwritten with stale bytes, and a file origin deleted came
+// back. `cp -r` cannot express a deletion, and a snapshot is not a delta.
+
+{
+    const label = 'replay preserves this run\'s deletion and origin\'s concurrent edits';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    // Origin edits a file this run never touches, deletes another, and adds one.
+    writeFileSync(join(other, 'reports/validation/2026-08-01-compare.json'), '{"origin":"edited"}\n');
+    git(other, 'rm', '-q', 'reports/raw/2026-08-01-quotes.json');
+    writeFileSync(join(other, 'data/history/yields-2027.json'), '{"origin":"added"}\n');
+    git(other, 'add', '-A');
+    git(other, 'commit', '-qm', 'origin moved');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    // This run deletes one file and modifies another.
+    rmSync(join(work, 'data/history/yields-2026.json'));
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[{"id":"mine"}]}\n');
+    const r = run(work);
+
+    const tree = git(work, 'ls-tree', '-r', '--name-only', 'HEAD').split('\n');
+    const read = (rel) => tree.includes(rel) ? git(work, 'show', `HEAD:${rel}`) : null;
+    const problems = [];
+    if (tree.includes('data/history/yields-2026.json')) problems.push('this run deleted data/history/yields-2026.json and the replay resurrected it');
+    if (tree.includes('reports/raw/2026-08-01-quotes.json')) problems.push("origin deleted reports/raw/2026-08-01-quotes.json and the replay resurrected it");
+    if (!/"origin":\s*"edited"/.test(read('reports/validation/2026-08-01-compare.json') || '')) {
+        problems.push("origin's edit to reports/validation/2026-08-01-compare.json was overwritten with this run's stale copy");
+    }
+    if (!/"origin":\s*"added"/.test(read('data/history/yields-2027.json') || '')) problems.push("origin's new data/history/yields-2027.json did not survive");
+    if (r.status !== 0) problems.push(`exited ${r.status}: ${r.out.trim().slice(-200)}`);
+    if (problems.length) fail(label, problems.join(' | '));
+    else ok(label, "only this run's delta is replayed; everything else origin did survives");
+    rmSync(root, { recursive: true, force: true });
+}
+
+{
+    const label = 'replay unions the append-only feed instead of overwriting it';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    writeFileSync(join(other, 'data/news-feed.json'), '{"items":[{"id":"from-origin","collectedAt":"2026-08-01T00:00:00Z"}]}\n');
+    git(other, 'commit', '-qam', 'origin appended');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[{"id":"from-mine","collectedAt":"2026-08-02T00:00:00Z"}]}\n');
+    const r = run(work);
+    const feed = git(work, 'show', 'HEAD:data/news-feed.json');
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-200)}`);
+    else if (!feed.includes('from-origin')) fail(label, "origin's appended item was dropped — the feed is append-only");
+    else if (!feed.includes('from-mine')) fail(label, "this run's appended item was dropped");
+    else ok(label, "both sides' items survive the replay");
+    rmSync(root, { recursive: true, force: true });
+}
+
+{
+    const label = 'replay stages only the allowed scopes and fails closed on the validator';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    writeFileSync(join(other, 'CLAUDE.md'), 'origin edit\n');
+    git(other, 'commit', '-qam', 'origin moved');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[]}\n');
+    writeFileSync(join(work, 'out-of-scope.txt'), 'must never be pushed\n');
+    const r = run(work);
+    const pushed = git(work, 'ls-tree', '-r', '--name-only', 'origin/main').split('\n');
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-200)}`);
+    else if (pushed.includes('out-of-scope.txt') || pushed.includes('.trace')) {
+        fail(label, `the replay pushed out-of-scope files: ${pushed.filter(f => !/^(data|reports|scripts|CLAUDE)/.test(f)).join(', ')}`);
+    } else ok(label, 'nothing outside data/, reports/raw/ and reports/validation/ reaches origin');
+    rmSync(root, { recursive: true, force: true });
+}
+
+{
+    const label = 'a failing validator aborts the replay before it commits';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    writeFileSync(join(other, 'data/history/yields-2026.json'), '{"origin":1}\n');
+    // A validator that refuses, committed to origin so the reset restores it.
+    writeFileSync(join(other, 'scripts/validate-data.mjs'), 'process.exit(1);\n');
+    git(other, 'commit', '-qam', 'origin moved, validator refuses');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[]}\n');
+    // Fetch FIRST: the remote-tracking ref is stale until then, so comparing
+    // against it would score origin's own push as "the replay pushed".
+    git(work, 'fetch', '-q', 'origin', 'main');
+    const before = git(work, 'rev-parse', 'origin/main');
+    const r = run(work);
+    git(work, 'fetch', '-q', 'origin', 'main');
+    const after = git(work, 'rev-parse', 'origin/main');
+    if (r.status === 0) fail(label, 'the replay exited 0 with a validator that refuses the tree');
+    else if (before !== after) fail(label, 'the replay pushed a tree the validator rejected');
+    else ok(label, 'a rejected tree is never committed or pushed');
     rmSync(root, { recursive: true, force: true });
 }
 

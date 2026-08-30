@@ -263,6 +263,15 @@ const CASES = [
             if (/^\s*git (commit|push)\b/m.test(wf)) {
                 bad.push('data-refresh.yml commits or pushes inline again — that path is untestable and belongs in commit-refresh.sh');
             }
+            // Invocation text is not reachability: `if: false` on the step
+            // leaves the `run:` line exactly as it is while the writer never
+            // runs. Assert the step carries no condition.
+            const step = wf.slice(wf.indexOf('- name: Commit & push if changed'));
+            const stepEnd = step.indexOf('\n      - name:', 1);
+            const stepText = stepEnd < 0 ? step : step.slice(0, stepEnd);
+            if (/^\s*(if|continue-on-error)\s*:/m.test(stepText)) {
+                bad.push('the writer step is conditional — `if:`/`continue-on-error:` can silence it entirely while the run: line still reads correctly');
+            }
             return bad;
         },
         shouldFail: false,

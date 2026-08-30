@@ -17,6 +17,13 @@
 set -euo pipefail
 
 STAGE_PATHS=(data/ reports/raw/ reports/validation/)
+
+# `git add <path>` is fatal when the pathspec matches nothing, and under
+# `set -e` that aborts the run. A scope directory really can be absent — origin
+# deleting the last file in reports/raw/ removes it, and the replay's reset then
+# lands on a tree without it. An existing empty directory stages nothing and is
+# not an error, so make sure each scope exists before staging.
+ensure_scopes() { mkdir -p "${STAGE_PATHS[@]}"; }
 MESSAGE="data: scheduled refresh $(date -u +%FT%TZ)"
 
 # `git diff --quiet` does not see untracked files, so a run whose only output
@@ -26,6 +33,7 @@ MESSAGE="data: scheduled refresh $(date -u +%FT%TZ)"
 # its failures, and of the first run of a new year, whose
 # data/history/yields-<year>.json does not exist yet. --porcelain lists
 # untracked paths too.
+ensure_scopes
 if [ -z "$(git status --porcelain -- "${STAGE_PATHS[@]}")" ]; then
     echo "no changes — skipping commit"
     exit 0
@@ -37,46 +45,76 @@ git config user.email 'bot@users.noreply.github.com'
 # Stage the whole data/ tree, not an enumerated list: every file added since
 # this line was written (fundamentals.json, and now data/history/*) had to be
 # remembered here or it silently never got committed.
+# The commit this run starts from. The replay below needs it to know which
+# changes are ITS OWN rather than replaying whatever the tree happens to hold.
+BASE=$(git rev-parse HEAD)
+
+ensure_scopes
 git add "${STAGE_PATHS[@]}"
 git commit -m "$MESSAGE"
 
 # A push landing mid-run otherwise loses the whole refresh to a rejected
 # non-fast-forward (seen 2026-08-18). Rebasing was the first fix, but it fails
 # too: two refresh runs regenerate the SAME files, so the replay hits content
-# conflicts in all ten of them and exits 1 (seen 2026-08-19). Instead of merging
-# generated data, replay it — take origin's tree wholesale, drop this run's
-# regenerated files on top, and commit that. Nothing can conflict because
-# nothing is merged.
+# conflicts in all ten of them and exits 1 (seen 2026-08-19).
+#
+# Replaying by overlaying an archive of the whole data/ and reports/ tree was
+# the second fix, and it silently lost data three ways — verified against a real
+# bare origin: a file this run DELETED came back, a file origin modified that
+# this run never touched was overwritten with stale bytes, and a file origin
+# deleted came back. `cp -r` cannot express a deletion, and a whole-tree
+# snapshot is not this run's delta.
+#
+# So compute the delta — what this run changed, scoped to the staged paths —
+# and apply only that on top of origin's tree. Anything origin did to a file
+# this run did not touch survives untouched.
 for i in 1 2 3; do
     if git push; then exit 0; fi
-    echo "push rejected (attempt $i) — replaying this run's output onto origin"
+    echo "push rejected (attempt $i) — replaying this run's delta onto origin"
+    mine=$(git rev-parse HEAD)
     tmp=$(mktemp -d)
-    git archive HEAD data reports | tar -x -C "$tmp"
+    # --no-renames: a rename would emit two paths and desync the read loop below.
+    git diff --name-status --no-renames -z "$BASE" "$mine" -- "${STAGE_PATHS[@]}" > "$tmp/delta"
     git fetch origin "$GITHUB_REF_NAME"
     git reset --hard "origin/$GITHUB_REF_NAME"
-    # news-feed.json is the one append-only file here; overwriting it would drop
-    # whatever the other run appended, so both sides are concatenated and then
-    # collapsed by scripts/dedupe-news-feed.mjs.
-    #
-    # This used to be an inline origin-first Map merge, which kept whichever
-    # copy it saw first rather than the earliest-collected one — the same "first
-    # occurrence" mistake the helper exists to end. The helper is the single
-    # definition of the rule; do not reintroduce a second one here.
-    if [ -f data/news-feed.json ] && [ -f "$tmp/data/news-feed.json" ]; then
-        node -e "
-          const fs=require('fs');
-          const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
-          const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
-          fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...(a.items||[]),...(b.items||[])]},null,2)+'\n');
-        " data/news-feed.json "$tmp/data/news-feed.json"
-    fi
-    cp -r "$tmp"/data "$tmp"/reports .
+
+    while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+        case "$status" in
+            D)
+                git rm -q -f --ignore-unmatch -- "$path"
+                ;;
+            *)
+                # news-feed.json is append-only, and origin may hold items this
+                # run never saw. Taking our copy wholesale drops them, so both
+                # sides are concatenated and collapsed by the shared helper
+                # below (earliest collectedAt wins). This used to be an inline
+                # origin-first Map merge, which kept whichever copy it saw first
+                # — the "first occurrence" mistake the helper exists to end. Do
+                # not reintroduce a second definition of the rule here.
+                if [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
+                    cp "$path" "$tmp/origin-news-feed.json"
+                    git show "$mine:$path" > "$path"
+                    node -e "
+                      const fs=require('fs');
+                      const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+                      const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+                      fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...(a.items||[]),...(b.items||[])]},null,2)+'\n');
+                    " "$tmp/origin-news-feed.json" "$path"
+                else
+                    mkdir -p "$(dirname "$path")"
+                    git show "$mine:$path" > "$path"
+                fi
+                ;;
+        esac
+    done < "$tmp/delta"
     rm -rf "$tmp"
-    # Collapse by the shared rule (earliest collectedAt wins), then re-validate:
-    # the replayed tree is a DIFFERENT tree from the one the integrity step in
-    # the workflow checked, and it was previously committed without any check.
+
+    # Collapse by the shared rule, then re-validate: the replayed tree is a
+    # DIFFERENT tree from the one the workflow's integrity step checked, and it
+    # was once committed with no check at all.
     node scripts/dedupe-news-feed.mjs
     node scripts/validate-data.mjs
+    ensure_scopes
     git add "${STAGE_PATHS[@]}"
     if git diff --cached --quiet; then echo "origin already has this data"; exit 0; fi
     git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
