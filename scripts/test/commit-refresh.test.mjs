@@ -316,25 +316,35 @@ for (const rel of SCOPES) {
     const label = 'a second rejection does not revert the competitor it never saw';
     const { root, origin, work } = scratch();
     const target = 'reports/validation/2026-08-01-compare.json';
+
+    // The two competing commits are built and pushed to refs/rivals/* BEFORE
+    // the run starts, so the hook only has to move a ref. An earlier version
+    // had the hook create objects itself, which works locally and fails on the
+    // runner: objects written during pre-receive live in the push quarantine
+    // and the ref then points at nothing the repository keeps.
+    const rival = join(root, 'rival');
+    execFileSync('git', ['clone', '-q', origin, rival], { stdio: 'pipe' });
+    git(rival, 'config', 'user.email', 'r@x');
+    git(rival, 'config', 'user.name', 'r');
+    for (const n of [2, 3]) {
+        writeFileSync(join(rival, target), `{"v":${n}}\n`);
+        git(rival, 'commit', '-qam', `rival v${n}`);
+        git(rival, 'push', '-q', 'origin', `HEAD:refs/rivals/${n - 1}`);
+    }
+    rmSync(rival, { recursive: true, force: true });
+
     writeFileSync(join(origin, 'hooks', 'pre-receive'), `#!/bin/bash
 set -e
 n=$(cat "$GIT_DIR/rejects" 2>/dev/null || echo 0)
 if [ "$n" -ge 2 ]; then exit 0; fi
 n=$((n + 1)); echo "$n" > "$GIT_DIR/rejects"
-# Advance main with a competing change to a file the pushing run never touched.
-# Objects written during pre-receive land in the push QUARANTINE and are
-# discarded when the hook rejects, so the ref update would point at nothing.
-# Write to the real object store instead.
-unset GIT_QUARANTINE_PATH GIT_ALTERNATE_OBJECT_DIRECTORIES
-export GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"
-blob=$(printf '{"v":%d}\\n' "$((n + 1))" | git hash-object -w --stdin)
-export GIT_INDEX_FILE="$GIT_DIR/tmpidx"
-git read-tree refs/heads/main
-git update-index --add --cacheinfo "100644,$blob,${target}"
-tree=$(git write-tree)
-commit=$(git commit-tree "$tree" -p refs/heads/main -m "rival $n")
-git update-ref refs/heads/main "$commit"
-rm -f "$GIT_INDEX_FILE"
+# Only move a ref — every object already exists in this repository, pushed to
+# refs/rivals/* before the run started. The env must be cleared first: git
+# refuses ref updates "inside quarantine environment" during pre-receive, which
+# is why an earlier version passed on this container's git and failed on the
+# runner's 2.55.
+env -u GIT_QUARANTINE_PATH -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \\
+    git update-ref refs/heads/main "refs/rivals/$n"
 echo "rejected by test hook (attempt $n)" >&2
 exit 1
 `);
