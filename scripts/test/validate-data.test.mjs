@@ -245,179 +245,28 @@ const CASES = [
         why: 'earliest collectedAt wins regardless of input order — array order is not a rule',
     },
     {
-        // Not a data fixture: a wiring assertion. dedupe-news-feed.mjs was
-        // written, tested, documented — and never called from the production
-        // path, which kept its own origin-first merge and its own bug. The rule
-        // existing is not the rule running.
+        // Not a data fixture: a wiring assertion. The writer used to live
+        // inline in this workflow and was tested by pattern-matching the YAML;
+        // every round of that was bypassable, so it now lives in
+        // scripts/commit-refresh.sh and is executed end-to-end by
+        // scripts/test/commit-refresh.test.mjs. All that remains to check here
+        // is that the workflow actually calls it — a script nothing invokes is
+        // exactly the defect dedupe-news-feed.mjs had for seven rounds.
         file: 'news-feed-unique.json',
-        label: 'data-refresh.yml calls the shared dedupe, not its own',
+        label: 'data-refresh.yml invokes the checked-in writer',
         run: () => {
-            const wf = readFileSync('.github/workflows/data-refresh.yml', 'utf8');
+            const wf = readFileSync('.github/workflows/data-refresh.yml', 'utf8').replace(/\r/g, '');
             const bad = [];
-            // Match an INVOCATION, not a mention. The first version of this
-            // check used wf.includes(), which the word "dedupe-news-feed.mjs"
-            // in a nearby comment satisfied — so deleting the actual command
-            // left the check green. A check that passes on prose is the same
-            // defect it was written to catch.
-            // `run: node x.mjs` (a one-line step) and a bare `node x.mjs`
-            // (a line inside `run: |`) are both invocations; a mention in prose
-            // is not.
-            const invokes = (hay, cmd) =>
-                new RegExp(`^\\s*(run:\\s+)?node\\s+${cmd.replace(/[.\/]/g, '\\$&')}\\s*$`, 'm').test(hay);
-
-            // Scope to the retry loop. Searching the whole file was the same
-            // mistake one level up: the pre-commit integrity step is also a
-            // bare `node scripts/validate-data.mjs`, so it satisfied the
-            // re-validation assertion on its own and the replay path could have
-            // dropped its copy with the check still green. The two are separate
-            // invariants over two different trees.
-            const loopStart = wf.indexOf('for i in 1 2 3; do');
-            const loopEnd = wf.indexOf('\n          done', loopStart);
-            if (loopStart < 0 || loopEnd < 0) return ['cannot locate the push-retry loop in data-refresh.yml'];
-            const replay = wf.slice(loopStart, loopEnd);
-            const beforeLoop = wf.slice(0, loopStart);
-
-            if (!invokes(replay, 'scripts/dedupe-news-feed.mjs')) {
-                bad.push('replay path does not invoke scripts/dedupe-news-feed.mjs');
+            if (!/^\s*run: bash scripts\/commit-refresh\.sh\s*$/m.test(wf)) {
+                bad.push('data-refresh.yml does not run `bash scripts/commit-refresh.sh` — the writer is orphaned or has moved back inline');
             }
-            if (/\(a\.items\|\|\[\]\)\.forEach\(i=>m\.set/.test(replay)) {
-                bad.push('an inline origin-first Map merge is back in the workflow');
+            if (/^\s*git (commit|push)\b/m.test(wf)) {
+                bad.push('data-refresh.yml commits or pushes inline again — that path is untestable and belongs in commit-refresh.sh');
             }
-            if (!invokes(replay, 'scripts/validate-data.mjs')) {
-                bad.push('replayed tree is committed without re-validation');
-            }
-            if (!invokes(beforeLoop, 'scripts/validate-data.mjs')) {
-                bad.push('the first-attempt tree is committed without validation — the bot is exempt again');
-            }
-
-            // The change guard decides whether anything is committed at all,
-            // and it must see UNTRACKED files — a run whose only output is a
-            // new file must not exit reporting "no changes" before reaching its
-            // own `git add`. Extracted and RUN against a scratch repository
-            // rather than pattern-matched: the first version of this check was
-            // a regex, and adding `--untracked-files=no` to the very command it
-            // matched left it green while hiding exactly the file it exists to
-            // catch. A check on the text of a command cannot speak for what the
-            // command does.
-            // Reject commit-level auto-staging on BOTH commits. `-a` stages
-            // every tracked modification, which is a different set from the
-            // paths the `git add` above names — the enumerated staging becomes
-            // decoration and anything else the job touched rides along.
-            // ALLOWLIST the one safe invocation instead of blacklisting the
-            // unsafe ones. Every blacklist round lost: first `-am`, then
-            // `-m "..." -a` and `--all`, then a quoted `"-a"`, a line
-            // continuation, and `--include <path>` — which in a scratch repo
-            // committed the staged data plus a previously unstaged CLAUDE.md.
-            // A regex is not a shell parser, so the only defensible rule is
-            // that each block holds exactly one `git commit` and it is
-            // literally the safe form.
-            const SAFE_COMMIT = /^[ \t]*git commit -m "data: scheduled refresh \$\(date -u \+%FT%TZ\)"[ \t]*$/;
-            for (const [label, hay] of [['the first-attempt commit', beforeLoop], ['the replay path', replay]]) {
-                const lines = hay.split('\n').filter(l => /(^|\s|;)git commit\b/.test(l));
-                if (lines.length !== 1) {
-                    bad.push(`${label} has ${lines.length} \`git commit\` lines — expected exactly one`);
-                } else if (!SAFE_COMMIT.test(lines[0])) {
-                    bad.push(
-                        `${label} is not the allowlisted commit form: got \`${lines[0].trim()}\` — ` +
-                        `anything but \`git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"\` ` +
-                        `can auto-stage or include paths the \`git add\` above did not`
-                    );
-                }
-            }
-
-            // Exercise the guard IN PLACE. Every structural check was
-            // bypassable: matching the first `if` missed a decoy, matching the
-            // block shape missed that same block wrapped in an unreachable
-            // `if false`, and running the condition alone missed a guard
-            // narrowed to data/history/ and one using `git ls-files --others`,
-            // which ignores tracked edits entirely. So take the step's script
-            // up to its first `git commit`, run that prefix in a scratch
-            // repository, and see whether control actually reaches the commit.
-            const stepAt = wf.indexOf('- name: Commit & push if changed');
-            const runAt = stepAt < 0 ? -1 : wf.indexOf('run: |', stepAt);
-            if (runAt < 0) {
-                bad.push('cannot locate the "Commit & push if changed" step');
-            } else {
-                const body = wf.slice(wf.indexOf('\n', runAt) + 1).split('\n').map(l => l.replace(/^ {10}/, ''));
-                const commitAt = body.findIndex(l => /^git commit\b/.test(l));
-                let haveBash = true;
-                try { execFileSync('bash', ['-c', 'exit 0'], { stdio: 'pipe' }); } catch { haveBash = false; }
-                if (commitAt < 0) {
-                    bad.push('the commit step has no top-level `git commit`');
-                } else if (!haveBash) {
-                    // Not skipped. A check that cannot run has not passed, and
-                    // "skipped inside a green run" is the shape this suite
-                    // exists to remove. Windows PowerShell's default PATH has
-                    // no bash; add Git's usr/bin.
-                    bad.push('cannot verify the change guard: `bash` will not launch, so it was never executed — add Git Bash to PATH');
-                } else {
-                    const prefix = body.slice(0, commitAt).join('\n') + '\necho __REACHED_COMMIT__\n';
-                    const scratch = mkdtempSync(join(tmpdir(), 'guard-'));
-                    try {
-                        const git = (...a) => execFileSync('git', a, { cwd: scratch, stdio: 'pipe' });
-                        git('init', '-q', '.');
-                        git('config', 'user.email', 't@t');
-                        git('config', 'user.name', 't');
-                        // One committed file per scope INCLUDING data/ root — a
-                        // guard narrowed to data/history/ looks fine without it.
-                        const TRACKED = [
-                            'data/news-feed.json',
-                            'data/history/yields-2026.json',
-                            'reports/raw/2026-08-01-quotes.json',
-                            'reports/validation/2026-08-01-compare.json',
-                        ];
-                        for (const rel of TRACKED) {
-                            mkdirSync(join(scratch, dirname(rel)), { recursive: true });
-                            writeFileSync(join(scratch, rel), '{"seed":1}\n');
-                        }
-                        writeFileSync(join(scratch, 'CLAUDE.md'), 'unrelated\n');
-                        git('add', '-A');
-                        git('commit', '-qm', 'seed');
-                        // --hard, and BEFORE clean. `git checkout -- .` restores
-                        // from the INDEX, and the prefix's own `git add` has
-                        // just staged the change — so the plain form left the
-                        // tree dirty and every later case reached the commit
-                        // trivially, which is why two untracked-blind guards
-                        // looked bound when they were not.
-                        const reset = () => { git('reset', '--hard', '-q'); git('clean', '-qfd'); };
-                        const reaches = () => execFileSync('bash', ['-c', prefix], { cwd: scratch, encoding: 'utf8' }).includes('__REACHED_COMMIT__');
-
-                        if (reaches()) bad.push('the commit step reaches `git commit` on a CLEAN tree — every run would commit');
-                        reset();
-
-                        for (const rel of TRACKED) {
-                            for (const [how, apply] of [
-                                ['modified', () => writeFileSync(join(scratch, rel), '{"seed":2}\n')],
-                                ['deleted', () => rmSync(join(scratch, rel))],
-                                ['joined by a new file', () => writeFileSync(join(scratch, dirname(rel), 'brand-new.json'), '{}\n')],
-                            ]) {
-                                mkdirSync(join(scratch, dirname(rel)), { recursive: true });
-                                apply();
-                                if (!reaches()) {
-                                    bad.push(`the commit step skips \`git commit\` when ${rel} is ${how} — that output would never be committed`);
-                                }
-                                reset();
-                            }
-                        }
-
-                        // And it must not stage anything outside its scopes.
-                        writeFileSync(join(scratch, 'data/news-feed.json'), '{"seed":3}\n');
-                        writeFileSync(join(scratch, 'CLAUDE.md'), 'touched by another step\n');
-                        reaches();
-                        const staged = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: scratch, encoding: 'utf8' }).split('\n').filter(Boolean);
-                        if (staged.includes('CLAUDE.md')) {
-                            bad.push('the commit step stages CLAUDE.md — it must stage only data/, reports/raw/ and reports/validation/');
-                        }
-                    } finally {
-                        rmSync(scratch, { recursive: true, force: true });
-                    }
-                }
-            }
-
             return bad;
         },
         shouldFail: false,
-        why: 'the production writer uses the shared rule and re-validates what it replays',
+        why: 'the workflow delegates writing to the script the end-to-end test drives',
     },
     {
         file: 'valuations-presplit-band.json',

@@ -29,6 +29,9 @@ jobs:
           for f in scripts/*.mjs scripts/lib/*.mjs scripts/local/*.mjs; do
             node --check "$f" && echo "OK $f"
           done
+          for f in scripts/*.sh; do
+            bash -n "$f" && echo "OK $f"
+          done
 
       - name: Inline dashboard scripts parse
         run: |
@@ -56,6 +59,12 @@ jobs:
       # main() against a stubbed fetch.
       - name: News writer regression tests
         run: node scripts/test/scrape-news.test.mjs
+
+      # The workflow's own writer, driven end-to-end against a scratch
+      # repository with a real origin. It replaced four rounds of
+      # pattern-matching data-refresh.yml, each of which was bypassable.
+      - name: Refresh writer end-to-end
+        run: node scripts/test/commit-refresh.test.mjs
 
       - name: Data integrity
         run: node scripts/validate-data.mjs

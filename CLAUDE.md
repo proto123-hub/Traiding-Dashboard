@@ -112,6 +112,7 @@ Strong success criteria let me loop independently. Weak criteria ("make it work"
 │   ├── verify-quotes.mjs         # cross-source verify pass → reports/validation/ drop
 │   ├── validate-data.mjs         # read-only integrity gate (no network, no writes)
 │   ├── test/                     # fixture suite — runs BEFORE the live pass in CI
+│   ├── commit-refresh.sh         # the cron's writer — guard, stage, commit, replay-on-reject
 │   ├── local/sync-vault.mjs      # LOCAL ONLY — reports → Obsidian vault, one-way
 │   └── lib/io.mjs                # readJson / writeJsonAtomic / timeouts / semaphore
 ├── .github/workflows/data-refresh.yml  # cron 11:00 & 21:00 UTC weekdays → commits to main
@@ -189,7 +190,7 @@ node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/v
 
 # Tests first, then the committed data layer (what CI runs)
 node scripts/test/validate-data.test.mjs && node scripts/test/scrape-news.test.mjs \
-  && node scripts/validate-data.mjs
+  && node scripts/test/commit-refresh.test.mjs && node scripts/validate-data.mjs
 
 # Validate JSON
 find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
@@ -199,8 +200,8 @@ node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.mat
 ```
 
 There is no linter. The verification gate is `scripts/validate-data.mjs` —
-read-only integrity checks over the committed data layer — plus two test suites
-in `scripts/test/`, and `.github/workflows/validate.yml` runs all three on every
+read-only integrity checks over the committed data layer — plus three test suites
+in `scripts/test/`, and `.github/workflows/validate.yml` runs all four on every
 PR and on every push except to `main`.
 
 The tests run **first**: a green pass over live data proves nothing if the
@@ -213,10 +214,19 @@ checks themselves have been weakened.
   failure *reason*, so a check cannot be weakened and still pass on a
   technicality. One case is not a fixture at all but a wiring assertion over
   `data-refresh.yml`.
-- `scrape-news.test.mjs` covers the WRITER, which had no tests at all while it
-  shipped three ways to destroy the feed inside a run that exited 0. It runs no
-  network: the fail-closed cases refuse before the scrape, and the append case
-  drives `main()` against a stubbed `fetch`.
+- `scrape-news.test.mjs` covers the news-feed WRITER, which had no tests at all
+  while it shipped three ways to destroy the feed inside a run that exited 0. It
+  runs no network: the fail-closed cases refuse before the scrape, and the
+  append case drives `main()` against a stubbed `fetch`.
+- `commit-refresh.test.mjs` covers `scripts/commit-refresh.sh`, the cron's own
+  writer. It builds a scratch repository with a real `origin`, runs the script,
+  and asserts on what git ends up holding — whether HEAD moved, what the commit
+  contains, what was left staged, and that a rejected push replays and
+  re-validates. That writer used to live inline in `data-refresh.yml` and was
+  tested by pattern-matching the YAML; **every round of that was bypassable**
+  (`git -c … commit -am`, a line continuation, a decoy `if`, a guard wrapped in
+  `if false`, and CRLF), which is why it is a file now. Do not move it back
+  inline — a regex over a shell script cannot say what the script does.
 
 Add a case with every new invariant, on whichever side owns it. The
 JSON-validate and script-syntax checks above still apply, plus loading the page
