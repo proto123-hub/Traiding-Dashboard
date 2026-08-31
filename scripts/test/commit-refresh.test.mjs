@@ -21,7 +21,7 @@
 //
 // Run: node scripts/test/commit-refresh.test.mjs
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
@@ -52,7 +52,11 @@ function scratch() {
     git(work, 'config', 'user.name', 't');
     for (const rel of SCOPES) {
         mkdirSync(join(work, dirname(rel)), { recursive: true });
-        writeFileSync(join(work, rel), '{"seed":1}\n');
+        writeFileSync(join(work, rel), rel === 'data/history/yields-2026.json'
+            ? JSON.stringify({ note: 'shard', year: 2026, rows: [
+                { date: '2026-01-31', country: 'DE', tenor: '10y', yield: 2.8, source: 'eurostat', collectedAt: '2026-08-01T00:00:00Z' },
+            ] }, null, 2) + '\n'
+            : '{"seed":1}\n');
     }
     writeFileSync(join(work, 'CLAUDE.md'), 'unrelated\n');
     // reports/ holds more than the two scopes the bot may write: the
@@ -67,6 +71,14 @@ function scratch() {
     // invoked and in which order. dedupe-news-feed.mjs collapsing the feed
     // after validate-data.mjs checked it would commit a tree nothing verified —
     // the defect the ordering exists to prevent.
+    // scrape-yields.mjs is imported by the replay to rebuild the derived
+    // yields-latest.json after a shard merge, and merge-yields-shard.mjs is the
+    // real helper — copied in rather than stubbed, because the merge semantics
+    // are the thing under test.
+    cpSync(join(REPO, 'scripts/merge-yields-shard.mjs'), join(work, 'scripts/merge-yields-shard.mjs'));
+    writeFileSync(join(work, 'scripts/scrape-yields.mjs'),
+        `import { appendFileSync } from 'node:fs';\n` +
+        `export async function rebuildLatest() { appendFileSync(process.env.REPLAY_TRACE, 'rebuildLatest\\n'); }\n`);
     for (const f of ['dedupe-news-feed.mjs', 'validate-data.mjs']) {
         writeFileSync(join(work, 'scripts', f),
             `import { appendFileSync } from 'node:fs';\n` +
@@ -169,8 +181,9 @@ for (const rel of SCOPES) {
     if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-300)}`);
     else if (!r.out.includes('push rejected')) fail(label, 'the push was not rejected — the replay path never ran');
     else if (!/^data: scheduled refresh /.test(head)) fail(label, `HEAD is ${JSON.stringify(head)}, not a refresh commit`);
+    else if (r.commits !== 2) fail(label, `made ${r.commits} commits, expected exactly 2 (the original and one replay) — an extra commit carrying the same subject would otherwise pass`);
     else if (!onOrigin.includes('reports/raw/2026-08-02-quotes.json')) fail(label, "this run's output did not reach origin");
-    else if (r.trace.join(' ') !== 'dedupe-news-feed.mjs validate-data.mjs') {
+    else if (r.trace.filter(l => l !== 'rebuildLatest').join(' ') !== 'dedupe-news-feed.mjs validate-data.mjs') {
         fail(label, `the replay ran ${JSON.stringify(r.trace)} — it must dedupe then re-validate, or it commits a tree nothing checked`);
     }
     else ok(label, "origin's tree is taken wholesale, this run's output replayed on top, deduped then re-validated");
@@ -382,13 +395,84 @@ exit 1
     // The file must be ADDED by this run. If it already exists on origin, the
     // reset restores it with the right mode and a redirect that overwrites the
     // bytes inherits it — the defect stays invisible.
+    // The fixture has to be an executable file this run ADDS, and the index
+    // must be clean when the script starts — so the mode can only come from the
+    // filesystem bit. Git for Windows sets core.filemode=false and cannot
+    // record it, which is why the suite really ran 20/21 there while I reported
+    // 21/21. Rather than assert 100755 blindly, ask git what it would record
+    // and say so plainly when the platform cannot represent the case at all.
     writeFileSync(join(work, 'data/hook.sh'), '#!/bin/sh\necho hi\n');
     execFileSync('chmod', ['+x', join(work, 'data/hook.sh')]);
+    // `git ls-files -s --others` prints no mode for an untracked path, so the
+    // probe is the two things that actually decide it: whether git honours the
+    // filesystem bit here, and whether the bit is set.
+    let filemode = 'true';
+    try { filemode = git(work, 'config', '--get', 'core.filemode'); } catch { /* unset means true */ }
+    const canRecordMode = filemode !== 'false'
+        && (statSync(join(work, 'data/hook.sh')).mode & 0o111) !== 0;
     const r = run(work);
     const mode = git(work, 'ls-tree', 'HEAD', 'data/hook.sh').split(/\s+/)[0];
     if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-200)}`);
+    else if (!canRecordMode) {
+        // Not skipped: a check that cannot run has not passed.
+        fail(label, 'this platform cannot record an executable bit (core.filemode=false, as on Git for Windows), so the mode contract was never exercised');
+    }
     else if (mode !== '100755') fail(label, `data/hook.sh came back as mode ${mode}, expected 100755 — a redirect writes bytes and loses the entry's mode`);
     else ok(label, 'the executable bit survives the replay');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ----------------------------- an upsert store is not a snapshot
+//
+// data/history/yields-YYYY.json is keyed by (country, tenor, date) and the
+// schema allows hand-curated rows. Restoring this run's copy wholesale dropped
+// rows a competing run had added for OTHER dates — and the validator passed all
+// seven checks with zero warnings, because a shard missing a row it never knew
+// about is a perfectly valid shard. Only a per-key merge sees it.
+
+{
+    const label = 'replay merges yields rows per key instead of overwriting the shard';
+    const shard = 'data/history/yields-2026.json';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    const theirs = JSON.parse(readFileSync(join(other, shard), 'utf8'));
+    theirs.rows.push({ date: '2026-08-31', country: 'UK', tenor: '10y', yield: 4.44, source: 'curated', collectedAt: '2026-08-31T00:00:00Z' });
+    writeFileSync(join(other, shard), JSON.stringify(theirs, null, 2) + '\n');
+    git(other, 'commit', '-qam', 'origin appended a different date');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    const mine = JSON.parse(readFileSync(join(work, shard), 'utf8'));
+    mine.rows.push({ date: '2026-08-30', country: 'UK', tenor: '10y', yield: 4.40, source: 'curated', collectedAt: '2026-08-30T00:00:00Z' });
+    writeFileSync(join(work, shard), JSON.stringify(mine, null, 2) + '\n');
+    const r = run(work);
+
+    const merged = r.status === 0 ? JSON.parse(git(work, 'show', `HEAD:${shard}`)) : { rows: [] };
+    const has = (d) => merged.rows.some((x) => x.date === d && x.country === 'UK');
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (!has('2026-08-31')) fail(label, "the competing run's UK|10y|2026-08-31 row was dropped — the shard was restored wholesale instead of merged per key");
+    else if (!has('2026-08-30')) fail(label, "this run's own UK|10y|2026-08-30 row did not survive");
+    else if (!r.trace.includes('rebuildLatest')) fail(label, 'yields-latest.json was not rebuilt after the merge — it is derived from the shards and is now stale');
+    else ok(label, 'both runs\' rows survive and the derived latest file is rebuilt');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ------------------------------------------- a pre-staged index is refused
+{
+    const label = 'a dirty index is refused rather than swept into the commit';
+    const { root, work } = scratch();
+    writeFileSync(join(work, 'CLAUDE.md'), 'staged by an earlier step\n');
+    git(work, 'add', 'CLAUDE.md');
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[]}\n');
+    const r = run(work);
+    if (r.status === 0) {
+        const files = git(work, 'show', '--name-only', '--format=', 'HEAD').split('\n').filter(Boolean);
+        fail(label, `exited 0 and committed ${JSON.stringify(files)} — \`git add <paths>\` does not clear a pre-staged entry`);
+    } else if (!/index already holds staged changes/.test(r.out)) {
+        fail(label, `exited ${r.status} for another reason: ${r.out.trim().slice(-200)}`);
+    } else ok(label, 'the run refuses instead of committing what someone else staged');
     rmSync(root, { recursive: true, force: true });
 }
 

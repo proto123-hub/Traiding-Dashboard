@@ -34,6 +34,20 @@ MESSAGE="data: scheduled refresh $(date -u +%FT%TZ)"
 # data/history/yields-<year>.json does not exist yet. --porcelain lists
 # untracked paths too.
 ensure_scopes
+
+# `git add <paths>` adds to the index; it does not clear what is already there,
+# and a plain `git commit` then consumes those entries too. With CLAUDE.md
+# pre-staged, this script committed and pushed it alongside one allowed data
+# edit. The scheduled workflow starts from a clean checkout and its earlier
+# steps stage nothing, so this is latent — but "only these paths are committed"
+# is not true while it holds, so refuse rather than narrow the claim.
+if ! git diff --cached --quiet; then
+    echo "refusing to run: the index already holds staged changes," >&2
+    git diff --cached --name-only | sed 's/^/  /' >&2
+    echo "and `git add` would not clear them from the commit." >&2
+    exit 1
+fi
+
 if [ -z "$(git status --porcelain -- "${STAGE_PATHS[@]}")" ]; then
     echo "no changes — skipping commit"
     exit 0
@@ -99,10 +113,24 @@ for i in 1 2 3; do
                 # origin-first Map merge, which kept whichever copy it saw first
                 # — the "first occurrence" mistake the helper exists to end. Do
                 # not reintroduce a second definition of the rule here.
-                if [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
+                if [[ "$path" == data/history/yields-[0-9]*.json ]] && [ -f "$path" ]; then
+                    # An UPSERT STORE, not a snapshot: rows are keyed by
+                    # (country, tenor, date) and the schema allows hand-curated
+                    # rows. Restoring our file wholesale dropped rows a
+                    # competing run had added for other dates — verified, with
+                    # the validator passing, because a shard missing a row it
+                    # never knew about is still a valid shard.
+                    cp "$path" "$tmp/theirs-shard.json"
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    node scripts/merge-yields-shard.mjs "$tmp/theirs-shard.json" "$path"
+                    shards_merged=1
+                elif [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
                     cp "$path" "$tmp/origin-news-feed.json"
                     git checkout "$RUN_COMMIT" -- "$path"
-                    node -e "
+                    # --input-type must precede -e; after it node reads it as a script
+        # argument, and the body then runs as CommonJS — which works on Node 22
+        # (syntax detection) and fails on the Node 20 the workflow pins.
+        node -e "
                       const fs=require('fs');
                       const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
                       const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
@@ -121,6 +149,21 @@ for i in 1 2 3; do
         esac
     done < "$tmp/delta"
     rm -rf "$tmp"
+
+    # yields-latest.json is DERIVED from the shards, wholesale, so a merged
+    # shard leaves it stale. Rebuild through the scraper's own function rather
+    # than a second copy of the derivation.
+    if [ -n "${shards_merged:-}" ]; then
+        # --input-type must precede -e; after it node reads it as a script
+        # argument and the body runs as CommonJS — which works on Node 22 by
+        # syntax detection and fails on the Node 20 the workflow pins.
+        node --input-type=module -e "
+          const { rebuildLatest } = await import('./scripts/scrape-yields.mjs');
+          const now = new Date().toISOString().replace(/\.\d{3}Z\$/, 'Z');
+          await rebuildLatest(now.slice(0, 10), now);
+        "
+        shards_merged=
+    fi
 
     # Collapse by the shared rule, then re-validate: the replayed tree is a
     # DIFFERENT tree from the one the workflow's integrity step checked, and it

@@ -215,6 +215,47 @@ function sortRows(rows) {
     return rows;
 }
 
+/**
+ * Rebuild data/history/yields-latest.json from the shards on disk. Exported
+ * because the replay in scripts/commit-refresh.sh has to rebuild it too, after
+ * merging a shard that both a competing run and this one appended to — and a
+ * second copy of this derivation is exactly how `consensusCluster` drifted into
+ * three versions that disagreed.
+ */
+export async function rebuildLatest(today, ts) {
+    const year = Number(today.slice(0, 4));
+    // Wholesale, trailing WINDOW_MONTHS — not appended.
+    const cutoff = new Date(`${today}T00:00:00Z`);
+    cutoff.setUTCMonth(cutoff.getUTCMonth() - WINDOW_MONTHS);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const sourceYears = [...new Set([year, year - 1])].sort();
+    const sourceFiles = sourceYears.map(y => `history/yields-${y}.json`);
+    let allRows = [];
+    for (const y of sourceYears) {
+        try {
+            const shard = await readJson(`data/history/yields-${y}.json`);
+            allRows = allRows.concat(shard.rows || []);
+        } catch { /* shard doesn't exist yet — fine, first run for that year */ }
+    }
+    const series = {};
+    for (const c of P3_COUNTRIES) {
+        const pts = allRows
+            .filter(r => r.country === c && r.tenor === '10y' && r.date >= cutoffStr)
+            .map(r => ({ date: r.date, yield: r.yield }))
+            .sort((a, b) => b.date.localeCompare(a.date)); // most recent first
+        series[c] = { '10y': pts }; // present with an empty array, not omitted, when nothing scraped yet
+    }
+    await writeJsonAtomic('data/history/yields-latest.json', {
+        note: 'Derived by scripts/scrape-yields.mjs each run from the current + prior year\'s history/yields-YYYY.json shards — a trailing ~24-month slice, regenerated WHOLESALE (not appended) every run, same shielding pattern as data/news-latest.json relative to data/news-feed.json. This is the ONLY yield file index.html fetches. Per-row provenance (source/agent/collectedAt) is dropped here to keep the file small — full provenance lives in the yearly shards.',
+        updated: ts,
+        agent: 'refresher',
+        sourceFiles,
+        windowMonths: WINDOW_MONTHS,
+        asOf: today,
+        series,
+    });
+}
+
 async function main() {
     const ts = nowIso();
     const today = todayUtc();
@@ -302,36 +343,7 @@ async function main() {
         });
     }
 
-    // --- Regenerate yields-latest.json (wholesale, trailing WINDOW_MONTHS) ---
-    const cutoff = new Date(`${today}T00:00:00Z`);
-    cutoff.setUTCMonth(cutoff.getUTCMonth() - WINDOW_MONTHS);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-    const sourceYears = [...new Set([year, year - 1])].sort();
-    const sourceFiles = sourceYears.map(y => `history/yields-${y}.json`);
-    let allRows = [];
-    for (const y of sourceYears) {
-        try {
-            const shard = await readJson(`data/history/yields-${y}.json`);
-            allRows = allRows.concat(shard.rows || []);
-        } catch { /* shard doesn't exist yet — fine, first run for that year */ }
-    }
-    const series = {};
-    for (const c of P3_COUNTRIES) {
-        const pts = allRows
-            .filter(r => r.country === c && r.tenor === '10y' && r.date >= cutoffStr)
-            .map(r => ({ date: r.date, yield: r.yield }))
-            .sort((a, b) => b.date.localeCompare(a.date)); // most recent first
-        series[c] = { '10y': pts }; // present with an empty array, not omitted, when nothing scraped yet
-    }
-    await writeJsonAtomic('data/history/yields-latest.json', {
-        note: 'Derived by scripts/scrape-yields.mjs each run from the current + prior year\'s history/yields-YYYY.json shards — a trailing ~24-month slice, regenerated WHOLESALE (not appended) every run, same shielding pattern as data/news-latest.json relative to data/news-feed.json. This is the ONLY yield file index.html fetches. Per-row provenance (source/agent/collectedAt) is dropped here to keep the file small — full provenance lives in the yearly shards.',
-        updated: ts,
-        agent: 'refresher',
-        sourceFiles,
-        windowMonths: WINDOW_MONTHS,
-        asOf: today,
-        series,
-    });
+    await rebuildLatest(today, ts);
 
     await writeJsonAtomic(`reports/raw/${today}-yields.json`, rawDrop);
 

@@ -268,14 +268,35 @@ const CASES = [
             // runs. Assert the step carries no condition.
             // Job level too: `if:` or `continue-on-error:` on the refresh JOB
             // silences every step in it, and a step-only check reads green.
-            const job = wf.slice(wf.indexOf('  refresh:'), wf.indexOf('    steps:'));
-            if (/^\s{4}(if|continue-on-error)\s*:/m.test(job)) {
+            // Key order is not fixed in YAML, so slicing between two landmarks
+            // misses `if: false` placed before `name:` on the step or after
+            // `steps:` on the job — both left this green. Scan by INDENTATION
+            // instead: 4 spaces is job level, 8 is a step key, and the writer is
+            // whichever step block contains the run: line.
+            const lines = wf.split('\n');
+            const jobStart = lines.findIndex(l => /^  refresh:/.test(l));
+            const jobKeys = [];
+            for (let i = jobStart + 1; i < lines.length && !/^  \S/.test(lines[i]); i++) {
+                const m = /^ {4}([A-Za-z-]+)\s*:/.exec(lines[i]);
+                if (m) jobKeys.push(m[1]);
+            }
+            if (jobKeys.includes('if') || jobKeys.includes('continue-on-error')) {
                 bad.push('the refresh job is conditional — `if:`/`continue-on-error:` at job level silences the writer while every step still reads correctly');
             }
-            const step = wf.slice(wf.indexOf('- name: Commit & push if changed'));
-            const stepEnd = step.indexOf('\n      - name:', 1);
-            const stepText = stepEnd < 0 ? step : step.slice(0, stepEnd);
-            if (/^\s*(if|continue-on-error)\s*:/m.test(stepText)) {
+            // Step blocks start at `      - `; find the one holding the writer.
+            const starts = lines.map((l, i) => /^ {6}- /.test(l) ? i : -1).filter(i => i >= 0);
+            const writerAt = lines.findIndex(l => /^\s*run: bash scripts\/commit-refresh\.sh\s*$/.test(l));
+            const blockStart = [...starts].reverse().find(i => i < writerAt);
+            const blockEnd = starts.find(i => i > writerAt) ?? lines.length;
+            const stepKeys = [];
+            for (let i = blockStart; i < blockEnd; i++) {
+                // The first key sits on the `- ` line at 6 spaces; every later
+                // key is at 8. Matching only the first form missed
+                // `continue-on-error:` entirely.
+                const m = /^ {6}- ([A-Za-z-]+)\s*:/.exec(lines[i]) || /^ {8}([A-Za-z-]+)\s*:/.exec(lines[i]);
+                if (m) stepKeys.push(m[1]);
+            }
+            if (stepKeys.includes('if') || stepKeys.includes('continue-on-error')) {
                 bad.push('the writer step is conditional — `if:`/`continue-on-error:` can silence it entirely while the run: line still reads correctly');
             }
             return bad;

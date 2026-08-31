@@ -113,6 +113,7 @@ Strong success criteria let me loop independently. Weak criteria ("make it work"
 │   ├── validate-data.mjs         # read-only integrity gate (no network, no writes)
 │   ├── test/                     # fixture suite — runs BEFORE the live pass in CI
 │   ├── commit-refresh.sh         # the cron's writer — guard, stage, commit, replay-on-reject
+│   ├── merge-yields-shard.mjs    # per-(country,tenor,date) merge for a replayed history shard
 │   ├── local/sync-vault.mjs      # LOCAL ONLY — reports → Obsidian vault, one-way
 │   └── lib/io.mjs                # readJson / writeJsonAtomic / timeouts / semaphore
 ├── .github/workflows/data-refresh.yml  # cron 11:00 & 21:00 UTC weekdays → commits to main
@@ -219,7 +220,11 @@ checks themselves have been weakened.
   runs no network: the fail-closed cases refuse before the scrape, and the
   append case drives `main()` against a stubbed `fetch`.
 - `commit-refresh.test.mjs` covers `scripts/commit-refresh.sh`, the cron's own
-  writer. It builds a scratch repository with a real `origin`, runs the script,
+  writer. Note the replay's two merge rules: `news-feed.json` unions by id and
+  `data/history/yields-YYYY.json` merges per `(country, tenor, date)` — both are
+  UPSERT STORES, and restoring either wholesale drops rows a concurrent run
+  added, with the validator passing because the result is still a valid file.
+  Everything else in the scoped paths is a snapshot where this run's copy wins. It builds a scratch repository with a real `origin`, runs the script,
   and asserts on what git ends up holding — whether HEAD moved, what the commit
   contains, what was left staged, and that a rejected push replays and
   re-validates. That writer used to live inline in `data-refresh.yml` and was
