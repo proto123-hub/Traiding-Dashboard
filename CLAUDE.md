@@ -221,11 +221,18 @@ checks themselves have been weakened.
   runs no network: the fail-closed cases refuse before the scrape, and the
   append case drives `main()` against a stubbed `fetch`.
 - `commit-refresh.test.mjs` covers `scripts/commit-refresh.sh`, the cron's own
-  writer. Note the replay's two merge rules: `news-feed.json` unions by id and
-  `data/history/yields-YYYY.json` merges per `(country, tenor, date)` — both are
-  UPSERT STORES, and restoring either wholesale drops rows a concurrent run
-  added, with the validator passing because the result is still a valid file.
-  Everything else in the scoped paths is a snapshot where this run's copy wins. It builds a scratch repository with a real `origin`, runs the script,
+  writer. **Four files under `data/` are keyed collections, not snapshots**, and
+  restoring any of them wholesale on replay drops records a concurrent run
+  wrote — with the validator passing every time, because a collection missing an
+  entry it never saw is still a valid file. This was found four separate times;
+  assume a new data file has the same shape until checked. The rules:
+  `news-feed.json` unions by id keeping the earliest `collectedAt`;
+  `data/history/yields-YYYY.json` upserts per `(country, tenor, date)`;
+  `price-quotes.json` and `fundamentals.json` share the
+  `{ …meta, <container>: { ticker: record } }` shape and take origin's table
+  with only the records this run changed laid over it. `yields-latest.json` is
+  DERIVED and must be rebuilt, never restored. Everything else in the scoped
+  paths is a real snapshot where this run's copy wins. It builds a scratch repository with a real `origin`, runs the script,
   and asserts on what git ends up holding — whether HEAD moved, what the commit
   contains, what was left staged, and that a rejected push replays and
   re-validates. That writer used to live inline in `data-refresh.yml` and was
