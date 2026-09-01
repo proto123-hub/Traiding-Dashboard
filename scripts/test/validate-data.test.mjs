@@ -260,6 +260,17 @@ const CASES = [
             if (!/^\s*run: bash scripts\/commit-refresh\.sh\s*$/m.test(wf)) {
                 bad.push('data-refresh.yml does not run `bash scripts/commit-refresh.sh` — the writer is orphaned or has moved back inline');
             }
+            // Order, not just presence: the integrity gate has to run BEFORE
+            // the writer, or the bot commits a tree nothing checked. Moving
+            // validation after commit-refresh.sh left this suite green. Found
+            // by the PR #19 session; ported. Compared by line index, so it does
+            // not depend on where either sits in the file.
+            const vAt = wf.split('\n').findIndex(l => /^\s*run: node scripts\/validate-data\.mjs\s*$/.test(l));
+            const wAt = wf.split('\n').findIndex(l => /^\s*run: bash scripts\/commit-refresh\.sh\s*$/.test(l));
+            if (vAt < 0) bad.push('data-refresh.yml never runs scripts/validate-data.mjs — the bot is exempt from the integrity gate');
+            else if (wAt >= 0 && vAt > wAt) {
+                bad.push('scripts/validate-data.mjs runs AFTER the writer — the tree is committed before anything checks it');
+            }
             if (/^\s*git (commit|push)\b/m.test(wf)) {
                 bad.push('data-refresh.yml commits or pushes inline again — that path is untestable and belongs in commit-refresh.sh');
             }

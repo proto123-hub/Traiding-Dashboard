@@ -114,6 +114,7 @@ Strong success criteria let me loop independently. Weak criteria ("make it work"
 │   ├── test/                     # fixture suite — runs BEFORE the live pass in CI
 │   ├── commit-refresh.sh         # the cron's writer — guard, stage, commit, replay-on-reject
 │   ├── merge-yields-shard.mjs    # per-(country,tenor,date) merge for a replayed history shard
+│   ├── merge-quote-records.mjs   # per-ticker delta merge for a replayed quote table
 │   ├── local/sync-vault.mjs      # LOCAL ONLY — reports → Obsidian vault, one-way
 │   └── lib/io.mjs                # readJson / writeJsonAtomic / timeouts / semaphore
 ├── .github/workflows/data-refresh.yml  # cron 11:00 & 21:00 UTC weekdays → commits to main

@@ -30,6 +30,7 @@ const REPO = process.cwd();
 const SCRIPT = join(REPO, 'scripts/commit-refresh.sh');
 const SCOPES = [
     'data/news-feed.json',
+    'data/price-quotes.json',
     'data/history/yields-2026.json',
     'reports/raw/2026-08-01-quotes.json',
     'reports/validation/2026-08-01-compare.json',
@@ -52,7 +53,12 @@ function scratch() {
     git(work, 'config', 'user.name', 't');
     for (const rel of SCOPES) {
         mkdirSync(join(work, dirname(rel)), { recursive: true });
-        writeFileSync(join(work, rel), rel === 'data/history/yields-2026.json'
+        writeFileSync(join(work, rel), rel === 'data/price-quotes.json'
+            ? JSON.stringify({ updated: '2026-08-18T00:00:00Z', quotes: {
+                GOOGL: { price: 100, regularSessionDate: '2026-08-18' },
+                CLS: { price: 200, regularSessionDate: '2026-08-18' },
+            } }, null, 2) + '\n'
+            : rel === 'data/history/yields-2026.json'
             ? JSON.stringify({ note: 'shard', year: 2026, rows: [
                 { date: '2026-01-31', country: 'DE', tenor: '10y', yield: 2.8, source: 'eurostat', collectedAt: '2026-08-01T00:00:00Z' },
             ] }, null, 2) + '\n'
@@ -75,7 +81,9 @@ function scratch() {
     // yields-latest.json after a shard merge, and merge-yields-shard.mjs is the
     // real helper — copied in rather than stubbed, because the merge semantics
     // are the thing under test.
-    cpSync(join(REPO, 'scripts/merge-yields-shard.mjs'), join(work, 'scripts/merge-yields-shard.mjs'));
+    for (const h of ['merge-yields-shard.mjs', 'merge-quote-records.mjs']) {
+        cpSync(join(REPO, 'scripts', h), join(work, 'scripts', h));
+    }
     writeFileSync(join(work, 'scripts/scrape-yields.mjs'),
         `import { appendFileSync } from 'node:fs';\n` +
         `export async function rebuildLatest() { appendFileSync(process.env.REPLAY_TRACE, 'rebuildLatest\\n'); }\n`);
@@ -473,6 +481,45 @@ exit 1
     } else if (!/index already holds staged changes/.test(r.out)) {
         fail(label, `exited ${r.status} for another reason: ${r.out.trim().slice(-200)}`);
     } else ok(label, 'the run refuses instead of committing what someone else staged');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ------------------------------- price-quotes.json is a record store too
+//
+// The third file to need this. scrape-quotes.mjs updates the table per ticker,
+// so restoring this run's whole file drops a competing run's tickers — verified
+// end to end: base GOOGL 100 / CLS 200, this run moved GOOGL to 101, a
+// competing run moved CLS to 202, and CLS came back as 200 with its old session
+// date while checkQuotes() reported zero failures and zero warnings.
+
+{
+    const label = 'replay keeps a competing run\'s tickers instead of restoring the whole table';
+    const quotes = 'data/price-quotes.json';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    const theirs = JSON.parse(readFileSync(join(other, quotes), 'utf8'));
+    theirs.quotes.CLS = { price: 202, regularSessionDate: '2026-08-20' };
+    theirs.updated = '2026-08-20T00:00:00Z';
+    writeFileSync(join(other, quotes), JSON.stringify(theirs, null, 2) + '\n');
+    git(other, 'commit', '-qam', 'origin moved CLS');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    const mine = JSON.parse(readFileSync(join(work, quotes), 'utf8'));
+    mine.quotes.GOOGL = { price: 101, regularSessionDate: '2026-08-19' };
+    mine.updated = '2026-08-21T00:00:00Z';
+    writeFileSync(join(work, quotes), JSON.stringify(mine, null, 2) + '\n');
+    const r = run(work);
+
+    const merged = r.status === 0 ? JSON.parse(git(work, 'show', `HEAD:${quotes}`)) : { quotes: {} };
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (merged.quotes.CLS?.price !== 202) {
+        fail(label, `CLS came back as ${JSON.stringify(merged.quotes.CLS)} — the competing run's ticker was overwritten by restoring the whole table`);
+    } else if (merged.quotes.GOOGL?.price !== 101) {
+        fail(label, `this run's GOOGL update did not survive: ${JSON.stringify(merged.quotes.GOOGL)}`);
+    } else ok(label, 'each run keeps the tickers it actually changed');
     rmSync(root, { recursive: true, force: true });
 }
 

@@ -113,7 +113,20 @@ for i in 1 2 3; do
                 # origin-first Map merge, which kept whichever copy it saw first
                 # — the "first occurrence" mistake the helper exists to end. Do
                 # not reintroduce a second definition of the rule here.
-                if [[ "$path" == data/history/yields-[0-9]*.json ]] && [ -f "$path" ]; then
+                # RECORD STORES. Three files here are keyed collections, not
+                # snapshots, and restoring any of them wholesale drops records a
+                # competing run wrote — with the validator passing every time,
+                # because a collection missing an entry it never saw is still
+                # valid. Each has its own retention rule and its own helper; the
+                # rule lives in the helper, never inline here.
+                if [ "$path" = data/price-quotes.json ] && [ -f "$path" ]; then
+                    # Keyed by ticker. Take origin's table, lay over only the
+                    # tickers this run actually changed.
+                    cp "$path" "$tmp/theirs-quotes.json"
+                    git show "$BASE:$path" > "$tmp/base-quotes.json"
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    node scripts/merge-quote-records.mjs "$tmp/base-quotes.json" "$tmp/theirs-quotes.json" "$path"
+                elif [[ "$path" == data/history/yields-[0-9]*.json ]] && [ -f "$path" ]; then
                     # An UPSERT STORE, not a snapshot: rows are keyed by
                     # (country, tenor, date) and the schema allows hand-curated
                     # rows. Restoring our file wholesale dropped rows a

@@ -30,11 +30,12 @@
 //
 // Run: node scripts/test/scrape-news.test.mjs
 
-import { mkdtemp, mkdir, writeFile, readFile, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { feedShapeFaults, continuityFaults } from '../scrape-news.mjs';
 import { NEWS_FEED_NOTE } from '../lib/io.mjs';
 
@@ -67,6 +68,19 @@ async function scratch(feedText) {
 }
 
 const exists = async (p) => { try { await access(p); return true; } catch { return false; } };
+
+// Every variable the writer reads. The suite must not inherit them: a shell
+// exporting NEWS_FEED_BOOTSTRAP=1 bootstrapped the missing feed the
+// `no bootstrap` case requires to be REFUSED, and the suite went red with no
+// code changed. Found by the PR #19 session; ported here.
+const WRITER_ENV = ['NEWS_FEED_BOOTSTRAP'];
+const envFor = (over = {}) => {
+    const env = { ...process.env, ...over };
+    for (const k of WRITER_ENV) if (!(k in over)) delete env[k];
+    return env;
+};
+// The in-process cases call main() in THIS process, which reads this directly.
+for (const k of WRITER_ENV) delete process.env[k];
 
 let bad = 0;
 const fail = (label, msg) => { console.log(`  FAIL ${label}: ${msg}`); bad++; };
@@ -149,6 +163,13 @@ const SCRIPTS = [
         why: '"0" is a truthy string; only "1" may enable a rebuild',
     },
     {
+        label: 'missing feed, NEWS_FEED_BOOTSTRAP=1 creates one',
+        feed: null,
+        env: { NEWS_FEED_BOOTSTRAP: '1' },
+        expect: null,          // the opt-in must SUCCEED, not refuse
+        why: 'the deliberate opt-in is the only way a feed is created, so it has to work',
+    },
+    {
         label: 'missing feed, NEWS_FEED_BOOTSTRAP=yes',
         feed: null,
         env: { NEWS_FEED_BOOTSTRAP: 'yes' },
@@ -183,10 +204,19 @@ for (const c of SCRIPTS) {
     const target = join(dir, 'data/news-feed.json');
     let code = 0, stderr = '';
     try {
-        await run(process.execPath, [SCRIPT], { cwd: dir, env: { ...process.env, ...c.env } });
+        await run(process.execPath, [SCRIPT], { cwd: dir, env: envFor(c.env) });
     } catch (e) {
         code = e.code;
         stderr = `${e.stderr || ''}${e.stdout || ''}`;
+    }
+    if (c.expect === null) {
+        // A success case: the opt-in must be accepted. With no network the
+        // scrape collects nothing, so no file is written — what is asserted is
+        // that the run is not REFUSED.
+        if (code !== 0) fail(c.label, `the deliberate opt-in was refused (exit ${code}): ${stderr.trim().slice(0, 200)}`);
+        else ok(c.label, c.why);
+        await rm(dir, { recursive: true, force: true });
+        continue;
     }
     if (code === 0) {
         fail(c.label, 'exited 0 — the run reported success');
@@ -285,7 +315,51 @@ const RSS = (titles) => `<?xml version="1.0"?><rss><channel>${titles.map(t =>
     }
 }
 
-const total = UNIT.length + SCRIPTS.length + 2;
+// -------------------------------------- the gate is wired, not just present
+//
+// Deleting the continuityFaults() CALL from main() left this suite green: the
+// unit cases exercise the helper directly, and the append case is a clean
+// append that loses nothing either way. Between them they proved the rule
+// exists, not that the writer runs it — the same shape dedupe-news-feed.mjs
+// carried for seven rounds. Found by the PR #19 session; ported here.
+
+{
+    const label = 'main() runs the continuity gate, not just the helper';
+    const APPEND = 'items: [...feed.items, ...collected]';
+    const REBUILD = 'items: [...collected]';
+    const source = await readFile(SCRIPT, 'utf8');
+    if (!source.includes(APPEND)) {
+        fail(label, `scrape-news.mjs no longer contains ${JSON.stringify(APPEND)} — this case mutates that expression and must be updated with it`);
+    } else {
+        const dir = await scratch(JSON.stringify(FEED, null, 2) + '\n');
+        const before = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        await mkdir(join(dir, 'scripts/lib'), { recursive: true });
+        await copyFile(join(REPO, 'scripts/lib/io.mjs'), join(dir, 'scripts/lib/io.mjs'));
+        const mutant = join(dir, 'scripts/scrape-news.mjs');
+        await writeFile(mutant, source.replace(APPEND, REBUILD), 'utf8');
+        const realFetch = globalThis.fetch;
+        const realCwd = process.cwd();
+        globalThis.fetch = async () => new Response(RSS(['Epsilon headline']), {
+            status: 200, headers: { 'content-type': 'application/rss+xml' },
+        });
+        let threw = null;
+        try {
+            process.chdir(dir);
+            const mod = await import(pathToFileURL(mutant).href);
+            await mod.main();
+        } catch (e) { threw = e; }
+        finally { process.chdir(realCwd); globalThis.fetch = realFetch; }
+        const after = await readFile(join(dir, 'data/news-feed.json'), 'utf8');
+        if (!threw) fail(label, 'a write that drops every id already on disk completed — main() does not run continuityFaults()');
+        else if (!String(threw.message).includes('An append-only feed cannot lose records')) {
+            fail(label, `threw, but not the continuity fault — got: ${threw.message}`);
+        } else if (after !== before) fail(label, 'refused, but the file on disk changed');
+        else ok(label, 'the rule the helper defines is the rule the writer enforces');
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
+const total = UNIT.length + SCRIPTS.length + 3;
 console.log('');
 if (bad) {
     console.log(`scrape-news.test: ${bad}/${total} FAILURES`);
