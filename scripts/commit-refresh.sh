@@ -119,13 +119,22 @@ for i in 1 2 3; do
                 # because a collection missing an entry it never saw is still
                 # valid. Each has its own retention rule and its own helper; the
                 # rule lives in the helper, never inline here.
-                if [ "$path" = data/price-quotes.json ] && [ -f "$path" ]; then
-                    # Keyed by ticker. Take origin's table, lay over only the
-                    # tickers this run actually changed.
-                    cp "$path" "$tmp/theirs-quotes.json"
-                    git show "$BASE:$path" > "$tmp/base-quotes.json"
-                    git checkout "$RUN_COMMIT" -- "$path"
-                    node scripts/merge-quote-records.mjs "$tmp/base-quotes.json" "$tmp/theirs-quotes.json" "$path"
+                if [ "$path" = data/price-quotes.json ] || [ "$path" = data/fundamentals.json ]; then
+                    # Both are `{ …meta, <container>: { ticker: record } }`.
+                    # Take origin's table, lay over only the records this run
+                    # actually changed. fundamentals.json was the same defect
+                    # unnoticed: origin adding a ticker mid-run kept the ticker
+                    # in the universe and lost its fundamentals row, and nothing
+                    # checks that coverage.
+                    if [ "$path" = data/price-quotes.json ]; then container=quotes; else container=fundamentals; fi
+                    if [ -f "$path" ]; then
+                        cp "$path" "$tmp/theirs-rec.json"
+                        git show "$BASE:$path" > "$tmp/base-rec.json"
+                        git checkout "$RUN_COMMIT" -- "$path"
+                        node scripts/merge-keyed-records.mjs "$container" "$tmp/base-rec.json" "$tmp/theirs-rec.json" "$path"
+                    else
+                        git checkout "$RUN_COMMIT" -- "$path"
+                    fi
                 elif [[ "$path" == data/history/yields-[0-9]*.json ]] && [ -f "$path" ]; then
                     # An UPSERT STORE, not a snapshot: rows are keyed by
                     # (country, tenor, date) and the schema allows hand-curated
@@ -136,7 +145,13 @@ for i in 1 2 3; do
                     cp "$path" "$tmp/theirs-shard.json"
                     git checkout "$RUN_COMMIT" -- "$path"
                     node scripts/merge-yields-shard.mjs "$tmp/theirs-shard.json" "$path"
-                    shards_merged=1
+                    yields_touched=1
+                elif [ "$path" = data/history/yields-latest.json ]; then
+                    # Derived, so this run's copy is not authoritative — it is
+                    # rebuilt from the shards below. Restore it only so the
+                    # working tree is coherent until then.
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    yields_touched=1
                 elif [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
                     cp "$path" "$tmp/origin-news-feed.json"
                     git checkout "$RUN_COMMIT" -- "$path"
@@ -163,10 +178,13 @@ for i in 1 2 3; do
     done < "$tmp/delta"
     rm -rf "$tmp"
 
-    # yields-latest.json is DERIVED from the shards, wholesale, so a merged
-    # shard leaves it stale. Rebuild through the scraper's own function rather
-    # than a second copy of the derivation.
-    if [ -n "${shards_merged:-}" ]; then
+    # yields-latest.json is DERIVED from the shards, wholesale. Rebuilding only
+    # after a shard MERGE was not enough: a run whose delta held just
+    # yields-latest.json restored its own stale copy onto an origin that had
+    # advanced a shard, and nothing rebuilt it — validation stayed green, since
+    # a latest file that omits a row is still a valid latest file. Rebuild
+    # whenever the delta touches yields at all.
+    if [ -n "${yields_touched:-}" ]; then
         # --input-type must precede -e; after it node reads it as a script
         # argument and the body runs as CommonJS — which works on Node 22 by
         # syntax detection and fails on the Node 20 the workflow pins.
@@ -175,7 +193,7 @@ for i in 1 2 3; do
           const now = new Date().toISOString().replace(/\.\d{3}Z\$/, 'Z');
           await rebuildLatest(now.slice(0, 10), now);
         "
-        shards_merged=
+        yields_touched=
     fi
 
     # Collapse by the shared rule, then re-validate: the replayed tree is a

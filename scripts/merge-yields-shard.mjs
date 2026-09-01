@@ -2,9 +2,11 @@
 // Merge two data/history/yields-YYYY.json shards by (country, tenor, date).
 //
 // Why this exists: the refresh replay restores this run's version of each file
-// it changed. For a whole-file snapshot like price-quotes.json that is right —
-// ours is the newer observation of the same live state. For an UPSERT STORE it
-// is data loss, and the yields shards are an upsert store: `scrape-yields.mjs`
+// it changed. For a genuine snapshot that is right — ours is the newer
+// observation of the same live state. price-quotes.json is NOT one: it is
+// keyed by ticker and goes through merge-keyed-records.mjs. The line here
+// used to name it as the snapshot example, which was wrong. For an UPSERT STORE
+// restoring wholesale is data loss, and the yields shards are an upsert store: `scrape-yields.mjs`
 // merges rows per (country, tenor, date), and the schema explicitly allows
 // hand-curated rows (UK is one). Reproduced against a real bare origin: this
 // run added UK|10y|2026-08-30, a competing run added UK|10y|2026-08-31 to the

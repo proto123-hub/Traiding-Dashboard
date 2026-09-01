@@ -30,6 +30,7 @@ const REPO = process.cwd();
 const SCRIPT = join(REPO, 'scripts/commit-refresh.sh');
 const SCOPES = [
     'data/news-feed.json',
+    'data/history/yields-latest.json',
     'data/price-quotes.json',
     'data/history/yields-2026.json',
     'reports/raw/2026-08-01-quotes.json',
@@ -53,7 +54,9 @@ function scratch() {
     git(work, 'config', 'user.name', 't');
     for (const rel of SCOPES) {
         mkdirSync(join(work, dirname(rel)), { recursive: true });
-        writeFileSync(join(work, rel), rel === 'data/price-quotes.json'
+        writeFileSync(join(work, rel), rel === 'data/history/yields-latest.json'
+            ? JSON.stringify({ note: 'derived', asOf: '2026-08-01', series: { UK: { '10y': [] } } }, null, 2) + '\n'
+            : rel === 'data/price-quotes.json'
             ? JSON.stringify({ updated: '2026-08-18T00:00:00Z', quotes: {
                 GOOGL: { price: 100, regularSessionDate: '2026-08-18' },
                 CLS: { price: 200, regularSessionDate: '2026-08-18' },
@@ -64,6 +67,12 @@ function scratch() {
             ] }, null, 2) + '\n'
             : '{"seed":1}\n');
     }
+    // Not in SCOPES — one concurrency case is enough, and each scope entry
+    // costs three more scratch repositories.
+    writeFileSync(join(work, 'data/fundamentals.json'), JSON.stringify({
+        updated: '2026-08-18T00:00:00Z',
+        fundamentals: { GOOGL: { trailingPE: 20 } },
+    }, null, 2) + '\n');
     writeFileSync(join(work, 'CLAUDE.md'), 'unrelated\n');
     // reports/ holds more than the two scopes the bot may write: the
     // interpreter's reports/YYYY-MM/ briefs and reports/designs/ are
@@ -81,12 +90,18 @@ function scratch() {
     // yields-latest.json after a shard merge, and merge-yields-shard.mjs is the
     // real helper — copied in rather than stubbed, because the merge semantics
     // are the thing under test.
-    for (const h of ['merge-yields-shard.mjs', 'merge-quote-records.mjs']) {
+    for (const h of ['merge-yields-shard.mjs', 'merge-keyed-records.mjs']) {
         cpSync(join(REPO, 'scripts', h), join(work, 'scripts', h));
     }
     writeFileSync(join(work, 'scripts/scrape-yields.mjs'),
         `import { appendFileSync } from 'node:fs';\n` +
-        `export async function rebuildLatest() { appendFileSync(process.env.REPLAY_TRACE, 'rebuildLatest\\n'); }\n`);
+        `import { readFileSync, writeFileSync } from 'node:fs';\n` +
+        `export async function rebuildLatest() {\n` +
+        `  appendFileSync(process.env.REPLAY_TRACE, 'rebuildLatest\\n');\n` +
+        `  const shard = JSON.parse(readFileSync('data/history/yields-2026.json','utf8'));\n` +
+        `  const pts = (shard.rows||[]).filter(r=>r.country==='UK').map(r=>({date:r.date,yield:r.yield}));\n` +
+        `  writeFileSync('data/history/yields-latest.json', JSON.stringify({note:'derived',asOf:'2026-09-01',series:{UK:{'10y':pts}}},null,2)+'\\n');\n` +
+        `}\n`);
     for (const f of ['dedupe-news-feed.mjs', 'validate-data.mjs']) {
         writeFileSync(join(work, 'scripts', f),
             `import { appendFileSync } from 'node:fs';\n` +
@@ -520,6 +535,77 @@ exit 1
     } else if (merged.quotes.GOOGL?.price !== 101) {
         fail(label, `this run's GOOGL update did not survive: ${JSON.stringify(merged.quotes.GOOGL)}`);
     } else ok(label, 'each run keeps the tickers it actually changed');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ------------------- a derived file must be rebuilt, not restored, on replay
+//
+// yields-latest.json is regenerated wholesale from the shards. Rebuilding only
+// after a shard MERGE missed the ordinary case: a run whose delta held just
+// yields-latest.json restored its own stale copy onto an origin that had
+// advanced a shard, and nothing rebuilt it. Validation stayed green — a latest
+// file that omits a row is still a valid latest file.
+
+{
+    const label = 'a latest-only delta still rebuilds the derived file from the shards';
+    const shard = 'data/history/yields-2026.json';
+    const latest = 'data/history/yields-latest.json';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    const theirs = JSON.parse(readFileSync(join(other, shard), 'utf8'));
+    theirs.rows.push({ date: '2026-08-31', country: 'UK', tenor: '10y', yield: 4.44, source: 'curated', collectedAt: '2026-08-31T00:00:00Z' });
+    writeFileSync(join(other, shard), JSON.stringify(theirs, null, 2) + '\n');
+    git(other, 'commit', '-qam', 'origin advanced the shard');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    // This run touches ONLY the derived file — no shard of its own.
+    writeFileSync(join(work, latest), JSON.stringify({ note: 'derived', asOf: '2026-08-30', series: { UK: { '10y': [] } } }, null, 2) + '\n');
+    const r = run(work);
+
+    const out = r.status === 0 ? JSON.parse(git(work, 'show', `HEAD:${latest}`)) : { series: {} };
+    const dates = (out.series?.UK?.['10y'] ?? []).map((p) => p.date);
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (!r.trace.includes('rebuildLatest')) fail(label, "rebuildLatest() never ran — this run's stale derived file was restored over an advanced shard");
+    else if (!dates.includes('2026-08-31')) fail(label, `the rebuilt latest file omits the shard row origin added: ${JSON.stringify(dates)}`);
+    else ok(label, 'the derived file is rebuilt from the merged shards, not restored');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// -------------------------- fundamentals.json is the same keyed store shape
+//
+// `{ …meta, fundamentals: { ticker: record } }`, exactly like price-quotes. A
+// competing run adding a ticker mid-run kept the ticker in the universe and
+// lost its fundamentals row, and nothing checks that coverage.
+
+{
+    const label = 'replay keeps a competing run\'s fundamentals rows';
+    const f = 'data/fundamentals.json';
+    const { root, origin, work } = scratch();
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    const theirs = JSON.parse(readFileSync(join(other, f), 'utf8'));
+    theirs.fundamentals.SNDK = { trailingPE: 31 };
+    writeFileSync(join(other, f), JSON.stringify(theirs, null, 2) + '\n');
+    git(other, 'commit', '-qam', 'origin added a ticker');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    const mine = JSON.parse(readFileSync(join(work, f), 'utf8'));
+    mine.fundamentals.GOOGL = { trailingPE: 21 };
+    writeFileSync(join(work, f), JSON.stringify(mine, null, 2) + '\n');
+    const r = run(work);
+
+    const merged = r.status === 0 ? JSON.parse(git(work, 'show', `HEAD:${f}`)) : { fundamentals: {} };
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (merged.fundamentals.SNDK?.trailingPE !== 31) {
+        fail(label, "the competing run's SNDK row was dropped — the table was restored wholesale");
+    } else if (merged.fundamentals.GOOGL?.trailingPE !== 21) {
+        fail(label, "this run's GOOGL update did not survive");
+    } else ok(label, 'both runs\' rows survive');
     rmSync(root, { recursive: true, force: true });
 }
 

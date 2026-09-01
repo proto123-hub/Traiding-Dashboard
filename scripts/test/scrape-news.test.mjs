@@ -210,11 +210,19 @@ for (const c of SCRIPTS) {
         stderr = `${e.stderr || ''}${e.stdout || ''}`;
     }
     if (c.expect === null) {
-        // A success case: the opt-in must be accepted. With no network the
-        // scrape collects nothing, so no file is written — what is asserted is
-        // that the run is not REFUSED.
-        if (code !== 0) fail(c.label, `the deliberate opt-in was refused (exit ${code}): ${stderr.trim().slice(0, 200)}`);
-        else ok(c.label, c.why);
+        // A success case. Exit 0 alone is not enough — an early return before
+        // the feed is created passes that, so assert the artefact: a parseable
+        // feed carrying the canonical note and an items array.
+        let feed = null, why = null;
+        if (code !== 0) why = `the deliberate opt-in was refused (exit ${code}): ${stderr.trim().slice(0, 200)}`;
+        else if (!await exists(target)) why = 'exited 0 without creating data/news-feed.json — the opt-in did nothing';
+        else {
+            try { feed = JSON.parse(await readFile(target, 'utf8')); }
+            catch (e) { why = `created a feed that does not parse: ${e.message}`; }
+            if (feed && !Array.isArray(feed.items)) why = `created a feed whose items is ${typeof feed.items}`;
+            else if (feed && feed.note !== NEWS_FEED_NOTE) why = `created a feed whose note is not the canonical contract: ${JSON.stringify(feed.note)}`;
+        }
+        if (why) fail(c.label, why); else ok(c.label, c.why);
         await rm(dir, { recursive: true, force: true });
         continue;
     }

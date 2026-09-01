@@ -296,6 +296,26 @@ const CASES = [
             }
             // Step blocks start at `      - `; find the one holding the writer.
             const starts = lines.map((l, i) => /^ {6}- /.test(l) ? i : -1).filter(i => i >= 0);
+            // Every step whose reachability matters, not just the writer: an
+            // `if: false` on the Data integrity step left this suite 32/32
+            // while the bot committed a tree nothing had checked.
+            const stepKeysAt = (runLine) => {
+                const at = lines.findIndex(l => runLine.test(l));
+                if (at < 0) return null;
+                const st = [...starts].reverse().find(i => i < at);
+                const en = starts.find(i => i > at) ?? lines.length;
+                const keys = [];
+                for (let i = st; i < en; i++) {
+                    const m = /^ {6}- ([A-Za-z-]+)\s*:/.exec(lines[i]) || /^ {8}([A-Za-z-]+)\s*:/.exec(lines[i]);
+                    if (m) keys.push(m[1]);
+                }
+                return keys;
+            };
+            const vKeys = stepKeysAt(/^\s*run: node scripts\/validate-data\.mjs\s*$/);
+            if (vKeys && (vKeys.includes('if') || vKeys.includes('continue-on-error'))) {
+                bad.push('the Data integrity step is conditional — `if:`/`continue-on-error:` lets the bot commit a tree nothing checked');
+            }
+
             const writerAt = lines.findIndex(l => /^\s*run: bash scripts\/commit-refresh\.sh\s*$/.test(l));
             const blockStart = [...starts].reverse().find(i => i < writerAt);
             const blockEnd = starts.find(i => i > writerAt) ?? lines.length;
