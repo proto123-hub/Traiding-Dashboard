@@ -24,10 +24,12 @@
 import { readFile } from 'node:fs/promises';
 import { checkQuotes, checkFundamentals, checkBands, checkBookWeights, checkNewsFeed } from '../validate-data.mjs';
 import { dedupeByEarliest } from '../dedupe-news-feed.mjs';
+import { NEWS_FEED_NOTE } from '../lib/io.mjs';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const DIR = new URL('./fixtures/', import.meta.url);
 const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8'));
@@ -341,6 +343,111 @@ const CASES = [
         shouldFail: true,
         expect: 'unadjusted split',
         why: 'KLAC band kept pre-split share counts for two months',
+    },
+    {
+        // Not a fixture case: it drives the validator END TO END and reads what
+        // it PRINTS. Every case above tests a pure check function, so the
+        // reporting layer had no coverage at all — and four of the seven checks
+        // called ok() unconditionally, right after record() had printed a FAIL.
+        // CI run 33686652865 shows the shape: "FAIL ... duplicate id" and
+        // "ok 9696 items, every id unique" one line apart, from one check, in
+        // one run. Exit codes were always right; the transcript was not, and a
+        // transcript that says a check passed when it failed is the same
+        // false-green this suite exists to remove.
+        //
+        // The assertion is general, not per-check: within a `[N] title`
+        // section, a FAIL line and an ok line may not coexist. Each scenario
+        // below fails exactly one check and leaves the rest clean.
+        file: 'news-feed-unique.json',
+        label: 'no check prints ok after printing FAIL',
+        run: () => {
+            const bad = [];
+            // Absolute: each scenario runs with cwd set to its scratch dir.
+            const validator = fileURLToPath(new URL('../validate-data.mjs', import.meta.url));
+            const goodQuotes = { updated: '2026-09-02T00:00:00Z', asOfDate: '2026-09-02', quotes: {} };
+            const goodFeed = { note: NEWS_FEED_NOTE, items: [{ id: 'a' }] };
+
+            const scenarios = [
+                {
+                    check: '[7]',
+                    files: { 'data/news-feed.json': { note: NEWS_FEED_NOTE, items: [{ id: 'a' }, { id: 'a' }] } },
+                    expect: 'duplicate id',
+                },
+                {
+                    check: '[4]',
+                    files: {
+                        'data/history/yields-2026.json': {
+                            year: 2026,
+                            rows: [
+                                { date: '2026-01-31', country: 'DE', tenor: '10y', yield: 2.807 },
+                                { date: '2026-01-31', country: 'DE', tenor: '10y', yield: 2.910 },
+                            ],
+                        },
+                    },
+                    expect: 'duplicate',
+                },
+                {
+                    check: '[5]',
+                    files: {
+                        'data/price-quotes.json': { updated: '2026-09-02T00:00:00Z', asOfDate: '2026-09-02', quotes: { KLAC: { price: 205.76 } } },
+                        'data/valuations.json': { valuations: { KLAC: { fvLow: 1450, fvMid: 1750, fvHigh: 2200 } } },
+                    },
+                    expect: 'split',
+                },
+            ];
+
+            for (const sc of scenarios) {
+                const dir = mkdtempSync(join(tmpdir(), 'validate-report-'));
+                try {
+                    const files = { 'data/price-quotes.json': goodQuotes, 'data/news-feed.json': goodFeed, ...sc.files };
+                    for (const [rel, body] of Object.entries(files)) {
+                        const abs = join(dir, rel);
+                        mkdirSync(dirname(abs), { recursive: true });
+                        writeFileSync(abs, JSON.stringify(body));
+                    }
+
+                    let out = '';
+                    let status = 0;
+                    try {
+                        out = execFileSync(process.execPath, [validator], { cwd: dir, encoding: 'utf8' });
+                    } catch (e) {
+                        out = (e.stdout || '') + (e.stderr || '');
+                        status = e.status;
+                    }
+
+                    if (status !== 1) {
+                        bad.push(`${sc.check}: expected exit 1 from a failing run, got ${status} — the scenario did not reach the check`);
+                        continue;
+                    }
+                    if (!out.includes(sc.expect)) {
+                        bad.push(`${sc.check}: no FAIL mentioning "${sc.expect}" — the scenario failed some other check, so it pins nothing`);
+                        continue;
+                    }
+
+                    // Split the transcript into `[N] title` sections and look
+                    // for one holding both a FAIL and an ok.
+                    let section = '(preamble)';
+                    const seen = {};
+                    for (const line of out.split('\n')) {
+                        const head = /^\[(\d+)\]/.exec(line);
+                        if (head) { section = line.trim(); seen[section] = { fail: false, ok: false }; continue; }
+                        if (!seen[section]) continue;
+                        if (/^\s+FAIL /.test(line)) seen[section].fail = true;
+                        if (/^\s+ok\s{2,}/.test(line)) seen[section].ok = true;
+                    }
+                    for (const [title, st] of Object.entries(seen)) {
+                        if (st.fail && st.ok) {
+                            bad.push(`${title} printed both a FAIL and an ok in one run — the ok line asserts the very thing the FAIL denies`);
+                        }
+                    }
+                } finally {
+                    rmSync(dir, { recursive: true, force: true });
+                }
+            }
+            return bad;
+        },
+        shouldFail: false,
+        why: 'a check that records a failure does not also print its ok line',
     },
 ];
 

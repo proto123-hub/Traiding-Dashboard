@@ -480,16 +480,20 @@ async function main() {
     let shards = [];
     try { shards = (await readdir('data/history')).filter(f => /^yields-\d{4}\.json$/.test(f)); }
     catch (e) { if (e.code !== 'ENOENT') throw e; }
+    let shardFails = 0;
     for (const f of shards) {
-        record(checkHistoryShard(await readJson(`data/history/${f}`), `data/history/${f}`).fail);
+        const sf = checkHistoryShard(await readJson(`data/history/${f}`), `data/history/${f}`).fail;
+        shardFails += sf.length;
+        record(sf);
     }
-    ok(`${shards.length} yield shards, no duplicate keys`);
+    if (!shardFails) ok(`${shards.length} yield shards, no duplicate keys`);
 
     console.log('\n[5] valuation band plausibility');
     try {
         const val = (await readJson('data/valuations.json')).valuations || {};
-        record(checkBands(val, pq.quotes).fail);
-        ok('no band is an order of magnitude off its price');
+        const bands = checkBands(val, pq.quotes).fail;
+        record(bands);
+        if (!bands.length) ok('no band is an order of magnitude off its price');
     } catch (e) {
         if (e.code === 'ENOENT') warn.push('data/valuations.json absent — skipped'); else throw e;
     }
@@ -530,7 +534,7 @@ async function main() {
     // to remove.
     const nf = checkNewsFeed(await readJson('data/news-feed.json'));
     record(nf.fail);
-    ok(`${nf.count} items, every id unique`);
+    if (!nf.fail.length) ok(`${nf.count} items, every id unique`);
 
     console.log('');
     warn.forEach(w => console.log(`  warn ${w}`));
