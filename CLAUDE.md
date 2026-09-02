@@ -350,7 +350,13 @@ in CI that exit is the guard working, not a failure.
   `collectedAt` wins, not first-in-array: `collectedAt` records when a run
   first saw the item, and array order is whatever git chose. Validator check
   [7] asserts the result (ids unique) but cannot assert the retention — once
-  the later copy is dropped, the evidence it existed is gone.
+  the later copy is dropped, the evidence it existed is gone. **Then stage it
+  again**: `git merge` has already staged the feed, and the dedupe rewrites the
+  worktree, so a `git commit` after it ships the pre-dedupe bytes while the
+  validator — which reads the worktree — reports the deduped count and passes.
+  Verify the commit, not the checkout: `git show HEAD:data/news-feed.json`.
+  (2026-09-02: `7c769f2` was pushed with 9,696 items and a duplicate id behind
+  a green local gate.)
 - **`valuation-dashboard-v3.6.html` is legacy.** It predates `index.html` and
   is kept for reference; new work goes in `index.html` only.
 - **Never edit `data/price-quotes.json` by hand** — always go through the
