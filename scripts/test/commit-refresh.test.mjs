@@ -25,8 +25,15 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const REPO = process.cwd();
+// The tree this test file lives in, NOT process.cwd(). With cwd, running a
+// COPY of the suite still exercised the ORIGINAL scripts/commit-refresh.sh,
+// so every mutation applied to the copy silently proved nothing — a `-am`
+// mutant and a deleted replay `git add` both read green that way, and both
+// are caught once the right script is under test. Mutation testing works by
+// copying the tree, so the script under test must be the one beside the test.
+const REPO = fileURLToPath(new URL('../..', import.meta.url));
 const SCRIPT = join(REPO, 'scripts/commit-refresh.sh');
 const SCOPES = [
     'data/news-feed.json',
@@ -606,6 +613,58 @@ exit 1
     } else if (merged.fundamentals.GOOGL?.trailingPE !== 21) {
         fail(label, "this run's GOOGL update did not survive");
     } else ok(label, 'both runs\' rows survive');
+    rmSync(root, { recursive: true, force: true });
+}
+
+// ------------------- the REPLAY's commit is scoped too, not just the first one
+//
+// Every scope case above pins the FIRST commit. The replay's own commit had no
+// scope assertion at all: swapping its `git commit -m` for `git commit -am`
+// left the suite at 32/32. The reason the existing cases miss it is timing —
+// they plant their out-of-scope file BEFORE the run, and the replay's
+// `git reset --hard` either discards it (tracked) or leaves it unstaged and
+// therefore invisible to `-a` (untracked). `-a` sweeps TRACKED MODIFICATIONS,
+// so exposing it needs a tracked file dirtied AFTER the reset — inside the
+// replay window.
+//
+// The dedupe stub is the lever: the replay runs it post-reset, so having it
+// touch a tracked out-of-scope file reproduces exactly that window. Nothing in
+// the real pipeline writes outside the scopes today (validate-data.mjs is
+// read-only, dedupe touches only the feed), so this is a coverage gap rather
+// than a live leak — which is the point. The contract is that the replay
+// commits the scoped paths and nothing else, and it should hold whatever else
+// happens to be dirty when it commits.
+{
+    const label = 'the replay commits only the scoped paths when a tracked file is dirtied mid-replay';
+    const { root, origin, work } = scratch();
+
+    // Must live in origin/main: the replay resets to it before running this.
+    writeFileSync(join(work, 'scripts/dedupe-news-feed.mjs'),
+        `import { appendFileSync, writeFileSync } from 'node:fs';\n` +
+        `appendFileSync(process.env.REPLAY_TRACE, 'dedupe-news-feed.mjs\\n');\n` +
+        `writeFileSync('CLAUDE.md', 'touched during the replay\\n');\n`);
+    git(work, 'commit', '-qam', 'dedupe stub writes an out-of-scope tracked file');
+    git(work, 'push', '-q', 'origin', 'main');
+
+    const other = join(root, 'other');
+    execFileSync('git', ['clone', '-q', origin, other], { stdio: 'pipe' });
+    git(other, 'config', 'user.email', 'o@o');
+    git(other, 'config', 'user.name', 'o');
+    writeFileSync(join(other, 'reports/validation/2026-08-01-compare.json'), '{"origin":1}\n');
+    git(other, 'commit', '-qam', 'origin moved');
+    git(other, 'push', '-q', 'origin', 'main');
+
+    writeFileSync(join(work, 'data/news-feed.json'), '{"items":[{"id":"a"}]}\n');
+    const r = run(work);
+
+    if (r.status !== 0) fail(label, `exited ${r.status}: ${r.out.trim().slice(-250)}`);
+    else if (!r.trace.includes('dedupe-news-feed.mjs')) {
+        fail(label, 'the replay never ran the dedupe stub, so nothing dirtied a tracked file — the case pins nothing');
+    } else {
+        const leaked = r.files.filter(f => !/^(data|reports\/raw|reports\/validation)\//.test(f));
+        if (leaked.length) fail(label, `the replay commit swept out-of-scope ${JSON.stringify(leaked)}`);
+        else ok(label, 'CLAUDE.md was rewritten inside the replay and stayed out of the commit');
+    }
     rmSync(root, { recursive: true, force: true });
 }
 
