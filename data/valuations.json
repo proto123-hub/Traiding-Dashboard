@@ -2,87 +2,188 @@
   "note": "Owned by the evaluator agent. Writes must include method[], rationale, catalysts[], nextReview.",
   "valuations": {
     "GOOGL": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 350,
       "fvMid": 400,
       "fvHigh": 460,
-      "currentPrice": 346.35,
-      "upsideMidPct": 15.49,
-      "method": ["DCF-10y", "EV/EBITDA-peer", "SOTP-Cloud+Search+Waymo+YT", "Analyst-consensus-crosscheck"],
-      "rationale": "DCF-10y (FCF ~$95B FY26E post-Q2 beat, 12% g y1-5, 8% y6-10, WACC 9%, term 3%) → $395. EV/EBITDA-peer (EBITDA ~$138B, 18-22x) → $390. SOTP (Search $225+Cloud $105 margin-expansion+YT $37+Waymo/Other $28, DOJ -12%) → $390. Analyst-consensus-crosscheck (validator-verified 2026-08-14: stockanalysis.com+tipranks.com avg, 1.29% spread, mean $425.32, low $345/high $490 — MarketBeat $419.86 corroborates) → $425. Four-method average $400, up from $367 (6/5) — genuine re-derivation, not a price chase: Q2 'blowout' beat + Cloud margin (not just growth) drove the raise per news-latest (Trefis, Seeking Alpha 8/12), corroborated by a now-verified analyst consensus meaningfully above the prior band. currentPrice $346.35 is SINGLE-SOURCE (nasdaq only; stooq 404'd + yahoo 429'd across the entire 22-ticker universe this cycle, not GOOGL-specific — see price-quotes.json failures[]) as of 2026-08-13 EOD; treated as provisional/directional per house rule, not a confirmed 2-source trading trigger — currentPrice re-anchored, FV band change is independently justified by the verified analyst-consensus + fundamental methods above. No web access this session; all figures anchored to data/analyst-targets.json + data/news-latest.json. At $346.35 the stock trades BELOW even the revised fvLow $350 — consistent with the single-source-price caveat plus a competitive-risk headline (Nvidia's $500B financing deal threatens custom-chip economics, MarketWatch 8/12) weighing on sentiment despite the Q2 beat.",
-      "catalysts": ["Gemini 3 GA + monetization inflection (Q2 beat confirms AI-stack thesis, Seeking Alpha 8/12)", "Cloud margin expansion outpacing growth (Trefis 8/12)", "Waymo city expansion", "DOJ remedy ruling Q4 — clarity event"],
-      "risks": ["DOJ Chrome/ad-tech divest tail-risk — active regulatory overhang", "41.2% book concentration at EOD market values (240sh × $346.35) — crossed >40% threshold", "Nvidia $500B financing deal threatens custom-chip economics (MarketWatch 8/12)", "currentPrice single-source (nasdaq only) — stooq/yahoo failed universe-wide 2026-08-13; treat as provisional"],
+      "currentPrice": 344.72,
+      "upsideMidPct": 16.04,
+      "method": [
+        "DCF-10y",
+        "EV/EBITDA-peer",
+        "SOTP-Cloud+Search+Waymo+YT",
+        "Analyst-consensus-crosscheck"
+      ],
+      "rationale": "DCF-10y (FCF ~$95B FY26E post-Q2 beat, 12% g y1-5, 8% y6-10, WACC 9%, term 3%) → $395. EV/EBITDA-peer (EBITDA ~$138B, 18-22x) → $390. SOTP (Search $225+Cloud $105 margin-expansion+YT $37+Waymo/Other $28, DOJ -12%) → $390. Analyst-consensus-crosscheck (validator-verified 2026-08-14: stockanalysis.com+tipranks.com avg, 1.29% spread, mean $425.32, low $345/high $490 — MarketBeat $419.86 corroborates) → $425. Four-method average $400, up from $367 (6/5) — genuine re-derivation, not a price chase: Q2 'blowout' beat + Cloud margin (not just growth) drove the raise per news-latest (Trefis, Seeking Alpha 8/12), corroborated by a now-verified analyst consensus meaningfully above the prior band. currentPrice $346.35 is SINGLE-SOURCE (nasdaq only; stooq 404'd + yahoo 429'd across the entire 22-ticker universe this cycle, not GOOGL-specific — see price-quotes.json failures[]) as of 2026-08-13 EOD; treated as provisional/directional per house rule, not a confirmed 2-source trading trigger — currentPrice re-anchored, FV band change is independently justified by the verified analyst-consensus + fundamental methods above. No web access this session; all figures anchored to data/analyst-targets.json + data/news-latest.json. At $346.35 the stock trades BELOW even the revised fvLow $350 — consistent with the single-source-price caveat plus a competitive-risk headline (Nvidia's $500B financing deal threatens custom-chip economics, MarketWatch 8/12) weighing on sentiment despite the Q2 beat. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $344.00, close to the prior single-source read; still below fvLow $350; FV band NOT recomputed (fundamental methods unchanged since 8/14). RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $344.20, +0.06% — essentially flat, the lone held ticker to hold up through the broad semis selloff that breached AVGO/CLS/SOXL stops. Stop $325 holds comfortably (+5.9%), still within entry zone $335-355. Book concentration rose to 42.92% (from 41.1% on 8/18) purely because the other 5 holdings sold off harder — not a GOOGL-specific event. FV band NOT recomputed (fundamental methods unchanged since 8/14). SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $344.72, +0.15% — again essentially flat. Stop $325 holds comfortably (+5.72%, price-relative), still within entry zone $335-355. Book concentration eased slightly to 42.66% (from 42.92%) at verified EOD market values across all 6 holdings (portfolio-current.json share counts × 2026-08-19 verified closes, total book $193,915.40) because MRVL's +9.85% rally partially offset AVGO/CLS/SOXL's continued declines — still >40% threshold. FV band NOT recomputed (no fundamental trigger in validated inputs since 8/14).",
+      "catalysts": [
+        "Gemini 3 GA + monetization inflection (Q2 beat confirms AI-stack thesis, Seeking Alpha 8/12)",
+        "Cloud margin expansion outpacing growth (Trefis 8/12)",
+        "Waymo city expansion",
+        "DOJ remedy ruling Q4 — clarity event"
+      ],
+      "risks": [
+        "DOJ Chrome/ad-tech divest tail-risk — active regulatory overhang",
+        "41.1% book concentration at verified EOD market values (240sh × $344.00) — crossed >40% threshold",
+        "Nvidia $500B financing deal threatens custom-chip economics (MarketWatch 8/12)",
+        "currentPrice now verified (2-of-3 source agreement, $344.00, 2026-08-17 session) — prior single-source caveat resolved 2026-08-18",
+        "Verified close $344.20 (2026-08-18 session) flat vs prior close; book concentration rose to 42.92% (from 41.1%) as peer holdings sold off harder — still >40% threshold (2026-08-19).",
+        "Verified close $344.72 (2026-08-19 session, +0.15%) again flat; stop $325 holds +5.72%; book concentration eased to 42.66% (from 42.92%) as MRVL's rally offset the rest of the book — still >40% threshold."
+      ],
       "nextReview": "2026-09-14"
     },
     "AVGO": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 385,
       "fvMid": 458,
       "fvHigh": 555,
-      "currentPrice": 419.4693,
-      "upsideMidPct": 9.19,
-      "method": ["DCF-10y", "EV/Sales-AI-networking", "peer-comp-MRVL-NVDA", "Analyst-consensus-crosscheck"],
-      "rationale": "DCF-10y (FCF ~$27B, custom-silicon CAGR 17% y1-4 — moderated from 18% on insider-selling/momentum caution below, 10% y5-10, WACC 9.5%, term 3%) → $445. EV/Sales-AI-networking (rev ~$68B FY26E, 6-7x) → $435. Peer-comp-MRVL-NVDA → $430. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 2.19% spread, mean $522.10, high $652.5 — targetLow $215.88 explicitly flagged by validator as a stale/unadjusted outlier, TipRanks' $390 low used instead) → $522. Four-method average $458, up from $424 (6/5). currentPrice $419.4693 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is UP 8.5% since 6/5 ($386.50→$419.47) even as news is mixed: 'trades near fair value but at a premium on earnings' and 'above fair value after 15% drop' (Yahoo/simplywall.st 8/13) vs co-founder quarterly stake sales >$720M (Stocktwits 8/11, insider-selling flag) — the mixed signal is why the DCF growth input was trimmed 18%→17% rather than following the analyst consensus fully up.",
-      "catalysts": ["TPU v7 production ramp", "Verified analyst consensus mean $522.10 (23% above 6/5 fvMid $424)", "Meta MTIA 2 volume ramp", "VMware FCF margin expansion"],
-      "risks": ["Co-founder quarterly stake sales >$720M — insider-selling flag (Stocktwits 8/11)", "Customer concentration (Google TPU ~30% of AI rev)", "Export ban overhang on advanced AI chips", "Mixed news framing ('near fair value at a premium' vs '15% drop') — elevated uncertainty; currentPrice single-source"],
+      "currentPrice": 362.48,
+      "upsideMidPct": 26.35,
+      "method": [
+        "DCF-10y",
+        "EV/Sales-AI-networking",
+        "peer-comp-MRVL-NVDA",
+        "Analyst-consensus-crosscheck"
+      ],
+      "rationale": "DCF-10y (FCF ~$27B, custom-silicon CAGR 17% y1-4 — moderated from 18% on insider-selling/momentum caution below, 10% y5-10, WACC 9.5%, term 3%) → $445. EV/Sales-AI-networking (rev ~$68B FY26E, 6-7x) → $435. Peer-comp-MRVL-NVDA → $430. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 2.19% spread, mean $522.10, high $652.5 — targetLow $215.88 explicitly flagged by validator as a stale/unadjusted outlier, TipRanks' $390 low used instead) → $522. Four-method average $458, up from $424 (6/5). currentPrice $419.4693 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is UP 8.5% since 6/5 ($386.50→$419.47) even as news is mixed: 'trades near fair value but at a premium on earnings' and 'above fair value after 15% drop' (Yahoo/simplywall.st 8/13) vs co-founder quarterly stake sales >$720M (Stocktwits 8/11, insider-selling flag) — the mixed signal is why the DCF growth input was trimmed 18%→17% rather than following the analyst consensus fully up. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $392.43 — MATERIALLY below the 8/14 single-source read of $419.4693 (-6.4%); the prior read appears to have been contaminated by a live pre/after-hours print rather than the official close (see reports/validation/2026-08-18-source-probe.md, item 2, on the NASDAQ primaryData/secondaryData session-mixing bug). At $392.43 the stock sits only $2.43 (0.6%) above the $390 stopLoss and below the $395 entry-zone floor — a materially different risk/reward picture than the 8/14 read implied. FV band NOT recomputed (fundamental methods unchanged since 8/14); see risk-scores.json decisionLog for verdict impact. RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $380.00, -3.17% — this BREACHES stopLoss $390 by 2.6% (was $2.43/0.6% above on 8/18); no fundamental cause found in validated inputs (news-latest.json still dated 8/14) — this reads as a broad semis-sector selloff, not a company-specific event. FV band NOT recomputed (no fundamental trigger in validated sources); upside-to-fvMid widened to 20.5% (from 16.7%) purely on the price drop — flagged as a widening gap that may indicate either a buying opportunity or a stale band; next fundamentals check should confirm before treating the wider gap as actionable upside. SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $362.48, -4.61% — the stopLoss $390 breach DEEPENS to 7.59% (price-relative; was 2.6% on 8/18). No fundamental cause found in validated inputs (news-latest.json still dated 8/14) — reads as a continuation of the broad semis-sector selloff, not company-specific. FV band NOT recomputed; upside-to-fvMid widens further to 26.35% (from 20.53%) purely on the price drop — the gap remains a measure of staleness/urgency for the next fundamentals check, not confirmed actionable upside.",
+      "catalysts": [
+        "TPU v7 production ramp",
+        "Verified analyst consensus mean $522.10 (23% above 6/5 fvMid $424)",
+        "Meta MTIA 2 volume ramp",
+        "VMware FCF margin expansion"
+      ],
+      "risks": [
+        "Co-founder quarterly stake sales >$720M — insider-selling flag (Stocktwits 8/11)",
+        "Customer concentration (Google TPU ~30% of AI rev)",
+        "Export ban overhang on advanced AI chips",
+        "Verified close $392.43 is only 0.6% above stopLoss $390 — immediate stop-watch item, not yet breached (2026-08-18)",
+        "Verified close $380.00 (2026-08-18 session) BREACHED stopLoss $390 by 2.6% on fully verified 3-source data (2026-08-19) — see risk-scores.json decisionLog for SELL verdict.",
+        "Verified close $362.48 (2026-08-19 session, -4.61%) DEEPENS the stopLoss $390 breach to 7.59% (price-relative; was 2.6%) — no fundamental cause found; see risk-scores.json decisionLog for SELL verdict."
+      ],
       "nextReview": "2026-09-14"
     },
     "CLS": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 355,
       "fvMid": 424,
       "fvHigh": 495,
-      "currentPrice": 349.44,
-      "upsideMidPct": 21.34,
-      "method": ["EV/EBITDA-peer-hyperscaler-ODM", "PEG-growth-normalized", "Analyst-consensus-crosscheck"],
-      "rationale": "EV/EBITDA-peer (EBITDA ~$860M est, 12-18x hyperscaler ODM) → $430. PEG-normalized (fwd EPS ~$13 est, 38% growth, PEG 0.6-0.8x) → $390. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 4.03% spread, mean $453.06, low $383/high $525) → $453. Three-method average $424, up from $399 (6/5) — genuine re-derivation: verified analyst consensus meaningfully above the prior band, corroborated by a 7.15% single-day pop (TradingKey 8/13) and 'investors refocus on AI demand' (Quiver 8/12). currentPrice $349.44 is SINGLE-SOURCE (nasdaq only, universe-wide scraper failure — see price-quotes.json failures[]); no 2nd source to confirm. At $349.44 price sits marginally BELOW the June hard stop $355 (-1.6%) — flagged, NOT treated as an executed mechanical breach given (a) single-source provenance, (b) genuinely positive recent price action plus a verified analyst upgrade argue the thesis is intact, not broken. Stop reset to $325 (new structural level, buffer against repeat whipsaw on unverified quotes) rather than mechanically honoring the stale $355 stop against an unconfirmed print — see risk-scores.json decisionLog.",
-      "catalysts": ["AAS capacity expansion ramp H2 2026", "Verified analyst consensus mean $453.06 (13.6% above 6/5 fvMid $399) — Street re-rating", "CLS vs ANET growth-opportunity coverage (TradingView 8/13) — competitive positioning improving", "Hyperscaler capex sustained"],
-      "risks": ["currentPrice single-source (nasdaq only) marginally tested prior stop $355 — unconfirmed, do not treat as executed without 2-source verification", "Cyclical peak margins risk on hyperscaler ODM mix", "Server/rack tariff sector macro risk", "ODM margin compression on component cost"],
+      "currentPrice": 301.36,
+      "upsideMidPct": 40.7,
+      "method": [
+        "EV/EBITDA-peer-hyperscaler-ODM",
+        "PEG-growth-normalized",
+        "Analyst-consensus-crosscheck"
+      ],
+      "rationale": "EV/EBITDA-peer (EBITDA ~$860M est, 12-18x hyperscaler ODM) → $430. PEG-normalized (fwd EPS ~$13 est, 38% growth, PEG 0.6-0.8x) → $390. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 4.03% spread, mean $453.06, low $383/high $525) → $453. Three-method average $424, up from $399 (6/5) — genuine re-derivation: verified analyst consensus meaningfully above the prior band, corroborated by a 7.15% single-day pop (TradingKey 8/13) and 'investors refocus on AI demand' (Quiver 8/12). currentPrice $349.44 is SINGLE-SOURCE (nasdaq only, universe-wide scraper failure — see price-quotes.json failures[]); no 2nd source to confirm. At $349.44 price sits marginally BELOW the June hard stop $355 (-1.6%) — flagged, NOT treated as an executed mechanical breach given (a) single-source provenance, (b) genuinely positive recent price action plus a verified analyst upgrade argue the thesis is intact, not broken. Stop reset to $325 (new structural level, buffer against repeat whipsaw on unverified quotes) rather than mechanically honoring the stale $355 stop against an unconfirmed print — see risk-scores.json decisionLog. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $340.40 — the 8/14 stop-test flag is RESOLVED: verified close sits $15.40 (4.7%) above the reset stop $325 and at the entry-zone floor ($340-365), confirming the thesis-intact read, not a breach. FV band NOT recomputed (fundamental methods unchanged since 8/14). RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $310.59, -8.76% — this REVERSES the 8/18 \"resolved\" read: the stop $325 is now BREACHED by 4.4%. No fundamental cause found in validated inputs (news-latest.json still dated 8/14) — reads as a broad semis-sector selloff, not company-specific. FV band NOT recomputed; upside-to-fvMid widened to 36.5% (from 24.6%) purely on the price drop — flagged as a widening gap that may indicate either a buying opportunity or a stale band; next fundamentals check should confirm before treating the wider gap as actionable upside. SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $301.36, -2.97% — the stop $325 breach DEEPENS further to 7.84% (price-relative; was 4.4%). No fundamental cause found in validated inputs (news-latest.json still dated 8/14) — reads as a continuation of the broad semis-sector selloff, not company-specific. FV band NOT recomputed; upside-to-fvMid widens further to 40.70% (from 36.51%) purely on the price drop — the gap remains a measure of staleness/urgency, not confirmed actionable upside.",
+      "catalysts": [
+        "AAS capacity expansion ramp H2 2026",
+        "Verified analyst consensus mean $453.06 (13.6% above 6/5 fvMid $399) — Street re-rating",
+        "CLS vs ANET growth-opportunity coverage (TradingView 8/13) — competitive positioning improving",
+        "Hyperscaler capex sustained"
+      ],
+      "risks": [
+        "Verified close $340.40 confirmed NOT breaching stop $325 (8/14 single-source stop-test flag resolved 2026-08-18)",
+        "Cyclical peak margins risk on hyperscaler ODM mix",
+        "Server/rack tariff sector macro risk",
+        "ODM margin compression on component cost",
+        "Verified close $310.59 (2026-08-18 session) BREACHED stopLoss $325 by 4.4% on fully verified 3-source data (2026-08-19), reversing the 8/18 \"resolved\" read — see risk-scores.json decisionLog for SELL verdict.",
+        "Verified close $301.36 (2026-08-19 session, -2.97%) DEEPENS the stopLoss $325 breach to 7.84% (price-relative; was 4.4%) — no fundamental cause found; see risk-scores.json decisionLog for SELL verdict."
+      ],
       "nextReview": "2026-09-14"
     },
     "MRVL": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 250,
       "fvMid": 295,
       "fvHigh": 370,
-      "currentPrice": 224.39,
-      "upsideMidPct": 31.47,
-      "method": ["DCF-10y", "EV/Sales-AI-semis", "PEG-growth-normalized", "Analyst-consensus-crosscheck"],
-      "rationale": "DCF-10y (FCF ~$4.3B, AI-custom+data-center 24% g y1-4, 15% y5-7, 8% y8-10, WACC 10%) → $295. EV/Sales-AI-semis (rev ~$8.5B FY26E, 10-11x) → $300. PEG-normalized (fwd EPS ~$4.60, 33% growth, PEG 0.75x) → $305. Analyst-consensus-crosscheck (validator CAUTION FLAG: preferred SA+TipRanks pairing narrowly MISSES the 5% tolerance at 5.32%; verified status rests on the weaker SA+MarketBeat pairing (4.27%) instead; mean $258.06, low $153/high $400 exact-match SA/TipRanks) → $258, down-weighted given the caution flag. Straight four-method average would be $290; revised up slightly to $295 because genuinely bullish news outweighs the flagged-caution consensus figure: Goldman Sachs price-target raise ahead of earnings + rating upgrade (TipRanks/Seeking Alpha 8/13) + Nvidia CEO calling MRVL 'next trillion-dollar company' (Stocktwits 8/12). currentPrice $224.39 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is DOWN 19.1% since 6/5 ($277.50→$224.39) and BELOW the June hard stop $255 by 12% — a materially larger breach than CLS's, occurring ahead of an apparently-imminent earnings print ('quick bounce before earnings,' Barchart 8/12). Given the single-source provenance AND pending binary earnings event, this is flagged as an URGENT price-verification item, not mechanically executed as a confirmed stop-loss trigger — see risk-scores.json decisionLog for the reset-stop rationale.",
-      "catalysts": ["Goldman Sachs price-target raise + rating upgrade ahead of earnings (8/13)", "Nvidia CEO 'next trillion-dollar company' endorsement (8/12)", "New AI memory platform spotlight (StocksToTrade 8/12)", "Custom ASIC next-gen win pipeline"],
-      "risks": ["currentPrice single-source, 12% below June stop $255 — UNCONFIRMED breach, urgent 2-source verification needed before any action", "Earnings apparently imminent per news framing — binary event risk, exact date unconfirmed this cycle", "Export restrictions on AI chips curbing datacenter rev", "-19.1% price decline since 6/5 vs a broadly-positive semis peer group — MRVL notably underperformed sector"],
+      "currentPrice": 237.27,
+      "upsideMidPct": 24.33,
+      "method": [
+        "DCF-10y",
+        "EV/Sales-AI-semis",
+        "PEG-growth-normalized",
+        "Analyst-consensus-crosscheck"
+      ],
+      "rationale": "DCF-10y (FCF ~$4.3B, AI-custom+data-center 24% g y1-4, 15% y5-7, 8% y8-10, WACC 10%) → $295. EV/Sales-AI-semis (rev ~$8.5B FY26E, 10-11x) → $300. PEG-normalized (fwd EPS ~$4.60, 33% growth, PEG 0.75x) → $305. Analyst-consensus-crosscheck (validator CAUTION FLAG: preferred SA+TipRanks pairing narrowly MISSES the 5% tolerance at 5.32%; verified status rests on the weaker SA+MarketBeat pairing (4.27%) instead; mean $258.06, low $153/high $400 exact-match SA/TipRanks) → $258, down-weighted given the caution flag. Straight four-method average would be $290; revised up slightly to $295 because genuinely bullish news outweighs the flagged-caution consensus figure: Goldman Sachs price-target raise ahead of earnings + rating upgrade (TipRanks/Seeking Alpha 8/13) + Nvidia CEO calling MRVL 'next trillion-dollar company' (Stocktwits 8/12). currentPrice $224.39 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is DOWN 19.1% since 6/5 ($277.50→$224.39) and BELOW the June hard stop $255 by 12% — a materially larger breach than CLS's, occurring ahead of an apparently-imminent earnings print ('quick bounce before earnings,' Barchart 8/12). Given the single-source provenance AND pending binary earnings event, this is flagged as an URGENT price-verification item, not mechanically executed as a confirmed stop-loss trigger — see risk-scores.json decisionLog for the reset-stop rationale. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $234.33 — HIGHER than the 8/14 single-source read ($224.39, +4.4%). Under the OLD $255 stop, verified data confirms a real breach (-8.1%, smaller than the -12% single-source read but still a genuine breach of that historical level); under the CURRENT reset stop $205, the verified close is comfortably above (+14.3%) and near the top of the $210-235 entry zone. The earnings-timing binary risk remains UNRESOLVED — no new verified date this cycle (news-latest.json unchanged since 8/14). FV band NOT recomputed (fundamental methods unchanged since 8/14). RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $216.00, -7.82% — HOLDS the reset stop $205 (+5.4%, buffer thinned sharply from +14.3% on 8/18); the ORIGINAL $255 stop is now -15.3% under (deeper than the -8.1% on 8/18). No new fundamental reason found to move the reset stop either way; it is honored as-is, unbreached. FV band NOT recomputed; upside-to-fvMid widened to 36.6% (from 25.9%) purely on the price drop — flagged as a widening gap, earnings-timing binary risk still unresolved (news-latest.json unchanged since 8/14). SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $237.27, +9.85% — a sharp single-session recovery. The reset stop $205 now HOLDS by 13.60% (price-relative), buffer restored from +5.4% on 8/18. Under the ORIGINAL $255 stop the verified close is now only -7.47% below (price-relative), narrowing sharply from -15.3% (stop-relative reading) on 8/18. This is the strongest evidence to date that the 8/14 stop widening ($255→$205) is holding through a real recovery session, not just avoiding a breach on quiet days — recorded plainly as evidence for Daniel to weigh; the widening is NOT being re-affirmed or reversed here, that decision remains his. Separately, this rally also pushed MRVL's book-concentration weight over 20% for the first time this cycle (172sh × $237.27 = $40,810.44 / total book $193,915.40 = 21.05%, up from 19.30% on 8/18) — see risk-scores.json for the +15pt score impact. FV band NOT recomputed (no fundamental trigger in validated inputs since 8/14); upside-to-fvMid compresses to 24.33% (from 36.57%) purely on the price rally, earnings-timing binary risk still unresolved (news-latest.json unchanged since 8/14).",
+      "catalysts": [
+        "Goldman Sachs price-target raise + rating upgrade ahead of earnings (8/13)",
+        "Nvidia CEO 'next trillion-dollar company' endorsement (8/12)",
+        "New AI memory platform spotlight (StocksToTrade 8/12)",
+        "Custom ASIC next-gen win pipeline"
+      ],
+      "risks": [
+        "Verified close $234.33 confirms NOT breaching the reset stop $205 (8/14 flag resolved 2026-08-18); old $255 stop level remains breached on verified data (-8.1%)",
+        "Earnings apparently imminent per news framing — binary event risk, exact date STILL unconfirmed as of 2026-08-18",
+        "Export restrictions on AI chips curbing datacenter rev",
+        "-19.1% price decline since 6/5 vs a broadly-positive semis peer group — MRVL notably underperformed sector",
+        "Verified close $216.00 (2026-08-18 session) holds the reset stop $205 by only 5.4% (thinned from 14.3% on 8/18) — the ORIGINAL $255 stop is now -15.3% breached on fully verified data (2026-08-19); earnings-timing risk still unresolved.",
+        "Verified close $237.27 (2026-08-19 session, +9.85%) restores the reset-stop $205 buffer to 13.60% (price-relative) and narrows the original $255 stop's breach to 7.47% — evidence bearing on the 8/14 widening, not a decision; concentration crossed 20% of book (21.05%, up from 19.30%) for the first time this cycle."
+      ],
       "nextReview": "2026-09-14"
     },
     "MU": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 780,
       "fvMid": 1196,
       "fvHigh": 1490,
-      "currentPrice": 961.88,
-      "upsideMidPct": 24.34,
-      "method": ["DCF-10y", "EV/EBITDA-peer-memory", "PEG-growth-normalized", "Analyst-consensus-crosscheck"],
-      "rationale": "DCF-10y (FCF ~$14B FY26E — raised on HBM ramp acceleration + buyback, 22% g y1-3 cycle peak, 6% y4-10 mean reversion, WACC 10%, term 2.5%) → $1,150. EV/EBITDA-peer-memory (EBITDA ~$24B FY26E, 8-12x cyclical discount) → $1,050. PEG-normalized (fwd EPS ~$28, P/E 35-40x normalized) → $1,050. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 4.27% spread, mean $1,535.54, high $2,200 exact-match SA/TipRanks — MarketBeat's $1,260.31 explicitly excluded by validator as stale/unrefreshed post-rally) → $1,536. Four-method average $1,196, up sharply from $868 (6/5) — the single largest FV revision this cycle; disciplined re-derivation, not a chase: verified Street consensus independently corroborates the DCF/EBITDA/PEG cluster direction (~$1,050-1,150) at a level well above it, and news confirms a genuine buyback catalyst ('could begin retiring 12% of shares,' Seeking Alpha 8/13) alongside the rally. currentPrice $961.88 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is UP 9.9% since 6/5. Counterweight: Michael Burry disclosed a new MU short (Yahoo Finance 8/12, alongside NBIS/ORCL) — a notable bear signal from a known cyclical-top caller — kept fvMid meaningfully below the $1,536 analyst mean rather than converging fully to it.",
-      "catalysts": ["HBM3E/HBM4 volume ramp", "Verified analyst consensus mean $1,535.54 (77% above 6/5 fvMid) — major Street re-rating", "Buyback: 'could begin retiring 12% of shares' (Seeking Alpha 8/13)", "NAND price recovery cycle H2 2026"],
-      "risks": ["Michael Burry disclosed new MU short (Yahoo Finance 8/12) — notable cyclical-top bear signal", "Memory cycle peak margins — cyclical mean-reversion risk", "HBM supply normalization as SK Hynix/Samsung ramp", "New memory-chip rival flagged (Barron's 8/13) — competitive risk"],
+      "currentPrice": 937.105,
+      "upsideMidPct": 27.63,
+      "method": [
+        "DCF-10y",
+        "EV/EBITDA-peer-memory",
+        "PEG-growth-normalized",
+        "Analyst-consensus-crosscheck"
+      ],
+      "rationale": "DCF-10y (FCF ~$14B FY26E — raised on HBM ramp acceleration + buyback, 22% g y1-3 cycle peak, 6% y4-10 mean reversion, WACC 10%, term 2.5%) → $1,150. EV/EBITDA-peer-memory (EBITDA ~$24B FY26E, 8-12x cyclical discount) → $1,050. PEG-normalized (fwd EPS ~$28, P/E 35-40x normalized) → $1,050. Analyst-consensus-crosscheck (validator-verified 2026-08-14: SA+TipRanks avg, 4.27% spread, mean $1,535.54, high $2,200 exact-match SA/TipRanks — MarketBeat's $1,260.31 explicitly excluded by validator as stale/unrefreshed post-rally) → $1,536. Four-method average $1,196, up sharply from $868 (6/5) — the single largest FV revision this cycle; disciplined re-derivation, not a chase: verified Street consensus independently corroborates the DCF/EBITDA/PEG cluster direction (~$1,050-1,150) at a level well above it, and news confirms a genuine buyback catalyst ('could begin retiring 12% of shares,' Seeking Alpha 8/13) alongside the rally. currentPrice $961.88 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is UP 9.9% since 6/5. Counterweight: Michael Burry disclosed a new MU short (Yahoo Finance 8/12, alongside NBIS/ORCL) — a notable bear signal from a known cyclical-top caller — kept fvMid meaningfully below the $1,536 analyst mean rather than converging fully to it. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $1,011.75, +5.2% above the 8/14 single-source read — price now trades ABOVE the $920-980 entry zone. Upside to fvMid compresses to 18.2% (was 24.3%) and rrr compresses materially (2.09→1.14, see risk-scores.json) purely on the price move; FV band NOT recomputed (fundamental methods, buyback catalyst, and Burry short are all unchanged since 8/14) — flagged as reduced new-money attractiveness, not a thesis change. RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $940.76, -7.02% — price has fallen back INTO the $920-980 entry zone (was above it on 8/18); stop $850 holds comfortably (+10.7%). No fundamental cause found in validated inputs (news-latest.json still dated 8/14) — reads as a broad semis-sector selloff, not company-specific; fundamentals (buyback catalyst, HBM ramp, Burry short) all unchanged. FV band NOT recomputed; upside-to-fvMid widened to 27.1% (from 18.2%) on the price drop plus renewed entry-zone attractiveness. SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $937.105, -0.39% — a small further pullback, price stays INSIDE the $920-980 entry zone; stop $850 holds comfortably (+9.30% price-relative, down slightly from +10.7%). No fundamental cause found in validated inputs (news-latest.json still dated 8/14). FV band NOT recomputed; upside-to-fvMid widens marginally to 27.63% (from 27.13%).",
+      "catalysts": [
+        "HBM3E/HBM4 volume ramp",
+        "Verified analyst consensus mean $1,535.54 (77% above 6/5 fvMid) — major Street re-rating",
+        "Buyback: 'could begin retiring 12% of shares' (Seeking Alpha 8/13)",
+        "NAND price recovery cycle H2 2026"
+      ],
+      "risks": [
+        "Michael Burry disclosed new MU short (Yahoo Finance 8/12) — notable cyclical-top bear signal",
+        "Memory cycle peak margins — cyclical mean-reversion risk",
+        "HBM supply normalization as SK Hynix/Samsung ramp",
+        "New memory-chip rival flagged (Barron's 8/13) — competitive risk",
+        "Verified close $1,011.75 now above the $920-980 entry zone — rrr compressed to 1.14 from 2.09 on price alone (2026-08-18)",
+        "Verified close $940.76 (2026-08-18 session) back within the $920-980 entry zone with stop $850 holding +10.7% (2026-08-19) — improved new-money attractiveness, thesis unchanged.",
+        "Verified close $937.105 (2026-08-19 session, -0.39%) stays inside the $920-980 entry zone; stop $850 holds +9.30%; thesis and catalysts unchanged."
+      ],
       "nextReview": "2026-09-14"
     },
     "SOXL": {
-      "updated": "2026-08-14",
+      "updated": "2026-08-19",
       "agent": "evaluator",
       "fvLow": 150,
       "fvMid": 205,
       "fvHigh": 260,
-      "currentPrice": 146.2784,
-      "upsideMidPct": 40.16,
-      "method": ["NAV-decay-adjusted", "3x-beta-scaling"],
-      "rationale": "NAV-decay-adjusted + 3x-beta-scaling re-applied with 2 months of realized data (no analyst coverage exists for this leveraged ETF — notApplicable per validator, methods unchanged). Sector context: SOX-basket-adjacent held/watch names broadly APPRECIATED since 6/5 (MU +9.9%, AVGO +8.5%, NVDA +9.9%, TSM +5.1%, AMD +4.0%, LRCX +10.2%, INTC +8.2% — MRVL -19.1% the lone large decliner), yet SOXL itself is DOWN 19.4% ($181.46→$146.28) over the same window — a stark divergence consistent with realized 3x daily-reset decay compounding through an interim volatility episode, exactly the risk the 6/5 and 6/7 entries flagged ('SOX -10% → SOXL ~-30%' precedent). NAV-decay-adjusted: theoretical SOX FV basket direction is intact (semis capex cycle confirmed — AMAT/LRCX Q3 'better-than-expected sales' per news-latest 8/13), but 2 months of decay has structurally lowered the NAV-per-unit floor → recomputed mid ~$205, down from $240 (6/5) — this FV revision reflects realized decay, not a fundamental sector call. 3x-beta-scaling: VIX dropped to 15.45 (8/13) from 21.51 (6/5) — lower forward decay expected going forward (partial mitigant), but does not undo decay already realized. currentPrice $146.2784 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is BELOW the June hard stop $170 by 14% — the largest stop breach of the 6 held tickers this cycle. Given (a) the breach is thesis-CONSISTENT (decay realization, not an anomaly), (b) the position is de minimis (5sh, 0.36% of book, ~$731), and (c) no analyst floor exists (leveraged ETF, notApplicable), this is treated as a genuine, actionable stop-loss trigger despite the single-source caveat — see risk-scores.json decisionLog for the SELL rationale.",
-      "catalysts": ["SOX sector recovery intact per component price action (AMAT/LRCX/MU/AVGO/NVDA broadly up since 6/5)", "VIX declined to 15.45 from 21.51 — lower forward decay risk", "Semi capex cycle confirmation (AMAT/LRCX Q3 beats)", "NDX reversal / risk-on rotation"],
-      "risks": ["currentPrice 14% below June hard stop $170 — largest breach of any held ticker, thesis-consistent with realized 3x decay (SOXL -19.4% vs a broadly-positive underlying basket)", "Leveraged ETF daily-reset decay — realized this cycle exactly as flagged", "De minimis position (0.36% of book) — low cost to exit cleanly", "No analyst/fundamental floor (ETF, notApplicable coverage)"],
+      "currentPrice": 120.74,
+      "upsideMidPct": 69.79,
+      "method": [
+        "NAV-decay-adjusted",
+        "3x-beta-scaling"
+      ],
+      "rationale": "NAV-decay-adjusted + 3x-beta-scaling re-applied with 2 months of realized data (no analyst coverage exists for this leveraged ETF — notApplicable per validator, methods unchanged). Sector context: SOX-basket-adjacent held/watch names broadly APPRECIATED since 6/5 (MU +9.9%, AVGO +8.5%, NVDA +9.9%, TSM +5.1%, AMD +4.0%, LRCX +10.2%, INTC +8.2% — MRVL -19.1% the lone large decliner), yet SOXL itself is DOWN 19.4% ($181.46→$146.28) over the same window — a stark divergence consistent with realized 3x daily-reset decay compounding through an interim volatility episode, exactly the risk the 6/5 and 6/7 entries flagged ('SOX -10% → SOXL ~-30%' precedent). NAV-decay-adjusted: theoretical SOX FV basket direction is intact (semis capex cycle confirmed — AMAT/LRCX Q3 'better-than-expected sales' per news-latest 8/13), but 2 months of decay has structurally lowered the NAV-per-unit floor → recomputed mid ~$205, down from $240 (6/5) — this FV revision reflects realized decay, not a fundamental sector call. 3x-beta-scaling: VIX dropped to 15.45 (8/13) from 21.51 (6/5) — lower forward decay expected going forward (partial mitigant), but does not undo decay already realized. currentPrice $146.2784 (single-source nasdaq, universe-wide scraper failure — see price-quotes.json failures[]) is BELOW the June hard stop $170 by 14% — the largest stop breach of the 6 held tickers this cycle. Given (a) the breach is thesis-CONSISTENT (decay realization, not an anomaly), (b) the position is de minimis (5sh, 0.36% of book, ~$731), and (c) no analyst floor exists (leveraged ETF, notApplicable), this is treated as a genuine, actionable stop-loss trigger despite the single-source caveat — see risk-scores.json decisionLog for the SELL rationale. RE-ANCHOR 2026-08-18: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-17) = $151.53 — the breach of the $170 hard stop is CONFIRMED (-10.9% vs the prior single-source read of -14.0%; magnitude smaller than believed but the breach is real, no longer provisional). Verified pre-market print $135.6443 (-10.5% from this close) is context only, not a session close — it signals continuing decay pressure toward the current $130 stopLoss but does not itself trigger anything. FV band NOT recomputed (fundamental/NAV-decay methods unchanged since 8/14). RE-ANCHOR 2026-08-19: verified 3-source close (nasdaq+cboe+cnbc all agree, regular session 2026-08-18) = $129.10, -14.80% — BOTH the reset stopLoss $130 AND the original hard stop $170 are now breached (-0.7% and -24.1% respectively) on fully verified data. Verified pre-market print $125.67 shows continuing decay pressure (context/urgency only, not a session close). SELL stands, already the verdict since 8/14. FV band NOT recomputed this cycle — one additional decay day is not sufficient basis alone to re-derive the NAV-decay model; the current fvMid $205 should be treated as increasingly stale for a leveraged ETF after this magnitude of realized decay and flagged for the next NAV-decay re-derivation cycle rather than read as 58.8% upside. SAME-DAY RE-ANCHOR 2026-08-19 (second pass, verified close for session 2026-08-19): verified 3-source close (nasdaq+cboe+cnbc all agree, price-quotes.json regularSessionDate 2026-08-19) = $120.74, -6.48% — a third consecutive verified session below both the reset stopLoss $130 (-7.67% price-relative) and the original hard stop $170 (-40.80% price-relative). SELL stands, reconfirmed. FV band still NOT recomputed — the same NAV-decay-model staleness flag applies with greater force after three sessions of realized decay; the fvMid $205 (69.8% nominal upside at this price) should not be read as an actionable signal for this instrument.",
+      "catalysts": [
+        "SOX sector recovery intact per component price action (AMAT/LRCX/MU/AVGO/NVDA broadly up since 6/5)",
+        "VIX declined to 15.45 from 21.51 — lower forward decay risk",
+        "Semi capex cycle confirmation (AMAT/LRCX Q3 beats)",
+        "NDX reversal / risk-on rotation"
+      ],
+      "risks": [
+        "Verified close $151.53 CONFIRMS the $170 hard-stop breach (-10.9%) — no longer a single-source flag; largest confirmed breach of any held ticker, thesis-consistent with realized 3x decay",
+        "Leveraged ETF daily-reset decay — realized this cycle exactly as flagged",
+        "De minimis position (0.36% of book) — low cost to exit cleanly",
+        "No analyst/fundamental floor (ETF, notApplicable coverage)",
+        "Verified pre-market print -10.5% further vs the close — context/urgency only, approaching but not yet breaching the reset $130 stopLoss",
+        "Verified close $129.10 (2026-08-18 session) breaches BOTH the reset stop $130 (-0.7%) and the original hard stop $170 (-24.1%) on fully verified data (2026-08-19) — fvMid $205 flagged as increasingly stale for this ETF, not a buy signal.",
+        "Verified close $120.74 (2026-08-19 session, -6.48%) remains below both stops for a third straight verified session (reset $130: -7.67%; original $170: -40.80%, both price-relative) — fvMid $205 increasingly stale, not a buy signal."
+      ],
       "nextReview": "2026-09-14"
     },
     "TSM": {
@@ -93,39 +194,93 @@
       "fvHigh": 600,
       "currentPrice": 412.11,
       "upsideMidPct": 18.18,
-      "method": ["DCF-10y", "EV/Sales-foundry-monopoly", "EV/EBITDA-peer"],
+      "method": [
+        "DCF-10y",
+        "EV/Sales-foundry-monopoly",
+        "EV/EBITDA-peer"
+      ],
       "rationale": "DCF-10y (FCF $40B FY26, leading-edge monopoly, 15% g y1-4 AI demand, 8% y5-10, WACC 9%, term 3%) → $450. EV/Sales foundry-monopoly premium (rev ~$120B FY26 est, 4-5x → $480-$600B EV) → $490-$615, mid $520. EV/EBITDA peer (EBITDA ~$70B est, 12-16x foundry premium) → $420-$560, mid $490. Three-method average $487. Portfolio cleared (TSM exit 10sh @ $401.10 per 5/5 sync). EOD 22:15Z $412.11 (stamped nasdaq primary; stooq $415.17 rejected per validator policy). Peer-reference entry maintained for sector context.",
-      "catalysts": ["N2 process ramp 2026", "CoWoS capacity expansion for AI HPC", "Arizona fab qualification"],
-      "risks": ["Taiwan geopolitical risk premium", "Export controls on advanced nodes to China", "Customer capex concentration (Apple/NVDA)"],
+      "catalysts": [
+        "N2 process ramp 2026",
+        "CoWoS capacity expansion for AI HPC",
+        "Arizona fab qualification"
+      ],
+      "risks": [
+        "Taiwan geopolitical risk premium",
+        "Export controls on advanced nodes to China",
+        "Customer capex concentration (Apple/NVDA)"
+      ],
       "nextReview": "2026-07-15"
     },
     "NVDA": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 165,
       "fvMid": 199,
       "fvHigh": 250,
-      "currentPrice": 205.201,
-      "upsideMidPct": -3.02,
-      "method": ["DCF-10y", "EV/Sales-semis", "PEG-growth-normalized"],
-      "rationale": "Watchlist (not held). DCF-10y (FCF ~$80B FY26 Blackwell ramp, 25% g y1-3, 15% y4-7, 8% y8-10, WACC 10%, term 3%) → $195. EV/Sales-semis (rev ~$195B FY26 est, 18-22x AI-semis) → mid $195; bull 25x → $244. PEG-normalized (fwd EPS ~$4.20 est, 45% growth, PEG 1.0-1.2x → P/E 45-54x) → $189-$227, mid $208. Three-method average $199. At $205.20 (EOD 6/5, 2-source verified) stock is 3.0% above fvMid — no entry margin at current price. Risk-off context 6/5 (NDX -4.8%, VIX +39.7% to 21.51); NVDA +0.05% outperformed sector. Entry attractive only on pullback toward fvLow $165-$175 zone.",
-      "catalysts": ["Blackwell B200/B300 production ramp confirmation H2 2026", "GB300 server volume orders", "Sovereign AI infrastructure spend acceleration", "NIM software stack monetization"],
-      "risks": ["Export ban extension to H20/B20 derivatives", "Sector macro de-rate NDX risk-off 6/5", "Hyperscaler capex reallocation to custom ASICs", "Valuation premium compression if AI monetization slows"],
-      "nextReview": "2026-07-01"
+      "currentPrice": 225.01,
+      "upsideMidPct": -11.56,
+      "method": [
+        "DCF-10y (June 2026-06-05 vintage, unrefreshed — input FCF ~$80B FY26 not present in any repo file)",
+        "EV/Sales-semis (June vintage, unrefreshed — input rev ~$195B FY26 est not present in any repo file)",
+        "PEG-growth-normalized (LEG INPUT INVALIDATED by verified TTM diluted EPS 6.53 vs the assumed fwd EPS ~$4.20; flagged, not re-cut)",
+        "band-carried-unchanged-from-2026-06-05"
+      ],
+      "rationale": "KEPT unchanged at 165/199/250 with a documented upward-bias flag. The June band is reproducible from its own legs — DCF-10y -> $195, EV/Sales-semis mid $195, PEG-normalized mid $208; the simple average of those three cited outputs (derived) is 199.33, matching the stored fvMid 199. One leg is now contradicted by genuinely verified data. data/fundamentals.json NVDA carries trailingVerified true, with both legs AGREEING: CNBC trailingPE 34.4579 on eps 6.53, and sec-xbrl trailingPE 34.46 on epsUsed 6.53 over quartersUsed 2026-04-26 / 2026-01-25 / 2025-10-26 / 2025-07-27, anchored to the verified close 225.01 with anchorVerified true. That verified TTM diluted EPS of 6.53 is 55.5% above (derived from 6.53 and 4.20) the 'fwd EPS ~$4.20 est' the June PEG leg assumed — a TRAILING figure already exceeding an assumed FORWARD figure kills that leg's input outright. It cannot be rebuilt here: the only forward figure in the repo is CNBC's NTM forwardEps 10.028 / forwardPE 22.4382 with forwardVerified false and NTM sourceCount 1, which per this brief is directional context only and may never anchor a band. The other two legs rest on 'FCF ~$80B FY26' and 'rev ~$195B FY26 est' — neither figure appears anywhere in this repo, so they can be neither confirmed nor refreshed offline. The honest net: the June band is more likely too LOW than too high, but every candidate replacement input is unverified, and the direction of the suspected error points straight at the current price — which is precisely the situation where this repo requires holding rather than re-cutting. Confidence is cut to low to carry that flag. Stamped off the verified regular-session close 225.01 (regularSessionDate 2026-08-17, verified true, 3 sources); upside to fvMid is -11.56% (derived from 199 and 225.01), i.e. the band says spot is above fair value and this pass declines to close that gap by moving the band. quotes.NVDA.extended.price 220.8754 is a separate live pre-market print, not the close, and was not used. News gives no support in either direction: all 5 NVDA items in data/news-latest.json are verified:false, and NVDA has zero verified items across data/news-feed.json. data/analyst-targets.json NVDA is verified:true (low 215, mean 306.24, high 500, numAnalysts 61) but is explicitly sell-side consensus, not the evaluator's FV band, and is recorded as divergence only.",
+      "catalysts": [
+        "Blackwell B200/B300 production ramp confirmation H2 2026 (carried from June, no verified confirmation in repo)",
+        "GB300 server volume orders (carried from June)",
+        "Sovereign AI infrastructure spend acceleration (carried from June)",
+        "NIM software stack monetization (carried from June)",
+        "A cross-verified FORWARD EPS (forwardVerified true, currently false at NTM sourceCount 1) is the single gating input — it is what would allow the PEG leg to be rebuilt and the band re-cut rather than carried",
+        "Any verified NVDA news item at all — the count is currently zero across the whole feed"
+      ],
+      "risks": [
+        "The band is KNOWN to have a stale leg: verified TTM diluted EPS 6.53 exceeds the June PEG leg's assumed fwd EPS ~$4.20, so fvMid 199 is more likely too low than too high — carried unchanged only because no verified replacement input exists",
+        "fvMid 199 sits 11.56% below the verified close 225.01 (derived) and verified sell-side mean 306.24 sits far above it — a wide, unresolved three-way divergence",
+        "Zero verified news coverage: all 5 items in news-latest.json are verified:false and NVDA has no verified items in news-feed.json — the thesis has no fact-checked confirmation",
+        "forwardVerified is false with NTM sourceCount 1 (CNBC forwardEps 10.028) — no forward earnings figure may be used as an anchor",
+        "Export ban extension to H20/B20 derivatives (carried from June)",
+        "Hyperscaler capex reallocation to custom ASICs (carried from June)",
+        "Valuation premium compression if AI monetization slows (carried from June)"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "AMD": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 270,
       "fvMid": 380,
       "fvHigh": 510,
-      "currentPrice": 466.36,
-      "upsideMidPct": -18.52,
-      "method": ["DCF-10y", "EV/Sales-semis", "PEG-growth-normalized"],
-      "rationale": "Watchlist (not held). DCF-10y (FCF ~$9B FY26, 20% g y1-4 MI300X+EPYC ramp, 12% y5-8, 7% y9-10, WACC 10.5%, term 3%) → $420. EV/Sales-semis (rev ~$30B FY26 est, 10-12x vs NVDA discount) → $300B-$360B EV / ~1.62B diluted shares = $185-$222; bull 14x → $259. PEG-normalized (fwd EPS ~$7.50 est, 35% growth, PEG 1.2-1.4x → P/E 42-49x) → $315-$368, mid $342. DCF anchors high at $420 due to ramp optionality; three-method average $380. At $466.36 (EOD 6/5, single-source nasdaq) stock is 18.5% above fvMid — priced for execution perfection. AMD +24% prior week per news-feed context; momentum-driven premium above fundamental FV. Entry only on meaningful correction toward $340-$360 support.",
-      "catalysts": ["MI350X/MI400 datacenter ramp H2 2026", "EPYC Turin server market share gain vs Intel", "ROCm software ecosystem maturation closing gap vs CUDA", "French AI deal + European public sector pipeline"],
-      "risks": ["NVDA recapturing AI training market share", "Execution risk on MI-series GPU ramp timeline", "Sector de-rate NDX risk-off 6/5 (-0.004% AMD outperformed)", "Revenue concentration in datacenter GPU — consumer GPU softness"],
-      "nextReview": "2026-07-01"
+      "currentPrice": 506,
+      "upsideMidPct": -24.9,
+      "method": [
+        "DCF-10y (June 2026-06-05 vintage, unrefreshed — input FCF ~$9B FY26 not present in any repo file)",
+        "EV/Sales-semis (June vintage, unrefreshed — input rev ~$30B FY26 est not present in any repo file)",
+        "PEG-growth-normalized (June vintage; its fwd EPS ~$7.50 input can be neither confirmed nor rebuilt — no verified forward figure exists)",
+        "band-carried-unchanged-from-2026-06-05 (fvMid 380 is a carried placeholder, NOT reproducible from the three legs above — see rationale)"
+      ],
+      "rationale": "KEPT unchanged at 270/380/510, with a defect disclosed rather than patched. Unlike TSM and NVDA, the stored fvMid 380 is NOT reproducible from its own stated legs: DCF-10y -> $420, EV/Sales-semis -> '$185-$222' (bull 14x -> $259), PEG-normalized mid $342. Simple averages derived from those cited outputs are 328.00 using the EV/Sales high end ($222) and 340.33 using the bull case ($259) — neither is 380. So 380 has never followed from the inputs it claims; it is being carried as a stale June placeholder, and saying so is the honest basis for KEPT. It is not re-cut, because a re-cut would need 'FCF ~$9B FY26' and 'rev ~$30B FY26 est' — figures that exist in no file in this repo and cannot be refreshed offline. The one genuinely new verified datum is data/fundamentals.json AMD trailingVerified true, with the two legs AGREEING: CNBC trailingPE 129.1442 on eps 3.9181 against sec-xbrl trailingPE 130.08 on epsUsed 3.89, over quartersUsed 2026-06-27 / 2026-03-28 / 2025-12-27 / 2025-09-27, anchored to the verified close 506 with anchorVerified true — a 0.72% EPS gap (derived from 3.9181 and 3.89), inside tolerance.trailingEps 0.01. Per this brief that trailing P/E is DIRECTIONAL CONTEXT ONLY and is not used as a valuation anchor; it tells us only that AMD's realized trailing earnings base is small relative to the price. The June PEG leg's 'fwd EPS ~$7.50 est' can be neither confirmed nor rebuilt: the only forward figure available is CNBC NTM forwardEps 11.113 / forwardPE 45.5323 with forwardVerified false and NTM sourceCount 1. Stamped off the verified regular-session close 506 (regularSessionDate 2026-08-17, verified true, 3 sources); upside to fvMid is -24.90% (derived from 380 and 506). That is a large negative and it is deliberate — the band says spot is materially rich, and closing that gap by lifting the band is exactly the price-chasing failure this repo exists to prevent. quotes.AMD.extended.price 489.90 is a separate live pre-market print, not the close, and was not used. All 5 AMD items in data/news-latest.json are verified:false (AMD has zero verified items in the whole feed), so the competitive-threat and target-raise headlines could not be factored in at all. data/analyst-targets.json AMD is verified:true (low 415, mean 626.83, high 1250, numAnalysts 52, MarketBeat excluded as an outlier) but is sell-side consensus, not the evaluator's FV band — recorded as divergence, never as an anchor.",
+      "catalysts": [
+        "MI350X/MI400 datacenter ramp H2 2026 (carried from June, no verified confirmation in repo)",
+        "EPYC Turin server market share gain vs Intel (carried from June)",
+        "ROCm software ecosystem maturation closing the gap vs CUDA (carried from June)",
+        "A first-principles re-derivation is the real gating item: fvMid 380 does not follow from the June legs, so the next evaluator pass should publish a number equal to its own stated average rather than carrying this one",
+        "A cross-verified forward EPS (forwardVerified currently false, NTM sourceCount 1) would let the PEG leg be rebuilt"
+      ],
+      "risks": [
+        "fvMid 380 is not reproducible from its own stated legs — derived averages of the cited leg outputs are 328.00 and 340.33 — so the carried mid is an unexplained number, not a corroborated output; this is why confidence is low",
+        "fvMid 380 sits 24.90% below the verified close 506 (derived) and verified sell-side mean 626.83 sits far above both — the band, the market and the Street disagree three ways and this pass resolves none of it",
+        "Extreme Street dispersion (verified low 415 vs high 1250) means the consensus mean carries little information about the distribution",
+        "Zero verified news coverage: all 5 news-latest.json items are verified:false and AMD has no verified items in news-feed.json — no fact-checked event could be incorporated",
+        "Trailing P/E 129.1442 / 130.08 is directional context only and forwardVerified is false, so no earnings-multiple anchor is available for this name",
+        "NVDA recapturing AI training market share (carried from June)",
+        "Execution risk on MI-series GPU ramp timeline (carried from June)",
+        "Revenue concentration in datacenter GPU — consumer GPU softness (carried from June)"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "ARM": {
       "updated": "2026-06-05",
@@ -135,25 +290,59 @@
       "fvHigh": 380,
       "currentPrice": 338.22,
       "upsideMidPct": -17.21,
-      "method": ["DCF-10y", "EV/Sales-IP-platform", "PEG-growth-normalized"],
+      "method": [
+        "DCF-10y",
+        "EV/Sales-IP-platform",
+        "PEG-growth-normalized"
+      ],
       "rationale": "Watchlist (not held). DCF-10y (royalty+licensing FCF ~$3.5B FY26, 22% g y1-4 AI-PC+datacenter royalties, 12% y5-8, 7% y9-10, WACC 10%, term 3%) → $290. EV/Sales-IP-platform (rev ~$5.2B FY26 est, 50-55x extreme IP-platform premium) → $260B-$286B EV / ~1.05B diluted shares = $248-$272, mid $260. PEG-normalized (fwd EPS ~$2.20 est, 30% growth, PEG 2.5-3.0x platform premium → P/E 75-90x) → $165-$198; bull PEG 4.0x → $264. Three-method average $280. At $338.22 (EOD 6/5, single-source nasdaq, -1.37% risk-off) stock is 17.2% above fvMid — extreme valuation premium reflects IP-royalty optionality. ARM trades at ~154x fwd PE; entry only on significant de-rate toward $260-$280 fundamental FV band.",
-      "catalysts": ["CSS (Compute Subsystems) adoption acceleration in datacenter", "AI-PC refresh cycle royalty step-up", "Smartphone ASP improvement driving royalty uplift", "Armv9 architecture penetration increasing royalty rates"],
-      "risks": ["RISC-V open-source alternative long-term royalty erosion", "Valuation extreme: any AI de-rate compresses multiple sharply", "SoftBank secondary offering overhang", "Sector macro de-rate 6/5 (-1.37%)"],
+      "catalysts": [
+        "CSS (Compute Subsystems) adoption acceleration in datacenter",
+        "AI-PC refresh cycle royalty step-up",
+        "Smartphone ASP improvement driving royalty uplift",
+        "Armv9 architecture penetration increasing royalty rates"
+      ],
+      "risks": [
+        "RISC-V open-source alternative long-term royalty erosion",
+        "Valuation extreme: any AI de-rate compresses multiple sharply",
+        "SoftBank secondary offering overhang",
+        "Sector macro de-rate 6/5 (-1.37%)"
+      ],
       "nextReview": "2026-07-01"
     },
     "INTC": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 42,
       "fvMid": 65,
       "fvHigh": 110,
-      "currentPrice": 97.36,
-      "upsideMidPct": -33.24,
-      "method": ["DCF-10y", "EV/Sales-semis", "PEG-growth-normalized"],
-      "rationale": "Watchlist (not held). DCF-10y (FCF ~$5B FY26 est foundry-loss-narrowing, 8% g y1-3 18A ramp, 5% y4-10, WACC 11% turnaround risk, term 2%) → $72. EV/Sales-semis (rev ~$56B FY26 est, 1.5-2.5x distressed foundry/legacy discount) → $84B-$140B EV / ~4.3B diluted shares = $20-$33; narrative-premium 3.5x → $46. PEG-normalized (fwd EPS ~$1.80 normalized turnaround, 12% normalized growth, PEG 1.2x → P/E 14.4x) → $26. Three-method average $65 (DCF $72 anchors; EV/Sales and PEG drag low). At $97.36 (EOD 6/5, single-source nasdaq, -1.83% risk-off) stock is 33.2% above fvMid — Evercore 146% target hike + Q1 earnings beat drove momentum surge; fundamental FV remains well below current price. Bull case fvHigh $110 requires 18A foundry qualification + US CHIPS Act disbursement + AI-PC market share. No entry at current price.",
-      "catalysts": ["18A process node external customer qualification (MSFT confirmed)", "US CHIPS Act grant disbursement ($8.5B allocated)", "AI-PC Lunar Lake successor adoption cycle", "Foundry-as-a-service pipeline conversion"],
-      "risks": ["Foundry execution risk: yield/timeline on 18A vs TSMC N2", "FCF negative through 2026 foundry investment phase", "Competitive pressure: AMD EPYC gaining data-center CPU share", "Sector de-rate 6/5 INTC -1.83%; narrative-driven premium vulnerable"],
-      "nextReview": "2026-07-15"
+      "currentPrice": 103.49,
+      "upsideMidPct": -37.19,
+      "method": [
+        "DCF-10y",
+        "EV/Sales-semis",
+        "PEG-growth-normalized"
+      ],
+      "rationale": "WATCH-ONLY (tickers-universe.json INTC.held = false) — band and thesis only, no entry zone or stop. BAND KEPT unchanged at the 2026-06-05 band 42/65/110, including fvHigh: nothing fundamental has changed to justify widening it, and a verified consensus mean is a price-following statistic, not a fundamental trigger, so it is not permitted to define an edge of this band. The one hard datapoint that has refreshed points the other way: fundamentals.json INTC.trailingPE is null on both legs because TTM earnings are still negative — CNBC eps -2.1203 and sec-xbrl epsUsed -2.09 over quartersUsed ['2026-06-27','2026-03-28','2025-12-27','2025-09-27'], anchored to the verified close 103.49 with anchorVerified true. The two legs agree in sign and magnitude, so the finding is robust even though trailingVerified is false and the top-level sourceCount is 0: there is no trailing-earnings valuation support of any kind, which confirms rather than contradicts June's own risk line 'FCF negative through 2026 foundry investment phase'. forwardPE 62.3058 on forwardEps 1.661 is NTM, single-source, forwardVerified false — directional context only, and explicitly not used to justify anything. I record but do not act on a defect in the June derivation: its three stated legs are DCF '$72', EV/Sales '$46' and PEG '$26', whose plain average is (derived) 48.0, not the '$65' the entry reports as a 'Three-method average' — so the stored mid is not reproducible from its own printed inputs. That is a reason for low confidence and for a full rebuild at next review, not a reason to move the band today on arithmetic of mine rather than new fundamentals. The verified consensus mean of 117 (48 analysts, verified true, basis 'stockanalysis.com + tipranks.com average (3.55% mean spread, within tolerance) — the only pairing that passes') sits far above fvMid 65 and is logged as an unresolved divergence, deliberately NOT used to widen fvHigh. The file itself documents how thin that mean is: marketbeat.com 107.85 is excluded for a '6.1% spread vs stockanalysis.com — just outside 5% tolerance', and wallstreetzen.com 96.61 is excluded as 'a real outlier in view, not a data error'. The pre-market print 99.07 (extended.verified true) is a separate live session print, not the verified 2026-08-17 close, and plays no part in the band. All five INTC items in news-latest.json are verified:false and are excluded as inputs per evaluator.md — including the widely-reported financing headline, which is therefore not used to derive any dilution figure.",
+      "catalysts": [
+        "18A process node external customer qualification — carried unchanged from the 2026-06-05 entry",
+        "US CHIPS Act grant disbursement — carried unchanged from the 2026-06-05 entry",
+        "Foundry-as-a-service pipeline conversion — carried unchanged from the 2026-06-05 entry",
+        "AI-PC adoption cycle on the Lunar Lake successor — carried unchanged from the 2026-06-05 entry",
+        "A return to positive TTM EPS on both the CNBC and sec-xbrl legs would be the first hard datapoint capable of supporting a mid above 65"
+      ],
+      "risks": [
+        "fvMid 65 is not reproducible from the June entry's own stated legs: DCF 72, EV/Sales 46 and PEG 26 average to (derived) 48.0. The band is carried pending a full rebuild, not endorsed as derived",
+        "fvMid 65 sits far below the verified close 103.49 and the verified consensus mean 117; if the turnaround is real this band is materially too bearish, which is the main reason confidence is low despite the analyst entry being verified",
+        "TTM EPS is negative on both legs (CNBC -2.1203, sec-xbrl -2.09), so no trailing-earnings valuation support exists at any price",
+        "forwardPE 62.3058 on forwardEps 1.661 has forwardVerified false, one source, and a top-level sourceCount of 0 — it is directional context only and leaves no margin for execution slippage if taken at face value",
+        "The verified consensus mean 117 rests on a single passing pairing: marketbeat.com 107.85 is excluded at a 6.1% spread and wallstreetzen.com 96.61 is excluded as a genuine bearish outlier, so dispersion is wide and the mean is a thin reed",
+        "Foundry execution risk on 18A yield and timeline versus TSMC N2 — carried from the June entry",
+        "Competitive pressure from AMD EPYC in data-center CPU share — carried from the June entry",
+        "All five INTC items in data/news-latest.json are verified:false and were excluded per evaluator.md; any financing or dilution headline is unconfirmed here and was not used to derive any number"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "AMAT": {
       "updated": "2026-06-05",
@@ -163,10 +352,23 @@
       "fvHigh": 560,
       "currentPrice": 450.8707,
       "upsideMidPct": 0.25,
-      "method": ["EV/EBITDA-equipment-peer", "DCF-10y"],
+      "method": [
+        "EV/EBITDA-equipment-peer",
+        "DCF-10y"
+      ],
       "rationale": "Watchlist (not held). EV/EBITDA-equipment-peer (EBITDA ~$8.5B FY26 est, WFE-diversified peer range 20-27x → $170B-$230B EV / ~0.43B diluted shares = $395-$535, mid $465). DCF-10y (FCF ~$7B FY26, 8% g y1-4 WFE recovery cycle, 5% y5-10, WACC 9.5%, term 3%) → $440. Two-method average $452. At $450.87 (EOD 6/5, single-source nasdaq, -0.47%) stock is essentially at fvMid — fairly valued at current levels. News-feed: Tesla Terafab partnership announced (qualitative positive, not quantified). AMAT most diversified WFE player (CVD/PVD/etch/ion implant); less NAND-concentrated than LRCX. Entry zone $390-$420 represents attractive risk/reward on any sector pullback.",
-      "catalysts": ["Tesla Terafab project CVD/PVD equipment orders", "Gate-all-around (GAA) transition equipment spend acceleration", "Advanced packaging (Ensemble chip-to-chip) revenue ramp", "WFE upcycle confirmation H2 2026 on NAND/DRAM capex"],
-      "risks": ["Export restrictions on advanced semiconductor equipment to China (active BIS rules)", "WFE cycle timing: recovery could slip to 2027", "Sector macro risk 6/5 NDX -4.8%; equipment lags design by 1-2 quarters", "Customer capex concentration (Samsung/TSMC/Intel ~60% WFE spend)"],
+      "catalysts": [
+        "Tesla Terafab project CVD/PVD equipment orders",
+        "Gate-all-around (GAA) transition equipment spend acceleration",
+        "Advanced packaging (Ensemble chip-to-chip) revenue ramp",
+        "WFE upcycle confirmation H2 2026 on NAND/DRAM capex"
+      ],
+      "risks": [
+        "Export restrictions on advanced semiconductor equipment to China (active BIS rules)",
+        "WFE cycle timing: recovery could slip to 2027",
+        "Sector macro risk 6/5 NDX -4.8%; equipment lags design by 1-2 quarters",
+        "Customer capex concentration (Samsung/TSMC/Intel ~60% WFE spend)"
+      ],
       "nextReview": "2026-07-15"
     },
     "LRCX": {
@@ -177,39 +379,90 @@
       "fvHigh": 470,
       "currentPrice": 303.2,
       "upsideMidPct": 22.04,
-      "method": ["EV/EBITDA-equipment-peer", "DCF-10y"],
+      "method": [
+        "EV/EBITDA-equipment-peer",
+        "DCF-10y"
+      ],
       "rationale": "Watchlist (not held). EV/EBITDA-equipment-peer (EBITDA ~$4.0B FY26 est, etch/deposition peer range 18-23x; NAND-concentration discount vs AMAT → 15-20% haircut to peer mid → $72B-$92B EV; at ~135M diluted shares = $533-$681, mid ~$607). DCF-10y (FCF ~$3.2B FY26, 7% g y1-4 NAND recovery, 5% y5-10, WACC 9.5%, term 3%) → $320. Note: LRCX at $303 vs KLAC $1933 implies significant price-level divergence vs historical ratio; conservative DCF $320 anchors fvMid down vs EV/EBITDA peer $607 — averaging to $370 weighted 40/60 toward DCF given NAND exposure uncertainty. At $303.2 (EOD 6/5, single-source nasdaq, -0.026%) stock is 22.0% below fvMid — most discounted of the equipment trio. NAND recovery cycle is the key catalyst; HSBC positive forecast noted in news-feed. Entry zone $270-$300 represents compelling DCF-supported entry.",
-      "catalysts": ["NAND investment recovery H2 2026 (Samsung/SK Hynix capex restart)", "DRAM etch intensity increase for HBM3E/HBM4 stacks", "LRCX Q2 guidance beat + HSBC buy rating", "ALD/selective etch design wins for GAA transition"],
-      "risks": ["NAND oversupply: Samsung delays capex recovery", "Export restrictions on etch equipment to China (>25% China rev exposure)", "Sector macro risk-off 6/5; equipment de-rate lags chip design by 1-2Q", "Customer capex concentration: Samsung/SK Hynix/Micron memory capex cycles"],
+      "catalysts": [
+        "NAND investment recovery H2 2026 (Samsung/SK Hynix capex restart)",
+        "DRAM etch intensity increase for HBM3E/HBM4 stacks",
+        "LRCX Q2 guidance beat + HSBC buy rating",
+        "ALD/selective etch design wins for GAA transition"
+      ],
+      "risks": [
+        "NAND oversupply: Samsung delays capex recovery",
+        "Export restrictions on etch equipment to China (>25% China rev exposure)",
+        "Sector macro risk-off 6/5; equipment de-rate lags chip design by 1-2Q",
+        "Customer capex concentration: Samsung/SK Hynix/Micron memory capex cycles"
+      ],
       "nextReview": "2026-07-15"
     },
     "KLAC": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
-      "fvLow": 1450,
-      "fvMid": 1750,
-      "fvHigh": 2200,
-      "currentPrice": 1933,
-      "upsideMidPct": -9.47,
-      "method": ["EV/EBITDA-equipment-peer", "DCF-10y"],
-      "rationale": "Watchlist (not held). EV/EBITDA-equipment-peer (EBITDA ~$3.0B FY26 est, process-control/inspection leader commands 30-38x premium vs etch/CVD peers → $90B-$114B EV / ~138M diluted shares = $652-$826, mid $739). DCF-10y (FCF ~$2.8B FY26, 8% g y1-5 GAA transition-driven inspection intensity, 5% y6-10, WACC 9.5%, term 3%) → $1,600 (DCF anchors high given price level; share count calibrated to $1933 market price implying lower diluted count or richer fundamental). Two-method blend (DCF $1600 + peer-relative $1900) → $1750 fvMid. At $1933 (EOD 6/5, single-source nasdaq, +0.20% outperformed sector) stock is 9.5% above fvMid. News-feed: \"KLA shares rise on Intel results, KLAC earnings looming\" — event risk within 7 days. Process control is most defensible WFE segment (yield management non-deferrable); premium justified. Entry attractive only below $1800.",
-      "catalysts": ["KLAC earnings beat (event near-term)", "GAA node transition driving inspection intensity step-up 2x-3x per wafer", "Yield management spend non-cyclical floor vs etch/CVD", "Advanced packaging metrology revenue expansion"],
-      "risks": ["Earnings miss risk (event within ~7 days per news-feed context)", "Export restrictions on metrology/inspection equipment to China", "Sector macro de-rate 6/5; KLAC outperformed (+0.20%) but group risk remains", "Price above fvMid: limited upside to fvHigh $2200 vs 14% downside to fvLow $1450"],
-      "nextReview": "2026-07-01"
+      "fvLow": 145,
+      "fvMid": 175,
+      "fvHigh": 220,
+      "currentPrice": 205.76,
+      "upsideMidPct": -14.95,
+      "method": [
+        "EV/EBITDA-equipment-peer",
+        "DCF-10y",
+        "10-for-1-split-units-restatement"
+      ],
+      "rationale": "WATCH-ONLY (tickers-universe.json KLAC.held = false) — band and thesis only, no entry zone or stop. The band moves for UNITS ONLY: the stored June band 1450/1750/2200 is restated to 145/175/220 (derived: each edge divided by 10). KLA executed a 10-for-1 forward stock split effective 2026-06-11, validator-confirmed in analyst-targets.json KLAC.note ('KLA Corporation DID execute a real 10-for-1 forward stock split, effective 2026-06-11 ... record date 2026-06-04, split-adjusted trading began 2026-06-12'), which post-dates the 2026-06-05 valuation vintage. This is a units conversion, not a fundamental re-rating — the economic view is unchanged, and leaving the raw stored numbers in place would have shown a nonsensical collapse against the verified close of 205.76. Sanity check that the restatement preserves June's stance rather than drifting toward price: fvMid 175 implies (derived) 47.79x the cross-verified trailing eps 3.6618 (fundamentals.json trailingVerified true; CNBC trailingPE 56.1909 / eps 3.6618 against sec-xbrl trailingPE 56.22 / epsUsed 3.66, anchored to the verified close 205.76 with anchorVerified true), a de-rate from the market's own multiple — matching June's posture that the stock sat above fair value. Confidence is LOW because the June derivation is self-admittedly price-calibrated and cannot be rebuilt here. Its EV/EBITDA leg reads '$90B-$114B EV / ~138M diluted shares = $652-$826, mid $739' — which restates to a post-split mid of (derived) 73.9, wildly below the verified close 205.76, evidence that the '~$3.0B FY26 est' EBITDA input was simply wrong. June then discarded that leg: it states the blend was 'DCF $1600 + peer-relative $1900 → $1750', and (derived) (1600 + 1900) / 2 = 1750 reproduces exactly, so the stored mid is half a DCF whose own text admits the 'share count calibrated to $1933 market price' and half a 'peer-relative $1900' that was effectively the market price. No local file carries a post-split diluted share count, so I cannot rebuild the EV/EBITDA leg without inventing one, and I have not. forwardPE 37.1609 on forwardEps 5.537 is NTM, single-source, forwardVerified false — directional context only, explicitly not a valuation anchor. The verified consensus mean 231.95 (29 analysts, verified true) is recorded as a cross-check only and sets no edge; consensus low 165 and high 325 come from stockanalysis.com alone and are not covered by the verified flag. KLAC.extended.verified is false (197.08 nasdaq vs 197.61 cnbc, outside the 0.002 equity tolerance), so the pre-market print is excluded. All five KLAC items in news-latest.json are verified:false and are excluded per evaluator.md.",
+      "catalysts": [
+        "GAA node transition driving inspection intensity step-up per wafer — carried unchanged from the 2026-06-05 entry",
+        "Yield-management spend as a non-deferrable floor versus etch/CVD — carried unchanged from the 2026-06-05 entry",
+        "Advanced packaging metrology revenue expansion — carried unchanged from the 2026-06-05 entry",
+        "A post-split diluted share count and an FY26 EBITDA figure landing in a local file would allow the EV/EBITDA leg to be rebuilt properly; that is the gating item for raising confidence above low"
+      ],
+      "risks": [
+        "The underlying June derivation is price-calibrated, not independent: its own text says the DCF's 'share count calibrated to $1933 market price' and the blend used a 'peer-relative $1900' that was effectively the market price — (derived) (1600 + 1900) / 2 = 1750 reproduces the stored mid exactly",
+        "The June EV/EBITDA leg's mid of $739 restates to (derived) 73.9 post-split against a verified close of 205.76, which means its '~$3.0B FY26 est' EBITDA input was materially wrong; that leg contributes nothing usable today",
+        "No local file carries a post-split diluted share count, so the EV/EBITDA leg cannot be rebuilt without an unsourced number — the band is therefore a units-corrected carry, not a fresh valuation",
+        "Any downstream consumer comparing 145/175/220 to the raw stored June figures 1450/1750/2200 without applying the 10-for-1 restatement will misread this as a catastrophic FV cut that did not happen",
+        "forwardPE 37.1609 on forwardEps 5.537 has forwardVerified false and one source; it is directional only and was not used to set any edge",
+        "Consensus low 165 and high 325 are single-source (stockanalysis.com) and are not covered by the verified flag, which per data/README.md certifies only the mean",
+        "KLAC.extended.verified is false (197.08 nasdaq vs 197.61 cnbc, outside the 0.002 equity tolerance) — the pre-market print is unusable and was excluded",
+        "Export restrictions on metrology/inspection equipment to China — carried from the June entry",
+        "All five KLAC items in data/news-latest.json are verified:false and were excluded per evaluator.md"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "MSFT": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 380,
       "fvMid": 445,
       "fvHigh": 520,
-      "currentPrice": 414.287,
-      "upsideMidPct": 7.42,
-      "method": ["DCF-10y", "EV/EBITDA-peer", "PEG-growth-normalized"],
-      "rationale": "Watchlist (not held). DCF-10y (FCF ~$80B FY26, Azure+Copilot 14% g y1-5, 8% y6-10, WACC 10.0% elevated vs prior on US10Y 4.536+VIX 21.51 6/5 risk-off, terminal 3%) → $430. EV/EBITDA-peer (EBITDA ~$140B FY26 est, hyperscale+software peers 22-26x → $3.08T-$3.64T EV; net cash ~+$30B; ~7.44B diluted shares → $418-$512, mid $465). PEG-growth-normalized (fwd EPS ~$14.50 est, 15% growth, PEG 1.8-2.2x → P/E 27-33x → $392-$478, mid $435). Three-method average $443, rounded to $445 fvMid. At $414.29 (EOD 6/5, single-source nasdaq) stock is 7.4% below fvMid — moderate discount; entry zone attractive. Q1 FY26 revenue +15% confirmed per news-feed; INTC 18A node MSFT confirmed as external customer (INTC rationale).",
-      "catalysts": ["Azure AI revenue acceleration — Copilot monetization ramp", "OpenAI partnership deepening (Stargate infrastructure)", "Copilot+ PC refresh cycle revenue step-up", "INTC 18A foundry qualification (MSFT as anchor customer)"],
-      "risks": ["WACC elevated: US10Y 4.536, VIX 21.51 risk-off 6/5 compresses multiples", "AI capex overhang: MSFT $80B+ datacenter spend depresses near-term FCF", "Sector macro de-rate NDX -4.77% 6/5", "Single-source price stamp (nasdaq only; stooq+yahoo unavailable 6/5)"],
-      "nextReview": "2026-07-01"
+      "currentPrice": 480.35,
+      "upsideMidPct": -7.36,
+      "method": [
+        "DCF-10y",
+        "EV/EBITDA-peer",
+        "PEG-growth-normalized"
+      ],
+      "rationale": "KEPT at the June band 380/445/520; bandMovedFrom null. Verified close $480.35 (price-quotes MSFT.price, verified:true, sourceCount 3, regularSessionDate 2026-08-17). The $482.6251 pre-market print is a separate live extended-session quote and is NOT used as data about the close. DERIVED: price is +15.95% vs the June stamp $414.287, and fvMid sits -7.36% below the verified close (inputs 445 / 480.35 / 414.287, all cited). NO PERMITTED FUNDAMENTAL INPUT MOVED. All three stored June legs — DCF-10y $430 (FCF ~$80B FY26, WACC 10.0%), EV/EBITDA-peer $418-$512 mid $465 (EBITDA ~$140B FY26 est, ~7.44B diluted shares), PEG-growth-normalized $392-$478 mid $435 (fwd EPS ~$14.50 est, PEG 1.8-2.2x) — rest on FCF, EBITDA, share-count and forward-EPS figures that appear in NO local file, so not one leg can be rebuilt this cycle. The stored mid is at least self-consistent: DERIVED (430+465+435)/3 = 443.33, which is the 445 stored. DIRECTIONAL CONTEXT ONLY, never an anchor: fundamentals.MSFT.trailingVerified is true — CNBC eps 17.9467 vs sec-xbrl epsUsed 17.95 agree to a DERIVED 0.02%, well inside tolerance.trailingEps 0.01, over contiguous quarters [2026-06-30, 2026-03-31, 2025-12-31, 2025-09-30]. That cross-verified TTM diluted EPS 17.95 is a DERIVED +23.79% above the $14.50 forward-EPS figure the June PEG leg assumed, which points to this band being stale-LOW rather than stale-high. It is deliberately NOT used to rebuild that leg: data/README.md's fundamentals section forbids comparing figures across bases (trailing vs forward), the like-for-like NTM forwardEps 19.647 is forwardVerified:false and single-source CNBC, and P/E may not serve as a valuation anchor. analyst-targets.MSFT IS verified:true (mean 566.02, low 400, high 870, 56 analysts, tolerance 0.05), but data/README.md states this file is 'Wall Street sell-side consensus, NOT the evaluator's fundamental FV band'; the mean sits a DERIVED +27.20% above fvMid and is logged as an UNRESOLVED DIVERGENCE, not corroboration — it moves no number and is not in method[]. MACRO: US10Y 4.732 is verified:true against the 4.536 the June WACC cited, a DERIVED +19.6bp; but VIX — the other half of that same June WACC justification (21.51) — is verified:false (cboe 15.19 vs cnbc 15.65, a DERIVED 3.03% apart, outside the 0.005 index tolerance), so crediting only the rate half would be a one-sided downward bias. WACC held at June's 10.0%. NEWS: zero verified items — DERIVED by counting data/news-feed.json, 0 of 499 MSFT items carry verified:true, and all 5 news-latest.json MSFT items are verified:false, so no headline informs this band. Entry is a DERIVED 48 days past its stored nextReview 2026-07-01. WATCH-ONLY (tickers-universe held:false): valuation band and thesis only, no entry zone and no stop.",
+      "catalysts": [
+        "Azure AI / Copilot monetization ramp (carried verbatim from the June entry; no verified datapoint refreshes it this cycle)",
+        "Copilot+ PC refresh cycle revenue step-up (carried from June, unrefreshed)",
+        "INTC 18A foundry qualification with MSFT as anchor customer (carried from June, unrefreshed)",
+        "A validator-stamped verified news item or a second independent NTM forward-EPS source would be the single highest-value input — it is what would let the PEG leg actually be rebuilt",
+        "Cross-verified TTM diluted EPS 17.95 (trailingVerified:true) already exceeds the June PEG leg's $14.50 forward assumption by a derived 23.79%, so the first genuine re-derivation is more likely to raise this band than cut it"
+      ],
+      "risks": [
+        "Band is carried, not re-derived: none of the three legs could be refreshed because no local file carries FCF, EBITDA, diluted share count or a verified forward EPS — treat 380/445/520 as a stale placeholder, not a current underwriting",
+        "fvMid 445 sits a derived -7.36% below the verified close 480.35 while the verified Street mean 566.02 (56 analysts) sits a derived +27.20% above it — an unresolved divergence in the opposite direction from the band, and it is not reconciled",
+        "The one cross-verified fundamental datum available (TTM EPS 17.95) suggests the band is too LOW, but it cannot be used as an anchor under the P/E-is-directional-only rule, so the bias is documented and left uncorrected",
+        "Zero verified news coverage (derived: 0 of 499 news-feed items verified:true) — no fact-checked confirmation of the Azure/Copilot thesis exists in the local record",
+        "US10Y 4.732 verified is above the 4.536 the June WACC cited (derived +19.6bp), a headwind that was deliberately NOT passed through because its paired VIX input is verified:false (cboe 15.19 vs cnbc 15.65) — the WACC is therefore known to be stale in a direction that would lower the band",
+        "Mega-cap crowding / multiple compression if the AI narrative rotates — same June risk, now 48 days unreviewed"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "META": {
       "updated": "2026-06-05",
@@ -219,10 +472,24 @@
       "fvHigh": 800,
       "currentPrice": 590.495,
       "upsideMidPct": 15.33,
-      "method": ["DCF-10y", "EV/EBITDA-peer", "PEG-growth-normalized"],
+      "method": [
+        "DCF-10y",
+        "EV/EBITDA-peer",
+        "PEG-growth-normalized"
+      ],
       "rationale": "Watchlist (not held). DCF-10y (FCF ~$75B FY26, ad-revenue+Llama AI monetization 18% g y1-5, 10% y6-10, WACC 10.0% elevated on 6/5 risk-off context, terminal 3%) → $620. EV/EBITDA-peer (EBITDA ~$90B FY26 est, 18-22x digital-ad+AI platform → $1.62T-$1.98T EV; net cash ~$50B; ~2.57B diluted shares → $652-$789, mid $720). PEG-growth-normalized (fwd EPS ~$26 est, 20% growth, PEG 1.2-1.5x → P/E 24-30x → $624-$780, mid $702). Three-method average $681. At $590.50 (EOD 6/5, single-source nasdaq, -0.42%) stock is 15.3% below fvMid — attractive entry. News-feed confirms: Q1 earnings beat on EPS; revenue light vs consensus; 2026 AI capex guidance raised to $125B-$145B (near-term FCF drag, long-term moat builder); MTIA-2 AI chip deal with Amazon noted.",
-      "catalysts": ["Llama 4 open-source ecosystem monetization inflection", "AI Ads (advantage+ automation) market share gains vs Google", "Meta AI assistant MAU growth to 1B+", "Threads monetization ramp H2 2026"],
-      "risks": ["WACC elevated: US10Y 4.536, VIX 21.51 risk-off 6/5", "AI capex $125B-$145B 2026 guidance: FCF compression near-term", "Regulatory overhang: EU DMA enforcement, FTC antitrust case", "Single-source price stamp (nasdaq only)"],
+      "catalysts": [
+        "Llama 4 open-source ecosystem monetization inflection",
+        "AI Ads (advantage+ automation) market share gains vs Google",
+        "Meta AI assistant MAU growth to 1B+",
+        "Threads monetization ramp H2 2026"
+      ],
+      "risks": [
+        "WACC elevated: US10Y 4.536, VIX 21.51 risk-off 6/5",
+        "AI capex $125B-$145B 2026 guidance: FCF compression near-term",
+        "Regulatory overhang: EU DMA enforcement, FTC antitrust case",
+        "Single-source price stamp (nasdaq only)"
+      ],
       "nextReview": "2026-07-01"
     },
     "TSLA": {
@@ -233,10 +500,24 @@
       "fvHigh": 520,
       "currentPrice": 392.68,
       "upsideMidPct": -17.24,
-      "method": ["DCF-10y", "EV/Sales-auto-tech", "SOTP-auto+energy+FSD+robotics"],
+      "method": [
+        "DCF-10y",
+        "EV/Sales-auto-tech",
+        "SOTP-auto+energy+FSD+robotics"
+      ],
       "rationale": "Watchlist (not held). Core auto vs non-auto optionality split: (1) Core auto DCF (FCF ~$4B FY26, margins compressed post-price-cuts; 12% g y1-5, 8% y6-10, WACC 11%, terminal 3%) → $180/sh. (2) SOTP non-auto optionality: Energy+Storage $40/sh (5x sales, $22B rev est); FSD/Robotaxi $80/sh (bull $150, bear $0 — no revenue yet, regulatory gating); Optimus robotics $25/sh (pre-revenue option value). Core $180 + Energy $40 + FSD $80 + Optimus $25 = $325 base. (3) EV/Sales-auto-tech blended (rev ~$100B FY26 est; pure-auto peers 0.5-1x, pure-tech 10-15x; blended 3-5x for current mix → $300B-$500B EV / ~3.2B diluted shares = $94-$156; with optionality premium 6-8x → $188-$250). SOTP $325 anchors fvMid; EV/Sales conservative $220 pulls low. Bear scenario ($180): no FSD/Optimus monetization, auto margin -2ppt further. Bull scenario ($520): Cybercab volume ramp + FSD regulatory approval + Optimus 100K units by 2027. At $392.68 (EOD 6/5, single-source nasdaq, +0.43%) stock is 17.2% above fvMid — priced for bull optionality. News-feed: Cybercab production lines firing up; Q1 profit +136%; FSD v14 Lite rollout; Musk share overhang cited.",
-      "catalysts": ["Cybercab robotaxi commercial launch + regulatory approval", "FSD v14/v15 supervised-to-unsupervised transition", "Optimus Gen-2 factory deployment (internal then external)", "Energy+Storage Megapack revenue acceleration ($22B+ FY26)"],
-      "risks": ["Core auto margin decline: price-war + BYD competition, WACC 11%", "Musk political brand risk / executive distraction (DOGE)", "FSD regulatory gating — NHTSA + state approval timeline", "Sector macro de-rate NDX -4.77% 6/5; single-source price stamp"],
+      "catalysts": [
+        "Cybercab robotaxi commercial launch + regulatory approval",
+        "FSD v14/v15 supervised-to-unsupervised transition",
+        "Optimus Gen-2 factory deployment (internal then external)",
+        "Energy+Storage Megapack revenue acceleration ($22B+ FY26)"
+      ],
+      "risks": [
+        "Core auto margin decline: price-war + BYD competition, WACC 11%",
+        "Musk political brand risk / executive distraction (DOGE)",
+        "FSD regulatory gating — NHTSA + state approval timeline",
+        "Sector macro de-rate NDX -4.77% 6/5; single-source price stamp"
+      ],
       "nextReview": "2026-07-01"
     },
     "PLTR": {
@@ -246,26 +527,59 @@
       "fvMid": 90,
       "fvHigh": 140,
       "currentPrice": 135.53,
-      "upsideMidPct": -33.60,
-      "method": ["EV/Sales-AI-software", "DCF-10y", "EV/ARR-gov-commercial"],
+      "upsideMidPct": -33.6,
+      "method": [
+        "EV/Sales-AI-software",
+        "DCF-10y",
+        "EV/ARR-gov-commercial"
+      ],
       "rationale": "Watchlist (not held). High P/S premium justification: government ARR ~$1.0B FY26 est (sticky, re-upped USG/NATO/allied contracts, ~20% growth; 20-25x gov-ARR = $20B-$25B) + commercial ARR ~$1.1B FY26 est (AI Platform rapid enterprise adoption, ~60% growth; 30-40x commercial-ARR = $33B-$44B). Combined EV/ARR $53B-$69B at ~2.14B diluted shares + $4B net cash = $27-$34/sh fundamental ARR value. EV/Sales-AI-software: rev ~$3.5B FY26 est, 40-60x premium (vs SaaS peers 15-25x; PLTR commands extreme AI-data-platform scarcity premium) → $140B-$210B market cap / 2.14B shares = $65-$98, mid $82. DCF-10y (FCF ~$800M FY26, 35% g y1-5, 25% y6-10, WACC 10.5%, terminal 3%) → $88. Three-method average $90 fvMid. At $135.53 (EOD 6/5, 2-source verified stooq+yahoo), stock is 33.6% above fvMid — premium over fundamental FV reflects AI-platform scarcity narrative, DZ Bank $175 target (news-feed), USDA deal win. fvHigh $140 = 60x NTM sales = top of defensible premium band; current price approaching fvHigh. No entry at current price; entry attractive only on pullback toward $85-$100.",
-      "catalysts": ["USG contract renewals + NATO allied expansion", "Commercial AI Platform AIP adoption acceleration (enterprise deals)", "PLTR earnings beat + raised ARR guidance", "S&P 500 inclusion flow and index rebalancing"],
-      "risks": ["Extreme valuation: 80x+ NTM sales; any growth deceleration compresses multiple severely", "Government budget sequestration / DOGE spending cuts reducing USG contracts", "Citi price target cut (news-feed) signals street skepticism on valuation", "NDX risk-off 6/5 -4.77%; PLTR high-beta to risk sentiment"],
+      "catalysts": [
+        "USG contract renewals + NATO allied expansion",
+        "Commercial AI Platform AIP adoption acceleration (enterprise deals)",
+        "PLTR earnings beat + raised ARR guidance",
+        "S&P 500 inclusion flow and index rebalancing"
+      ],
+      "risks": [
+        "Extreme valuation: 80x+ NTM sales; any growth deceleration compresses multiple severely",
+        "Government budget sequestration / DOGE spending cuts reducing USG contracts",
+        "Citi price target cut (news-feed) signals street skepticism on valuation",
+        "NDX risk-off 6/5 -4.77%; PLTR high-beta to risk sentiment"
+      ],
       "nextReview": "2026-07-01"
     },
     "ORCL": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 185,
       "fvMid": 210,
       "fvHigh": 265,
-      "currentPrice": 213.68,
-      "upsideMidPct": -1.72,
-      "method": ["DCF-10y", "EV/FCF-cloud-transition", "EV/ARR-OCI-AI"],
-      "rationale": "Watchlist (not held). DCF-10y (FCF ~$20B FY26, blended OCI AI+legacy DB; 15% g y1-5, 8% y6-10, WACC 9.5% elevated on US10Y 4.536+VIX 21.51, terminal 3%) → $217. EV/FCF-cloud-transition (FCF $20B, blended 25-32x for legacy-to-cloud transition profile → $500B-$640B EV / 2.76B diluted shares = $181-$232, mid $207). EV/ARR-OCI-AI (OCI ARR ~$8B at 20-25x = $160B-$200B; legacy DB/Fusion ~$47B rev at 5x = $235B; total EV $395B-$435B; debt-adjusted equity $114-$121/sh, anchors fvLow; blended with full-company FV → $200). Three-method average $208, rounded to fvMid $210. Bear fvLow $185: OCI ramp delays, legacy erosion, WACC 11%. Bull fvHigh $265: OCI ramp 120%+ YoY sustains, OpenAI $300B pipeline converts, 28x blended FCF. At $213.68 (EOD 6/5, stooq-primary per validator) stock is 1.7% above fvMid — essentially at FV. News-feed: Dan Ives bullish as AI infra play (TipRanks); OpenAI missed targets stung ORCL (Barron's); Morgan Stanley price target revision cited. No entry margin at current price.",
-      "catalysts": ["OCI AI GPU cloud ramp continuation (>100% YoY)", "OpenAI $300B multi-year infrastructure deal pipeline conversion", "Fusion ERP cloud migration enterprise bookings", "Q4 FY26 earnings beat on OCI segment outperformance"],
-      "risks": ["OpenAI revenue miss contagion — ORCL down on OpenAI targets (news-feed Barron's)", "Legacy DB revenue erosion accelerating faster than OCI offset", "WACC elevated: US10Y 4.536, VIX 21.51 risk-off 6/5 NDX -4.77%", "Sector macro: single-source price stamp stooq-primary (nasdaq $212.40 delta 0.60% rejected)"],
-      "nextReview": "2026-07-15"
+      "currentPrice": 146.65,
+      "upsideMidPct": 43.2,
+      "method": [
+        "DCF-10y",
+        "EV/FCF-cloud-transition",
+        "EV/ARR-OCI-AI"
+      ],
+      "rationale": "KEPT at the June band 185/210/265; bandMovedFrom null. This is the hardest keep in the cohort and it is deliberate. Verified close $146.65 (price-quotes ORCL.price, verified:true, sourceCount 3, regularSessionDate 2026-08-17). The $142.48 pre-market print is a separate live extended-session quote and is NOT used as data about the close. DERIVED: price is -31.37% vs the June stamp $213.68, and fvMid now sits +43.20% above the verified close (inputs 210 / 146.65 / 213.68). A -31% price move is NOT a permitted reason to cut a fundamental band, and cutting one to meet a fallen tape is exactly the failure mode this pass exists to prevent — so the band is held and the discomfort is expressed in confidence:low and in risks[], not in the numbers. NO ANALYST DATA IS USABLE HERE: analyst-targets.ORCL is verified:false, its note recording a 'MAJOR UNRECONCILED DISCREPANCY' where stockanalysis.com's mean ($247.17) and MarketBeat/TipRanks (~$346-354) 'differ by ~30-40% — far outside tolerance', with the latter pair sharing identical low/high ($175/$415, shared vendor data) and a TipRanks last price ($257.85) confirmed stale. Accordingly NO ORCL target figure — not low 110, mean 247.17, or high 400 — is used anywhere in this entry, in any role. NO PERMITTED FUNDAMENTAL INPUT MOVED. The three stored June legs — DCF-10y $217 (FCF ~$20B FY26, WACC 9.5%), EV/FCF-cloud-transition $181-$232 mid $207 (FCF $20B at 25-32x, 2.76B diluted shares), EV/ARR-OCI-AI blended to $200 — depend on FCF, OCI ARR, legacy revenue, share count and net debt, none of which appears in any local file. Net debt in particular is unquantified anywhere in the repo, and it is the swing input of the EV-based legs. The stored mid IS reproducible: DERIVED (217+207+200)/3 = 208, rounded to the stored 210. A DATA-INTEGRITY FINDING, NOT ACTED ON: the June entry contradicts itself about its own floor. Its EV/ARR leg states 'debt-adjusted equity $114-$121/sh, anchors fvLow', yet fvLow was published at 185 — a DERIVED 52.89% above the top of the range that text says anchors it — while a separate sentence attributes fvLow 185 to a bear scenario instead. Both cannot be true. Resolving that contradiction would require choosing which half is right, and no local file resolves it, so it is filed as a finding for the architect/next cycle rather than used to silently re-cut the floor. Note the direction: honoring the ARR leg would put the floor near $120, below the verified close — which is precisely why acting on it now, in this price regime, would be indistinguishable from price-chasing. DIRECTIONAL CONTEXT ONLY, never an anchor: fundamentals.ORCL.trailingVerified is FALSE — CNBC eps 6.146 vs sec-xbrl epsUsed 5.83 is a DERIVED 5.42% apart, outside tolerance.trailingEps 0.01 — over contiguous fiscal quarters [2026-05-31, 2026-02-28, 2025-11-30, 2025-08-31]. Trailing P/E reads (CNBC 23.861, sec-xbrl 25.15) are context only. forwardEps 8.056 is forwardVerified:false, single-source, and unused. That quartersUsed cadence does establish, from the file itself, that Oracle's fiscal quarters end at the end of Aug/Nov/Feb/May — so the next fiscal quarter ends ~2026-08-31 and its print is the next hard datum, landing near nextReview. MACRO: US10Y 4.732 verified vs the 4.536 the June WACC 9.5% cited, a DERIVED +19.6bp — a genuine headwind for a debt-financed buildout, but it was NOT passed through, because the paired VIX input June also cited (21.51) is verified:false today (cboe 15.19 vs cnbc 15.65, DERIVED 3.03% apart), and crediting only the rate half would be a one-sided downward bias of exactly the kind flagged in the prior round. NEWS: zero verified items — DERIVED by counting data/news-feed.json, 0 of 441 ORCL items carry verified:true, and all 5 news-latest.json ORCL items are verified:false. The reported debt/leverage concerns and datacenter-capacity delays that would most plausibly justify a real cut are all inside that unverified set, so they cannot move the band and are recorded as risks instead. Entry is a DERIVED 34 days past its stored nextReview 2026-07-15. WATCH-ONLY (tickers-universe held:false): valuation band and thesis only, no entry zone and no stop.",
+      "catalysts": [
+        "Next fiscal-quarter print — the quarter ending ~2026-08-31 per the Aug/Nov/Feb/May cadence visible in fundamentals.json sec-xbrl quartersUsed — is the next hard datum and the gating item for any legitimate re-derivation",
+        "OCI AI GPU cloud ramp continuation (carried from the June entry, unrefreshed and unverified this cycle)",
+        "OpenAI multi-year infrastructure pipeline conversion (carried from June, unrefreshed)",
+        "Fusion ERP cloud migration enterprise bookings (carried from June, unrefreshed)",
+        "Any local source for net debt would let the EV/FCF leg be rebuilt honestly — today it is the largest unquantified input in the entry"
+      ],
+      "risks": [
+        "THE BAND IS STALE, NOT ACTIONABLE: fvMid 210 implies a derived +43.20% upside after a derived -31.37% price fall, and not one leg was refreshed. This gap is a measure of how out-of-date the entry is, not a measure of opportunity; it must not be read as a buy signal",
+        "Net debt is UNQUANTIFIED in the entire local record and is the swing input of both EV-based legs — the largest single source of error in this band",
+        "The June entry contradicts itself on its own floor: its EV/ARR leg says 'debt-adjusted equity $114-$121/sh, anchors fvLow' while fvLow was published at 185, a derived 52.89% above the top of that range. The floor is therefore unreliable, and it was left unchanged only because no local file resolves the contradiction and cutting it now would be indistinguishable from price-chasing",
+        "No external Street check at all: analyst-targets.ORCL is verified:false with a documented ~30-40% unreconciled 3-source gap, so none of low 110 / mean 247.17 / high 400 was used or may be used",
+        "No verified earnings base: fundamentals.ORCL.trailingVerified is false (CNBC eps 6.146 vs sec-xbrl 5.83, a derived 5.42% apart against a 1% tolerance)",
+        "Zero verified news coverage (derived: 0 of 441 news-feed items verified:true) — reported leverage/debt concerns and datacenter capacity slippage are precisely the claims that would justify a genuine cut, and none of them can be verified offline",
+        "US10Y 4.732 verified is above the 4.536 the June WACC 9.5% cited (derived +19.6bp) and compounds directly on a debt-financed buildout, but was deliberately not passed through because its paired VIX input is verified:false — the WACC is knowingly stale in the direction that would lower this band"
+      ],
+      "nextReview": "2026-09-18",
+      "confidence": "low"
     },
     "SNOW": {
       "updated": "2026-06-05",
@@ -275,39 +589,86 @@
       "fvHigh": 300,
       "currentPrice": 236.5,
       "upsideMidPct": -6.98,
-      "method": ["EV/ARR", "EV/FCF-normalized", "PEG-growth-normalized"],
+      "method": [
+        "EV/ARR",
+        "EV/FCF-normalized",
+        "PEG-growth-normalized"
+      ],
       "rationale": "Watchlist (not held). EV/ARR: product revenue ARR ~$3.9B FY26 est (42% YoY growth); high-growth data-cloud peers 12-18x ARR; at 14-16x → $54.6B-$62.4B EV; 340M diluted shares + $3.5B net cash → $171-$194/sh, mid $182. EV/FCF-normalized: non-GAAP FCF ~$800M FY26 (~20% margin, improving from prior losses); current-year 30-35x → $71-$82; 2y forward normalized FCF ~$1.5B at 35x PV-adjusted → $132; blend $100. PEG-growth-normalized: Rule-of-40 score ~48 (42% rev growth + ~8% FCF margin); normalized forward EPS ~$3.50 est at PEG 0.8-1.0x on 42% growth → P/E 34-42x → $119-$147, mid $135. Three-method average $139 anchors bear/base; market prices optionality above $200. fvLow $165 = 12x ARR bear. fvMid $220 = 16x ARR + Rule-of-40 sustained base. fvHigh $300 = 22x ARR bull (AI data lakehouse inflection, Iceberg open table format moat). At $236.50 (EOD 6/5, single-source nasdaq) stock is 7.0% above fvMid — slight premium; no entry margin at current level. News-feed: 13.6% fall cited as buying opportunity (Trefis); bearish option activity noted (IBD); ServiceNow sentiment spillover negative.",
-      "catalysts": ["Iceberg open table format adoption cementing data-lakehouse moat", "AI/ML workload migration driving compute credit consumption acceleration", "Cortex AI (Snowflake native LLM) enterprise adoption and revenue contribution", "Q1 FY27 earnings: ARR reacceleration above 45% YoY confirmation"],
-      "risks": ["Databricks private competition intensifying pre-IPO; commoditization of data-cloud compute pricing", "Rule-of-40 regression if FCF margin expansion stalls while growth decelerates", "WACC elevated 6/5 risk-off (VIX +39.7%, NDX -4.77%) compresses high-multiple SaaS", "Single-source price (nasdaq only; stooq+yahoo failed 6/5); bearish option flow news-feed"],
+      "catalysts": [
+        "Iceberg open table format adoption cementing data-lakehouse moat",
+        "AI/ML workload migration driving compute credit consumption acceleration",
+        "Cortex AI (Snowflake native LLM) enterprise adoption and revenue contribution",
+        "Q1 FY27 earnings: ARR reacceleration above 45% YoY confirmation"
+      ],
+      "risks": [
+        "Databricks private competition intensifying pre-IPO; commoditization of data-cloud compute pricing",
+        "Rule-of-40 regression if FCF margin expansion stalls while growth decelerates",
+        "WACC elevated 6/5 risk-off (VIX +39.7%, NDX -4.77%) compresses high-multiple SaaS",
+        "Single-source price (nasdaq only; stooq+yahoo failed 6/5); bearish option flow news-feed"
+      ],
       "nextReview": "2026-07-15"
     },
     "CRWD": {
-      "updated": "2026-06-05",
+      "updated": "2026-08-18",
       "agent": "evaluator",
-      "fvLow": 400,
-      "fvMid": 490,
-      "fvHigh": 640,
-      "currentPrice": 668.13,
-      "upsideMidPct": -26.67,
-      "method": ["EV/ARR", "EV/FCF-normalized", "PEG-growth-normalized"],
-      "rationale": "Watchlist (not held). EV/ARR: ARR ~$4.2B FY26 est (27% YoY); CRWD commands 20-28x ARR premium vs SNOW 12-18x — justified by superior FCF margin (~22% vs SNOW ~8-10%) and best-in-class NRR >120%; at 22-26x ARR → $92.4B-$109.2B EV; 245M diluted shares + $3.2B net cash → $390-$459/sh, mid $425. EV/FCF-normalized: FCF ~$800M FY26 at ~22% margin; 45-55x current FCF = $147-$180; 2y forward ~$1.5B FCF normalized at 40x PV-adjusted = $245; blend $196 (CRWD FCF multiple appropriately above SNOW given margin differential). PEG-growth-normalized: Rule-of-40 = 49 (27% ARR growth + 22% FCF margin — stronger margin profile than SNOW's ~48); NTM non-GAAP EPS ~$4.50; forward normalized EPS ~$8.50 at 2y; P/E 80-100x current year blended PEG 1.2-1.5x → $675 mid on NTM basis. Weighted average (EV/ARR 40%, FCF 20%, PEG 40%) = $170+$39+$270 = $479, rounded to fvMid $490. fvLow $400: post-July-2024-outage NRR erosion risk, macro de-rate, ARR growth deceleration to <20%. fvHigh $640: ARR reacceleration >30%, Charlotte AI upsell, full platform recovery. At $668.13 (EOD 6/5, single-source nasdaq) stock is 26.7% above fvMid — momentum-driven; earnings event near-term. KeyBanc upgrade (news-feed); Barron's 20% upside target implies ~$800 — above even fvHigh. No entry at current price; entry zone $420-$460.",
-      "catalysts": ["Charlotte AI SOC automation monetization — conversion of AI modules to paid ARR", "ARR reacceleration above 30% YoY on platform consolidation wins", "Federal/government cybersec spend expansion (AI vulnerability push with OpenAI/IBM per news-feed)", "Q1 FY27 earnings beat + raised ARR guidance"],
-      "risks": ["Price 26.7% above fvMid — valuation risk if growth decelerates or macro de-rates further", "July 2024 outage reputational tail-risk: NRR compression if large accounts churn", "WACC elevated 6/5 risk-off; cybersec names high-beta to NDX; NDX -4.77%", "Earnings event within 7 days — binary catalyst risk (positive or negative)"],
+      "fvLow": 100,
+      "fvMid": 122.5,
+      "fvHigh": 160,
+      "currentPrice": 213.9,
+      "upsideMidPct": -42.73,
+      "method": [
+        "EV/ARR",
+        "EV/FCF-normalized",
+        "PEG-growth-normalized"
+      ],
+      "rationale": "SPLIT RESTATEMENT ONLY — the 2026-06-05 band (400/490/640) was struck on a pre-split share count. CRWD split 4-for-1 effective 2026-07-02: this repo's own audit trail shows nasdaq CRWD 769.9025 in reports/raw/2026-07-01-quotes.json and 194.82 in reports/raw/2026-07-02-quotes.json (769.9025/4 = 192.48), while TSM (449.01 -> 435.68) and PLTR (124.84 -> 129.57) moved continuously across the same pair, ruling out a feed-format break. Every band bound is divided by 4 and currentPrice re-anchored to the verified 2026-08-17 close; NO fundamental re-derivation was performed and the underlying June thesis is unchanged and still stale. Watchlist (not held). EV/ARR: ARR ~$4.2B FY26 est (27% YoY); CRWD commands 20-28x ARR premium vs SNOW 12-18x — justified by superior FCF margin (~22% vs SNOW ~8-10%) and best-in-class NRR >120%; at 22-26x ARR → $92.4B-$109.2B EV; 245M diluted shares + $3.2B net cash → $390-$459/sh, mid $425. EV/FCF-normalized: FCF ~$800M FY26 at ~22% margin; 45-55x current FCF = $147-$180; 2y forward ~$1.5B FCF normalized at 40x PV-adjusted = $245; blend $196 (CRWD FCF multiple appropriately above SNOW given margin differential). PEG-growth-normalized: Rule-of-40 = 49 (27% ARR growth + 22% FCF margin — stronger margin profile than SNOW's ~48); NTM non-GAAP EPS ~$4.50; forward normalized EPS ~$8.50 at 2y; P/E 80-100x current year blended PEG 1.2-1.5x → $675 mid on NTM basis. Weighted average (EV/ARR 40%, FCF 20%, PEG 40%) = $170+$39+$270 = $479, rounded to fvMid $490. fvLow $400: post-July-2024-outage NRR erosion risk, macro de-rate, ARR growth deceleration to <20%. fvHigh $640: ARR reacceleration >30%, Charlotte AI upsell, full platform recovery. At $668.13 (EOD 6/5, single-source nasdaq) stock is 26.7% above fvMid — momentum-driven; earnings event near-term. KeyBanc upgrade (news-feed); Barron's 20% upside target implies ~$800 — above even fvHigh. No entry at current price; entry zone $420-$460.",
+      "catalysts": [
+        "Charlotte AI SOC automation monetization — conversion of AI modules to paid ARR",
+        "ARR reacceleration above 30% YoY on platform consolidation wins",
+        "Federal/government cybersec spend expansion (AI vulnerability push with OpenAI/IBM per news-feed)",
+        "Q1 FY27 earnings beat + raised ARR guidance"
+      ],
+      "risks": [
+        "Price 26.7% above fvMid — valuation risk if growth decelerates or macro de-rates further",
+        "July 2024 outage reputational tail-risk: NRR compression if large accounts churn",
+        "WACC elevated 6/5 risk-off; cybersec names high-beta to NDX; NDX -4.77%",
+        "Earnings event within 7 days — binary catalyst risk (positive or negative)",
+        "Band is a mechanical post-split restatement of a 2026-06-05 derivation — the thesis behind it has not been refreshed since"
+      ],
       "nextReview": "2026-07-01"
     },
     "TSMU": {
-      "updated": "2026-06-20",
+      "updated": "2026-08-18",
       "agent": "evaluator",
       "fvLow": 67,
       "fvMid": 83,
       "fvHigh": 103,
-      "currentPrice": 70.4,
-      "upsideMidPct": 17.90,
-      "method": ["NAV-decay-adjusted", "2x-beta-scaling"],
-      "rationale": "Watchlist (not held). 2026-06-07 early re-evaluation (조기 재평가): TSM Q1 2026 earnings beat (id:2026-04-27-tsm-tsm-stock-spikes-overnight, MSN+CNBC+timothysykes, verified=true), TSM 3nm price +15% H2 2026 (id:2026-05-27-tsm-taiwan-semi-will-hike-3-nm-price-by-15, SA+IBD, verified=true), TSMC-Nvidia AI partnership (id:2026-06-01-tsm-tsmc-stock-tsm-soars-on-teaming-up-with-nvidia, TipRanks+Investing+Benzinga, verified=true) all strengthen TSMU underlying asset thesis. However: no new verified TSM price or revised quantitative fundamental inputs sufficient to revise TSM FV band ($390/$487/$600) — band change requires updated DCF/EV inputs, not news confirmation alone. FV band unchanged. currentPrice $70.40 is provisional, single-source (nasdaq only), as-of 2026-06-05 EOD — not anchored to new session. upsideMidPct 17.90 carried over from 6-05, not recomputed (no new price). 2x daily-reset decay continues to run regardless of thesis strength. NAV-decay-adjusted: TSMU/TSM ratio $70.40/$412.11 = 0.1708 vs theoretical 2x = 0.2000; 14.6% cumulative decay from theoretical. FV band derived from TSM FV × 0.1708 ratio: fvLow $67 / fvMid $83 / fvHigh $103. 2x-beta-scaling: TSM to fvMid +18.2% → TSMU gross +36.4%; 30d decay ~3.5% → $92.6; 60d → $89.1. Methods converge at fvMid $83 (ratio anchors lower bound). fvLow $67: TSM at fvLow with further decay. fvHigh $103: TSM at fvHigh $600, minimal decay scenario. | 2026-06-20 정기 검토: risk 프로파일 최초 산출 — score 23 (low; leveraged-ETF +15, sector-macro +8), entryZone $67-$72, stopLoss $65.00 (TSM fvLow $390 × ratio 0.1708 → $66.61 rounded down with noise buffer), target.base $77 (fvMid $83 × 60d-decay 0.93), target.bull $99 (fvHigh $103 × 30d-decay 0.965), target.bear $60 (fvLow $67 × 90d-decay 0.90), RRR 1.22 ((77-70.40)/(70.40-65.00)); decay-adjusted RRR identical as target already decay-adjusted. 2-source 교차검증 가격 미충족(단일소스 nasdaq provisional) → 진입 보류. FV 밴드 무변경 (fundamental inputs 변화 없음). nextReview 2026-07-04: §6-1 leveraged ETF +2주 규칙 — 2026-06-20 정기검토 기준일로부터 +14일; 2026-06-20 유지는 이미 당일 검토가 완료됐으므로 부정확.",
-      "catalysts": ["TSM underlying appreciation toward fvMid $487 confirmed by Q1 beat + 3nm pricing power + Nvidia partnership (all verified 2026-04-27 to 2026-06-01)", "Risk-on rotation in semi sector: NDX recovery", "Taiwan geopolitical tension easing reducing TSM discount"],
-      "risks": ["Daily-reset 2x decay: at VIX 21.51, decay ~3-4%/30d; 90d hold erodes ~10-12% vs underlying — decay continues regardless of positive thesis news", "Leveraged ETF: TSM -10% → TSMU approximately -20% to -22% (with decay)", "Taiwan geopolitical risk — any escalation hits TSM 2x-amplified", "No new verified price since 2026-06-05; currentPrice provisional single-source; single-source price stamp risk"],
-      "nextReview": "2026-07-04"
+      "currentPrice": 71.5142,
+      "upsideMidPct": 16.06,
+      "method": [
+        "NAV-decay-adjusted",
+        "2x-beta-scaling"
+      ],
+      "rationale": "BAND HELD at 67/83/103 — bandMovedFrom null. Only currentPrice and upsideMidPct are refreshed. Watch-only; no entry zone or stop. TSMU is a 2x daily-reset leveraged single-stock ETF on TSM, valued STRUCTURALLY — never with equity multiples, and the file itself forbids them: data/fundamentals.json fundamentals.TSMU is notApplicable:true, reason 'Leveraged single-stock ETF (2x daily-reset TSM exposure) — P/E not meaningful, no issuer earnings'. Likewise data/analyst-targets.json targets.TSMU is notApplicable:true — a coverage GAP, not a failed verification, so there is no external cross-check by construction. Verified close $71.5142 (data/price-quotes.json quotes.TSMU.price, verified:true, nasdaq 71.5142 / cboe 71.5142 / cnbc 71.51); derived upsideMidPct = 83/71.5142-1 = +16.06%. The pre-market print quotes.TSMU.extended.price 68.56 is verified:FALSE (nasdaq 68.56 vs cnbc 68.24 disagree) and is used for nothing. WHY THE BAND IS HELD RATHER THAN RE-CUT ON RATIO DRIFT: the band derives from TSM's FV band (valuations.TSM fvLow 390 / fvMid 487 / fvHigh 600) scaled by the TSMU/TSM price ratio, which the June entry fixed at 0.1708. It is tempting to re-scale on the current ratio and call the change decay. That is not supportable, for two reasons I verified in-repo. (1) THE RATIO IS NOT MONOTONE, so it does not measure permanent NAV decay. From single-source nasdaq raw drops: 2026-06-30 TSMU 91.72 / TSM 475.8; 2026-07-29 TSMU 54.03 / TSM 371.88; and the verified 2026-08-18 closes TSMU 71.5142 / TSM 430.97. DERIVED from those pairs, the ratio runs about 0.193, then 0.145, then 0.166 — it FELL then ROSE. Permanent decay does not mean-revert, so the ratio is dominated by a 2x fund's convexity to the underlying's level, not by drag; re-scaling off any single sample date would swing fvMid by double digits on date selection alone. (2) THE JUNE BASELINE IS NOT A CLEAN CLOSE. June's 0.1708 comes from TSMU 70.40 / TSM 412.109 in reports/raw/2026-06-05-quotes.json, runAt 2026-06-05T22:15:37Z, and reports/validation/2026-08-18-source-probe.md documents that the old adapter 'read primaryData unconditionally', i.e. a live extended-hours print rather than the official close. The June entry itself concedes the price was 'provisional, single-source (nasdaq only)'. So a small ratio delta is inside the documented session-timing error and cannot be read as structure. Moving the band on it would be exactly the drift this repo exists to prevent. WHAT WOULD ACTUALLY JUSTIFY A MOVE: the band's real anchor is TSM's fundamental band, and that entry (valuations.TSM, updated 2026-06-05, nextReview 2026-07-15) is past its own review date — while TSM, unlike TSMU, HAS a verified consensus (data/analyst-targets.json targets.TSM mean 533.36, verified:true) sitting above the 487 anchor. Re-running TSM is the genuine prerequisite; until then this band is held and flagged as inheriting a stale anchor. nextReview is set to 2026-09-01 rather than ~1 month out because the June entry cites the repo's leveraged-ETF '+2주' (+14-day) review rule for this instrument.",
+      "catalysts": [
+        "A TSM re-evaluation is the real unlock — valuations.TSM is past its 2026-07-15 nextReview and TSM carries a verified consensus mean 533.36 above the 487 anchor this band scales from, so a TSM re-rate would lift the TSMU band mechanically",
+        "TSM underlying appreciation toward the 487 anchor delivers roughly 2x gross into TSMU before drag (N2 ramp, CoWoS capacity, advanced-packaging demand)",
+        "A sustained low-volatility uptrend in TSM is the only regime in which a 2x daily-reset fund compounds favorably rather than bleeding",
+        "Taiwan geopolitical tension easing, which would compress the discount applied to TSM and transmit at roughly 2x"
+      ],
+      "risks": [
+        "Daily-reset 2x mechanics: TSMU tracks 2x TSM's DAILY return, not its cumulative return, so path volatility erodes NAV permanently and independently of how strong the TSM thesis is — this is the defining structural risk of the instrument",
+        "Amplified downside: a TSM decline transmits at roughly 2x before drag; the ratio series above shows the fund fell to a 0.145-type level on 2026-07-29 when TSM was at 371.88, versus roughly 0.193 on 2026-06-30 at TSM 475.8",
+        "Stale anchor: this band is scaled from valuations.TSM's 390/487/600, updated 2026-06-05 and past its 2026-07-15 nextReview — the band is only as current as that entry",
+        "Undisclosed fee drag: data/fundamentals.json fundamentals.TSMU.expenseRatio reads 0, which for a leveraged single-stock ETF is almost certainly a scrape artifact rather than a real zero-fee fund; the true management fee is an unmeasured additional drag not reflected in the band",
+        "No sell-side coverage exists at all (targets.TSMU.notApplicable:true) — zero independent valuation cross-check by construction",
+        "Issuer identity conflict unresolved: data/tickers-universe.json names TSMU 'T-Rex 2X Long TSMC' while a MarketBeat item in data/news-latest.json (verified:false) calls it 'GraniteShares 2x Long TSM Daily ETF' — expense ratio and NAV both depend on which fund this actually is; worth an architect ticket",
+        "The reported etfBeta 3.58 is far above the 2x design target, and AUM is small at 67,939 — both argue for treating tracking as noisy rather than precise",
+        "Today's pre-market print is verified:false (nasdaq 68.56 vs cnbc 68.24), so no live read on the fund is admissible this cycle"
+      ],
+      "nextReview": "2026-09-01",
+      "confidence": "medium"
     }
   }
 }

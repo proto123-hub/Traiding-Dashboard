@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+# Commit and push the refresh output. Invoked by .github/workflows/data-refresh.yml.
+#
+# Why this is a file rather than an inline `run:` block: the workflow's writer
+# was the one part of this repo tested by pattern-matching YAML, and every round
+# of that lost. A regex over a script cannot tell `git commit -m "..."` from
+# `git -c commit.gpgSign=false commit -am "..."`, cannot see a line
+# continuation, and cannot say whether the guard it matched is the one that
+# runs. As a checked-in script with fail-fast semantics it is executed
+# end-to-end by scripts/test/commit-refresh.test.mjs against a scratch
+# repository, which is the only way to assert what it actually does.
+#
+# set -u and pipefail matter here specifically: GitHub Actions runs `run:`
+# blocks with `bash -e`, and the old test harness ran plain `bash -c`, so a
+# fatal `git add missing-path/` still fell through to the commit in test while
+# failing the job in CI. The two now agree.
+set -euo pipefail
+
+STAGE_PATHS=(data/ reports/raw/ reports/validation/)
+
+# `git add <path>` is fatal when the pathspec matches nothing, and under
+# `set -e` that aborts the run. A scope directory really can be absent — origin
+# deleting the last file in reports/raw/ removes it, and the replay's reset then
+# lands on a tree without it. An existing empty directory stages nothing and is
+# not an error, so make sure each scope exists before staging.
+ensure_scopes() { mkdir -p "${STAGE_PATHS[@]}"; }
+MESSAGE="data: scheduled refresh $(date -u +%FT%TZ)"
+
+# `git diff --quiet` does not see untracked files, so a run whose only output
+# was a NEW file exited here reporting "no changes" and the file was never
+# committed — the later `git add` never ran. That is the shape of a news run
+# that appends nothing but still drops reports/raw/<date>-google-news.json with
+# its failures, and of the first run of a new year, whose
+# data/history/yields-<year>.json does not exist yet. --porcelain lists
+# untracked paths too.
+ensure_scopes
+
+# `git add <paths>` adds to the index; it does not clear what is already there,
+# and a plain `git commit` then consumes those entries too. With CLAUDE.md
+# pre-staged, this script committed and pushed it alongside one allowed data
+# edit. The scheduled workflow starts from a clean checkout and its earlier
+# steps stage nothing, so this is latent — but "only these paths are committed"
+# is not true while it holds, so refuse rather than narrow the claim.
+if ! git diff --cached --quiet; then
+    echo "refusing to run: the index already holds staged changes," >&2
+    git diff --cached --name-only | sed 's/^/  /' >&2
+    echo "and `git add` would not clear them from the commit." >&2
+    exit 1
+fi
+
+if [ -z "$(git status --porcelain -- "${STAGE_PATHS[@]}")" ]; then
+    echo "no changes — skipping commit"
+    exit 0
+fi
+
+git config user.name 'data-refresh-bot'
+git config user.email 'bot@users.noreply.github.com'
+
+# Stage the whole data/ tree, not an enumerated list: every file added since
+# this line was written (fundamentals.json, and now data/history/*) had to be
+# remembered here or it silently never got committed.
+# The commit this run starts from. The replay below needs it to know which
+# changes are ITS OWN rather than replaying whatever the tree happens to hold.
+BASE=$(git rev-parse HEAD)
+
+ensure_scopes
+git add "${STAGE_PATHS[@]}"
+git commit -m "$MESSAGE"
+
+# This run's output, frozen. The replay below must re-derive its delta from a
+# commit that cannot move: recomputing it from HEAD worked for one rejection and
+# broke on the second, because by then HEAD is the replay commit and carries the
+# FIRST competing push's changes too. `BASE..HEAD` then claimed those as this
+# run's output and replayed them over a third push, silently reverting it —
+# reproduced against a real bare origin. BASE..RUN_COMMIT is the same delta on
+# every attempt.
+RUN_COMMIT=$(git rev-parse HEAD)
+
+# A push landing mid-run otherwise loses the whole refresh to a rejected
+# non-fast-forward (seen 2026-08-18). Rebasing was the first fix, but it fails
+# too: two refresh runs regenerate the SAME files, so the replay hits content
+# conflicts in all ten of them and exits 1 (seen 2026-08-19).
+#
+# Replaying by overlaying an archive of the whole data/ and reports/ tree was
+# the second fix, and it silently lost data three ways — verified against a real
+# bare origin: a file this run DELETED came back, a file origin modified that
+# this run never touched was overwritten with stale bytes, and a file origin
+# deleted came back. `cp -r` cannot express a deletion, and a whole-tree
+# snapshot is not this run's delta.
+#
+# So compute the delta — what this run changed, scoped to the staged paths —
+# and apply only that on top of origin's tree. Anything origin did to a file
+# this run did not touch survives untouched.
+for i in 1 2 3; do
+    if git push; then exit 0; fi
+    echo "push rejected (attempt $i) — replaying this run's delta onto origin"
+    tmp=$(mktemp -d)
+    # --no-renames: a rename would emit two paths and desync the read loop below.
+    git diff --name-status --no-renames -z "$BASE" "$RUN_COMMIT" -- "${STAGE_PATHS[@]}" > "$tmp/delta"
+    git fetch origin "$GITHUB_REF_NAME"
+    git reset --hard "origin/$GITHUB_REF_NAME"
+
+    while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+        case "$status" in
+            D)
+                git rm -q -f --ignore-unmatch -- "$path"
+                ;;
+            *)
+                # news-feed.json is append-only, and origin may hold items this
+                # run never saw. Taking our copy wholesale drops them, so both
+                # sides are concatenated and collapsed by the shared helper
+                # below (earliest collectedAt wins). This used to be an inline
+                # origin-first Map merge, which kept whichever copy it saw first
+                # — the "first occurrence" mistake the helper exists to end. Do
+                # not reintroduce a second definition of the rule here.
+                # RECORD STORES. Three files here are keyed collections, not
+                # snapshots, and restoring any of them wholesale drops records a
+                # competing run wrote — with the validator passing every time,
+                # because a collection missing an entry it never saw is still
+                # valid. Each has its own retention rule and its own helper; the
+                # rule lives in the helper, never inline here.
+                if [ "$path" = data/price-quotes.json ] || [ "$path" = data/fundamentals.json ]; then
+                    # Both are `{ …meta, <container>: { ticker: record } }`.
+                    # Take origin's table, lay over only the records this run
+                    # actually changed. fundamentals.json was the same defect
+                    # unnoticed: origin adding a ticker mid-run kept the ticker
+                    # in the universe and lost its fundamentals row, and nothing
+                    # checks that coverage.
+                    if [ "$path" = data/price-quotes.json ]; then container=quotes; else container=fundamentals; fi
+                    if [ -f "$path" ]; then
+                        cp "$path" "$tmp/theirs-rec.json"
+                        git show "$BASE:$path" > "$tmp/base-rec.json"
+                        git checkout "$RUN_COMMIT" -- "$path"
+                        node scripts/merge-keyed-records.mjs "$container" "$tmp/base-rec.json" "$tmp/theirs-rec.json" "$path"
+                    else
+                        git checkout "$RUN_COMMIT" -- "$path"
+                    fi
+                elif [[ "$path" == data/history/yields-[0-9]*.json ]] && [ -f "$path" ]; then
+                    # An UPSERT STORE, not a snapshot: rows are keyed by
+                    # (country, tenor, date) and the schema allows hand-curated
+                    # rows. Restoring our file wholesale dropped rows a
+                    # competing run had added for other dates — verified, with
+                    # the validator passing, because a shard missing a row it
+                    # never knew about is still a valid shard.
+                    cp "$path" "$tmp/theirs-shard.json"
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    node scripts/merge-yields-shard.mjs "$tmp/theirs-shard.json" "$path"
+                    yields_touched=1
+                elif [ "$path" = data/history/yields-latest.json ]; then
+                    # Derived, so this run's copy is not authoritative — it is
+                    # rebuilt from the shards below. Restore it only so the
+                    # working tree is coherent until then.
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    yields_touched=1
+                elif [ "$path" = data/news-feed.json ] && [ -f "$path" ]; then
+                    cp "$path" "$tmp/origin-news-feed.json"
+                    git checkout "$RUN_COMMIT" -- "$path"
+                    # --input-type must precede -e; after it node reads it as a script
+        # argument, and the body then runs as CommonJS — which works on Node 22
+        # (syntax detection) and fails on the Node 20 the workflow pins.
+        node -e "
+                      const fs=require('fs');
+                      const a=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+                      const b=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+                      fs.writeFileSync(process.argv[2],JSON.stringify({...b,items:[...(a.items||[]),...(b.items||[])]},null,2)+'\n');
+                    " "$tmp/origin-news-feed.json" "$path"
+                else
+                    # `git checkout <commit> -- <path>`, not `git show > file`:
+                    # a redirect writes bytes and loses the object's type and
+                    # mode, so a committed symlink came back as a regular file
+                    # and an executable bit would be dropped. Restoring through
+                    # git reproduces the entry faithfully.
+                    mkdir -p "$(dirname "$path")"
+                    git checkout "$RUN_COMMIT" -- "$path"
+                fi
+                ;;
+        esac
+    done < "$tmp/delta"
+    rm -rf "$tmp"
+
+    # yields-latest.json is DERIVED from the shards, wholesale. Rebuilding only
+    # after a shard MERGE was not enough: a run whose delta held just
+    # yields-latest.json restored its own stale copy onto an origin that had
+    # advanced a shard, and nothing rebuilt it — validation stayed green, since
+    # a latest file that omits a row is still a valid latest file. Rebuild
+    # whenever the delta touches yields at all.
+    if [ -n "${yields_touched:-}" ]; then
+        # --input-type must precede -e; after it node reads it as a script
+        # argument and the body runs as CommonJS — which works on Node 22 by
+        # syntax detection and fails on the Node 20 the workflow pins.
+        node --input-type=module -e "
+          const { rebuildLatest } = await import('./scripts/scrape-yields.mjs');
+          const now = new Date().toISOString().replace(/\.\d{3}Z\$/, 'Z');
+          await rebuildLatest(now.slice(0, 10), now);
+        "
+        yields_touched=
+    fi
+
+    # Collapse by the shared rule, then re-validate: the replayed tree is a
+    # DIFFERENT tree from the one the workflow's integrity step checked, and it
+    # was once committed with no check at all.
+    node scripts/dedupe-news-feed.mjs
+    node scripts/validate-data.mjs
+    ensure_scopes
+    git add "${STAGE_PATHS[@]}"
+    if git diff --cached --quiet; then echo "origin already has this data"; exit 0; fi
+    git commit -m "data: scheduled refresh $(date -u +%FT%TZ)"
+    sleep $((i * 3))
+done
+git push
