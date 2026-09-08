@@ -21,7 +21,7 @@
   "scores": {
     "GOOGL": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 35,
       "verdict": "HOLD",
       "entryZone": {
@@ -34,12 +34,12 @@
         "bear": 333
       },
       "stopLoss": 325,
-      "rrr": 2.8,
+      "rrr": 4.57,
       "risks": [
         {
           "tag": "concentration",
           "severity": "high",
-          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 107 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. 42.66% of book at verified EOD market values (240sh × $344.72 vs the other 5 holdings, computed against all 6 positions' 2026-08-19 verified closes, total book $193,915.40) — down from 42.92% on 8/18 (MRVL's +9.85% rally partially offset AVGO/CLS/SOXL's continued declines), still >40% threshold, +25 pts unchanged.",
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) -- computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 126 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. 42.33% of book at verified closes (240sh x $338.46 vs the other 5 holdings, computed against all 6 positions' 2026-09-04 verified closes, total book $191,877.63) -- down from 42.66% on 2026-08-19, still >40% threshold, +25 pts unchanged.",
           "provisional": true,
           "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         },
@@ -51,7 +51,7 @@
         {
           "tag": "data-quality",
           "severity": "low",
-          "note": "RE-CHECKED 2026-08-19 (session 2026-08-19 close): verified close $344.72 (nasdaq+cboe+cnbc agree, 2026-08-19 session, +0.15%) — GOOGL again essentially flat, the only held ticker not to move sharply this session; stop $325 holds comfortably (+5.72%, price-relative), still within entry zone $335-355."
+          "note": "RE-CHECKED 2026-09-08 (session 2026-09-04 close): verified close $338.46 (nasdaq+cboe+cnbc agree, -1.82% vs the 8/19 stamp) -- stop $325 holds (+3.98%, price-relative, thinner than +5.72% on 8/19), still within entry zone $335-355."
         }
       ],
       "decisionLog": [
@@ -90,12 +90,18 @@
           "action": "HOLD",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $344.72 (+0.15%) holds stop $325 by 5.72%; concentration eased to 42.66% (still >40%) as MRVL's rally offset other holdings; HOLD unchanged."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "HOLD",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $338.46 (-1.82% vs 8/19) holds stop $325 (+3.98%), within entry zone; concentration eased to 42.33% (still >40%); HOLD unchanged."
         }
       ]
     },
     "AVGO": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 16,
       "verdict": "SELL",
       "entryZone": {
@@ -108,7 +114,7 @@
         "bear": 375
       },
       "stopLoss": 390,
-      "rrr": -3.47,
+      "rrr": -3.12,
       "risks": [
         {
           "tag": "customer-concentration",
@@ -128,7 +134,7 @@
         {
           "tag": "technical",
           "severity": "high",
-          "note": "DEEPENED 2026-08-19 (session 2026-08-19 close): verified close $362.48 (nasdaq+cboe+cnbc agree, 2026-08-19 session, -4.61%) is BELOW stopLoss $390 by 7.59% (price-relative) — the breach deepens from 2.6% on 8/18, not resolved; no fundamental cause found in validated inputs (news-latest.json still dated 8/14) for this continued semis-sector move, so stop remains honored as written, not widened; score unchanged at 16 (no new enumerated rubric fact applies); published rrr (-3.47, smaller in magnitude than -7.80 only because the price-to-stop gap widened away from near-zero) remains an artifact of price below stop, not a meaningful reward/risk ratio."
+          "note": "DEEPENED 2026-09-08 (session 2026-09-04 close): verified close $357.895 (nasdaq+cboe+cnbc agree, -1.26% vs 8/19) is BELOW stopLoss $390 by 8.97% (price-relative) -- the breach deepens from 7.59% on 8/19, not resolved; no fundamental cause found (fundamentals.json AVGO trailingPE 45.7093, trailingVerified false -- directional only); stop remains honored, not widened; score unchanged at 16 (no new enumerated rubric fact applies); published rrr (-3.12) remains an artifact of price below stop, not a meaningful reward/risk ratio."
         }
       ],
       "decisionLog": [
@@ -167,12 +173,18 @@
           "action": "SELL",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $362.48 deepens stop $390 breach to 7.59% (was 2.6%); no fundamental cause found; SELL reconfirmed, execution is Daniel's call."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $357.895 deepens stop $390 breach to 8.97% (was 7.59%); no fundamental cause found; SELL reconfirmed, execution is Daniel's call."
         }
       ]
     },
     "CLS": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 15,
       "verdict": "SELL",
       "entryZone": {
@@ -185,7 +197,7 @@
         "bear": 340
       },
       "stopLoss": 325,
-      "rrr": -5.19,
+      "rrr": -8.83,
       "risks": [
         {
           "tag": "cyclical",
@@ -200,7 +212,7 @@
         {
           "tag": "data-quality",
           "severity": "high",
-          "note": "DEEPENED 2026-08-19 (session 2026-08-19 close): verified close $301.36 (nasdaq+cboe+cnbc agree, 2026-08-19 session, -2.97%) is BELOW stopLoss $325 by 7.84% (price-relative) — the breach deepens further from 4.4% on 8/18; no fundamental cause found in validated inputs (news-latest.json still dated 8/14) for this broad semis-selloff continuation, so stop is honored as written, not widened; score unchanged at 15 (no enumerated rubric fact newly applies); published rrr (-5.19, smaller in magnitude than -7.87 only because the price-to-stop gap widened) remains an artifact of price below stop, not meaningful."
+          "note": "EASED 2026-09-08 (session 2026-09-04 close): verified close $312.35 (nasdaq+cboe+cnbc agree, +3.65% vs 8/19) is BELOW stopLoss $325 by 4.05% (price-relative) -- the breach narrows from 7.84% on 8/19 but is not resolved; no fundamental cause found; stop remains honored, not widened; score unchanged at 15; published rrr (-8.83) remains an artifact of price below stop."
         }
       ],
       "decisionLog": [
@@ -239,12 +251,18 @@
           "action": "SELL",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $301.36 deepens stop $325 breach to 7.84% (was 4.4%); no fundamental cause found; SELL reconfirmed, execution is Daniel's call."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $312.35 narrows stop $325 breach to 4.05% (was 7.84%) but remains breached; SELL reconfirmed, execution is Daniel's call."
         }
       ]
     },
     "MRVL": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 33,
       "verdict": "HOLD",
       "entryZone": {
@@ -257,12 +275,12 @@
         "bear": 235
       },
       "stopLoss": 205,
-      "rrr": 1.79,
+      "rrr": 3.85,
       "risks": [
         {
           "tag": "concentration",
           "severity": "medium",
-          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 107 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. NEW 2026-08-19: MRVL crossed >20% of book at verified EOD market values — 172sh × $237.27 = $40,810.44 vs total book $193,915.40 (all 6 holdings at their respective 2026-08-19 verified closes, per data/portfolio-current.json share counts) = 21.05%, up from 19.30% on 8/18. The +9.85% rally pushed this position over the 20% concentration threshold for the first time this cycle; +15 pts added to score (18→33), moving the score into the medium band (30-60). This is a position-sizing fact, independent of the stop-level question below.",
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) -- computed from data/portfolio-current.json share counts, asOf 2026-05-05, unconfirmed against the broker for 126 days. Prices are verified; the SHARE COUNTS are an assumption. This position's own decisionLog carries a 2026-06-05 TRIM recommendation at 22% concentration, so if any trim was executed the weight below is overstated. Treat as a model result pending a broker sync, not a confirmed book fact. UPDATED 2026-09-08: MRVL at verified 2026-09-04 closes = 172sh x $223.55 = $38,450.60 vs total book $191,877.63 (all 6 holdings at their respective 2026-09-04 verified closes) = 20.04%, down from 21.05% on 2026-08-19 but still just above the 20% concentration threshold -- the margin (0.04pp) is thin enough to sit largely inside the share-count uncertainty this note already flags; +15 pts held provisionally, would drop to 18 if the true weight is even marginally under 20%.",
           "provisional": true,
           "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         },
@@ -274,7 +292,7 @@
         {
           "tag": "technical",
           "severity": "low",
-          "note": "RE-CHECKED 2026-08-19 (session 2026-08-19 close): verified close $237.27 (nasdaq+cboe+cnbc agree, 2026-08-19 session, +9.85%) further HOLDS the reset stop $205 (+13.60% price-relative, buffer restored from +5.4% on 8/18) — not breached. Under the ORIGINAL $255 stop the verified close is now -7.47% below (price-relative; improved sharply from -15.3% on 8/18) — still breached on that historical level, but the gap has narrowed materially. This session's +9.85% move is the clearest evidence yet bearing on whether the 8/14 stop widening ($255→$205) should be accepted as the operative level: the widened stop has now held through three verified sessions including one sharp recovery day, while the original stop remains breached but by a shrinking margin. This is evidence for Daniel to weigh, not a decision made here — the stop is neither re-widened nor re-tightened this cycle. Published rrr (1.79, down sharply from 7.18) reflects genuine reward/risk compression as price rallies toward target.base $295 and the stop buffer widens in dollar terms ($32.27 vs $11) — this is NOT a near-zero-denominator artifact (the prior inflated 7.18 was); treat the lower rrr as a real signal that fresh-entry reward/risk has become less favorable even though the position itself is healthier."
+          "note": "RE-CHECKED 2026-09-08 (session 2026-09-04 close): verified close $223.55 (nasdaq+cboe+cnbc agree, -5.78% vs the 8/19 stamp) thins the reset-stop $205 buffer to 8.30% (price-relative; was 13.60%) -- still holding, not breached. Original $255 stop breach deepens to 14.07% (was 7.47%). Published rrr rises to 3.85 (from 1.79) -- this reflects the stop buffer thinning in dollar terms as much as it reflects reward; treat it as a real but stop-proximity-driven figure, not purely an improved setup."
         },
         {
           "tag": "event",
@@ -312,12 +330,18 @@
           "action": "HOLD",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $237.27 (+9.85%) restores stop buffer to 13.60% (from 5.4%), narrows original-stop breach to 7.47%; concentration crossed 20% (score 18→33); HOLD unchanged, stop-widening evidence noted for Daniel, not decided here."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "HOLD",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $223.55 (-5.78%) thins reset-stop $205 buffer to 8.30% (from 13.60%), still holding; concentration eased to 20.04% (thin margin above 20%); HOLD unchanged."
         }
       ]
     },
     "MU": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 15,
       "verdict": "BUY",
       "entryZone": {
@@ -330,7 +354,7 @@
         "bear": 800
       },
       "stopLoss": 850,
-      "rrr": 2.97,
+      "rrr": 1.08,
       "risks": [
         {
           "tag": "cyclical",
@@ -350,7 +374,7 @@
         {
           "tag": "entry-attractiveness",
           "severity": "low",
-          "note": "RE-CHECKED 2026-08-19 (session 2026-08-19 close): verified close $937.11 (nasdaq+cboe+cnbc agree, 2026-08-19 session, -0.39%) stays INSIDE the $920-980 entry zone (was $940.76 on 8/18, also inside); stop $850 holds comfortably (+9.30% price-relative, down slightly from +10.7% on the modest pullback); rrr improves further to 2.97 (from 2.81) as price drifted marginally lower against an unchanged target.base $1,196 — fundamentals/buyback catalyst/Burry short all unchanged (news-latest.json still dated 8/14). Not a rubric risk point."
+          "note": "RE-CHECKED 2026-09-08 (session 2026-09-04 close): verified close $1,016.59 (nasdaq+cboe+cnbc agree, +8.48% vs the 8/19 stamp) moves ABOVE the $920-980 entry zone again; stop $850 holds comfortably (+16.39%, up from +9.30%); rrr compresses to 1.08 (from 2.97) as price rallies away from the reward/risk-favorable entry zone toward target.base $1,196 -- fundamentals/buyback catalyst/Burry short all unchanged (no news/analyst refresh this cycle). Not a rubric risk point; BUY unchanged for the existing position, reduced attractiveness for fresh entries."
         }
       ],
       "decisionLog": [
@@ -383,12 +407,18 @@
           "action": "BUY",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $937.11 (-0.39%) stays in entry zone $920-980; stop $850 holds +9.30%; rrr improves 2.81→2.97; BUY unchanged."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "BUY",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $1,016.59 (+8.48%) moves back above entry zone $920-980; stop $850 holds +16.39%; rrr compresses 2.97->1.08; BUY unchanged, existing position."
         }
       ]
     },
     "SOXL": {
       "coverage": "full",
-      "updated": "2026-08-19",
+      "updated": "2026-09-08",
       "score": 31,
       "verdict": "SELL",
       "entryZone": {
@@ -401,7 +431,7 @@
         "bear": 125
       },
       "stopLoss": 130,
-      "rrr": -9.1,
+      "rrr": -6.9,
       "risks": [
         {
           "tag": "leveraged-etf",
@@ -411,7 +441,7 @@
         {
           "tag": "technical",
           "severity": "high",
-          "note": "THIRD CONSECUTIVE VERIFIED SESSION BELOW BOTH STOPS 2026-08-19 (session 2026-08-19 close): verified close $120.74 (nasdaq+cboe+cnbc agree, 2026-08-19 session, -6.48%) remains BELOW the reset stopLoss $130 (-7.67% price-relative) and the original hard stop $170 (-40.80% price-relative); verified pre-market print $122.26 is a separate live print (context/urgency only, not a session close). SELL stands, reconfirmed for a third straight verified session; published rrr (-9.10, smaller in magnitude than -84.33 only because the price-to-stop gap widened away from near-zero) remains a meaningless artifact — price sits below both stops."
+          "note": "NEXT VERIFIED SESSION 2026-09-08 (2026-09-04 close, first verified quote after the 2026-08-19 read -- no verified session in between in this pipeline): verified close $117.28 (nasdaq+cboe+cnbc agree, -2.87% vs 8/19) remains BELOW both the reset stopLoss $130 (-10.85% price-relative) and the original hard stop $170 (-44.95% price-relative). SELL stands, reconfirmed. Published rrr (-6.90) remains a meaningless artifact -- price sits below both stops."
         },
         {
           "tag": "macro",
@@ -421,7 +451,7 @@
         {
           "tag": "position-size",
           "severity": "low",
-          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — share counts from data/portfolio-current.json asOf 2026-05-05, unconfirmed against the broker for 107 days; prices are verified, the share counts are an assumption. De minimis position (0.36% of book, ~$731) — low cost to exit cleanly",
+          "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) -- share counts from data/portfolio-current.json asOf 2026-05-05, unconfirmed against the broker for 126 days; prices are verified, the share counts are an assumption. De minimis position (0.31% of book, ~$586) -- low cost to exit cleanly.",
           "provisional": true,
           "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)"
         }
@@ -462,12 +492,18 @@
           "action": "SELL",
           "by": "evaluator",
           "reason": "Verified 8/19-session close $120.74 remains below both stop $130 (-7.67%) and original stop $170 (-40.80%); SELL reconfirmed, execution is Daniel's call."
+        },
+        {
+          "date": "2026-09-08",
+          "action": "SELL",
+          "by": "evaluator",
+          "reason": "Verified 9/4-session close $117.28 remains below both stops (reset -10.85%, original -44.95%); SELL reconfirmed, execution is Daniel's call."
         }
       ]
     },
     "TSM": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 16,
       "verdict": "BUY",
@@ -486,14 +522,19 @@
           "tag": "customer-concentration",
           "severity": "low",
           "note": "Apple/NVDA capex concentration in foundry demand"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $428.91 (+4.08% vs the 6/5 stamp), still well inside the fundamental band -- no rubric-fact change this cycle."
         }
       ]
     },
     "PLTR": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
-      "score": 15,
+      "score": 25,
       "verdict": "HOLD",
       "risks": [
         {
@@ -510,12 +551,17 @@
           "tag": "sentiment",
           "severity": "medium",
           "note": "Mixed post-earnings reaction (Jefferies caution vs 'otherworldly quarter' bulls, 8/12-13)"
+        },
+        {
+          "tag": "valuation",
+          "severity": "high",
+          "note": "NEW 2026-09-08: verified close $174.33 (2026-09-04 session) sits ABOVE valuations.json fvHigh $140 for the first time (was 3.19% below fvHigh in June) -- rubric 'Above FV-High' (+20) newly applies; score 15->25 (net +10, since the prior 'within 5%' proximity was not separately scored). Band could not be responsibly re-derived this cycle -- see valuations.json for detail."
         }
       ]
     },
     "TSMU": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 23,
       "verdict": "HOLD",
@@ -534,12 +580,17 @@
           "tag": "no-coverage",
           "severity": "low",
           "note": "No sell-side analyst coverage exists (notApplicable) — no independent valuation anchor"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $69.7918 (-2.41% vs the 8/18 stamp) -- no rubric-fact change; band's TSM anchor remains overdue for re-derivation."
         }
       ]
     },
     "NVDA": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "BUY",
@@ -558,12 +609,17 @@
           "tag": "valuation",
           "severity": "low",
           "note": "Premium compression risk if AI monetization pace slows"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $230.36 (+2.38% vs the 8/17 stamp) -- no rubric-fact change; the cross-verified TTM EPS rose (7.9107) but this is directional-only per house rule and does not feed the score."
         }
       ]
     },
     "AMD": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "BUY",
@@ -582,12 +638,17 @@
           "tag": "volatility",
           "severity": "medium",
           "note": "'Can halve or nearly double' framing (Yahoo Finance 8/13) signals elevated outcome dispersion"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $477.57 (-5.62% vs the 8/17 stamp) -- price moved OFF the 0.78%-from-fvHigh proximity it sat at on 8/17 (now 6.36% below fvHigh $510); no rubric-fact change to the existing score."
         }
       ]
     },
     "ARM": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 25,
       "verdict": "HOLD",
@@ -606,12 +667,17 @@
           "tag": "competitive",
           "severity": "low",
           "note": "RISC-V open-source alternative — long-term royalty erosion risk"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $252.09 (-25.47% vs the 6/5 stamp), still inside the fundamental band and no verified consensus/fundamental fact crossed a rubric threshold -- score unchanged; see valuations.json for the price-move detail."
         }
       ]
     },
     "AMAT": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "BUY",
@@ -630,12 +696,17 @@
           "tag": "concentration",
           "severity": "low",
           "note": "Customer capex concentration (Samsung/TSMC/Intel ~60% of WFE spend)"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $454.71 (+0.85% vs the 6/5 stamp), essentially unchanged -- no rubric-fact change this cycle."
         }
       ]
     },
     "LRCX": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "BUY",
@@ -654,12 +725,17 @@
           "tag": "concentration",
           "severity": "low",
           "note": "Customer capex concentration in Samsung/SK Hynix/Micron memory cycles"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $307.65 (+1.47% vs the 6/5 stamp), essentially unchanged -- no rubric-fact change this cycle."
         }
       ]
     },
     "KLAC": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "BUY",
@@ -678,14 +754,19 @@
           "tag": "technical",
           "severity": "low",
           "note": "'KLA drops 9% in a month' headline (TradingView 8/13) — modest recent weakness"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $185.60 (-9.80% vs the 8/17 stamp), still not within 5% of the units-restated fvHigh $220 -- no rubric-fact change this cycle."
         }
       ]
     },
     "MSFT": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
-      "score": 5,
+      "score": 15,
       "verdict": "BUY",
       "risks": [
         {
@@ -702,12 +783,17 @@
           "tag": "competitive",
           "severity": "low",
           "note": "Azure/Copilot competitive intensity vs AWS/GCP"
+        },
+        {
+          "tag": "valuation",
+          "severity": "medium",
+          "note": "NEW 2026-09-08: verified close $499.70 (2026-09-04 session) sits within 5% of valuations.json fvHigh $520 (3.90% below, was 7.63% on 8/18) -- rubric 'Within 5% of FV-High' (+10) newly applies; score 5->15. Band NOT moved -- see valuations.json."
         }
       ]
     },
     "META": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 18,
       "verdict": "HOLD",
@@ -726,12 +812,17 @@
           "tag": "capex",
           "severity": "medium",
           "note": "AI capex uncertainty per Seeking Alpha 8/13 ('strong core, capex uncertainties')"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $616.77 (+4.45% vs the 6/5 stamp), still well inside the fundamental band -- no rubric-fact change this cycle (regulatory FTC overhang risk carried unchanged)."
         }
       ]
     },
     "TSLA": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "HOLD",
@@ -750,12 +841,17 @@
           "tag": "regulatory",
           "severity": "medium",
           "note": "FSD regulatory gating — NHTSA/state approval timeline"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $354.08 (-9.83% vs the 6/5 stamp), still well inside the fundamental band -- no rubric-fact change this cycle."
         }
       ]
     },
     "ORCL": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 18,
       "verdict": "HOLD",
@@ -774,14 +870,19 @@
           "tag": "concentration",
           "severity": "medium",
           "note": "OpenAI infrastructure-deal revenue dependency; layoffs reports (IBD/TradingView 8/12) signal cost pressure"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $158.78 (+8.27% vs the 8/17 stamp), still below fvLow $185 -- no rubric-fact change this cycle; band could not be responsibly re-derived, see valuations.json."
         }
       ]
     },
     "SNOW": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
-      "score": 15,
+      "score": 35,
       "verdict": "HOLD",
       "risks": [
         {
@@ -798,12 +899,17 @@
           "tag": "technical",
           "severity": "low",
           "note": "Recent 52-week high (Yahoo Finance 8/13) — price already above the unverified analyst mean $302.29"
+        },
+        {
+          "tag": "valuation",
+          "severity": "high",
+          "note": "NEW 2026-09-08: verified close $337.18 (2026-09-04 session) sits a derived 12.39% ABOVE valuations.json fvHigh $300 (was 21.2% below fvHigh in June) -- rubric 'Above FV-High' (+20) newly applies; score 15->35. Band could not be responsibly re-derived this cycle (no verified ARR/FCF/forward-EPS data) -- see valuations.json for detail."
         }
       ]
     },
     "CRWD": {
       "coverage": "informational",
-      "updated": "2026-08-18",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 20,
       "verdict": "HOLD",
@@ -827,12 +933,17 @@
           "tag": "corporate-action",
           "severity": "medium",
           "note": "4-for-1 split effective 2026-07-02 (raw drops 2026-07-01 nasdaq 769.9025 -> 2026-07-02 194.82). valuations.json band was unit-restated 2026-08-18; consensus targets were collected post-split and needed no adjustment."
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $213.10 (-0.37% vs the 8/17 stamp), still a derived 33.19% above fvHigh $160 (was 33.7% on 8/18, essentially unchanged) -- 'Above FV-High' (+20) was already reflected in the existing score 20, no delta; band could not be responsibly re-derived, see valuations.json."
         }
       ]
     },
     "INTC": {
       "coverage": "informational",
-      "updated": "2026-08-14",
+      "updated": "2026-09-08",
       "agent": "evaluator",
       "score": 8,
       "verdict": "HOLD",
@@ -851,6 +962,11 @@
           "tag": "valuation",
           "severity": "low",
           "note": "'Looks above fair value after a very large run' (Yahoo Finance 8/12) despite still trading below verified analyst mean $117"
+        },
+        {
+          "tag": "data-quality",
+          "severity": "low",
+          "note": "REVIEWED 2026-09-08 (2026-09-04 session): verified close $95.80 (-7.43% vs the 8/17 stamp), still not within 5% of fvHigh $110 -- no rubric-fact change this cycle."
         }
       ]
     }
@@ -865,6 +981,6 @@
       "de-minimis / position-size claims",
       "any score points derived from them"
     ],
-    "note": "Every book-weight figure in this file (GOOGL 42.66%, MRVL 21.05%) multiplies VERIFIED 2026-08-19 closes by share counts last confirmed on 2026-05-05. The prices are cross-source verified; the share counts are not. Stop-loss, entry-zone and target adjudication are per-share and unaffected — they do not read share counts. Concentration-derived score points ARE affected: MRVL score 33 includes +15 for crossing 20%, which reverts to 18 if the 2026-06-05 TRIM was executed. Resolve by re-entering holdings through the dashboard UI and exporting portfolio-current.json."
+    "note": "Every book-weight figure in this file (GOOGL 42.33%, MRVL 20.04%) multiplies VERIFIED 2026-09-04 closes by share counts last confirmed on 2026-05-05. The prices are cross-source verified; the share counts are not. Stop-loss, entry-zone and target adjudication are per-share and unaffected -- they do not read share counts. Concentration-derived score points ARE affected: MRVL score 33 includes +15 for crossing 20%, and the margin over that threshold is now razor-thin (20.04%), so it reverts to 18 if the true weight is even marginally under 20% or if the 2026-06-05 TRIM was executed. Resolve by re-entering holdings through the dashboard UI and exporting portfolio-current.json."
   }
 }
