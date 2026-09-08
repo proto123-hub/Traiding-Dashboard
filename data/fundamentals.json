@@ -1,7 +1,7 @@
 {
   "note": "Owned by refresher agent + GitHub Actions data-refresh workflow (scripts/scrape-fundamentals.mjs). Supersedes the prior validator/WebSearch-synthesis phase — see data/README.md for the ownership history. trailingPE = CNBC's reported TTM PE (falls back to stockanalysis.com, then a SEC-XBRL-computed figure anchored to the verified close in data/price-quotes.json). trailingVerified = TTM diluted EPS agreement (CNBC vs SEC-XBRL, and stockanalysis when it exposes EPS) within tolerance.trailingEps — see tolerance.trailingPE for the wider raw-PE fallback comparison used only when no source exposes a separate EPS figure. forwardPE/forwardPEBasis = the NTM-basis consensus figure when available (CNBC feps, falls back to stockanalysis, then the nearest NASDAQ FY-basis estimate — see forwardPEBasisNote when that fallback fires). forwardPEByBasis carries every basis independently, each verified only against another source on the SAME basis — forward P/Es on different bases are NEVER cross-verified or averaged (see reports/designs/2026-08-18-fundamentals-scraper.md §2). verified (top-level, back-compat) is UNCHANGED semantics: true only if BOTH trailingVerified AND forwardVerified pass — expect this to be rare under basis-aware forward verification; trailingVerified is the more informative signal going forward. ETFs get notApplicable plus real expenseRatio/aum/etfBeta from NASDAQ's ETF summary.",
-  "updated": "2026-08-20T10:39:59Z",
-  "asOfDate": "2026-08-20",
+  "updated": "2026-09-08T12:26:27Z",
+  "asOfDate": "2026-09-08",
   "agent": "refresher",
   "sources": [
     "cnbc",
@@ -16,29 +16,29 @@
   },
   "fundamentals": {
     "GOOGL": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 17.2965,
+      "asOf": "2026-09-08",
+      "trailingPE": 16.9824,
       "eps": 19.93,
       "trailingVerified": true,
-      "forwardPE": 26.1171,
+      "forwardPE": 25.6584,
       "forwardPEBasis": "NTM",
-      "forwardEps": 13.199,
+      "forwardEps": 13.191,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 17.2965,
+          "trailingPE": 16.9824,
           "eps": 19.93,
-          "forwardPE": 26.1171,
+          "forwardPE": 25.6584,
           "forwardPEBasis": "NTM",
-          "forwardEps": 13.199
+          "forwardEps": 13.191
         },
         "sec-xbrl": {
-          "trailingPE": 17.31,
+          "trailingPE": 17,
           "epsUsed": 19.91,
           "quartersUsed": [
             "2026-06-30",
@@ -49,47 +49,47 @@
           "derivedQuarters": [
             "2025-12-31"
           ],
-          "anchorPrice": 344.72,
+          "anchorPrice": 338.46,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 26.1171,
+          "value": 25.6584,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 26.1171
+            "cnbc": 25.6584
           },
           "deltaPct": null
         }
       }
     },
     "CLS": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 31.3218,
+      "asOf": "2026-09-08",
+      "trailingPE": 32.4641,
       "eps": 9.6214,
       "trailingVerified": true,
-      "forwardPE": 19.9207,
+      "forwardPE": 20.9056,
       "forwardPEBasis": "NTM",
-      "forwardEps": 15.128,
+      "forwardEps": 14.941,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 31.3218,
+          "trailingPE": 32.4641,
           "eps": 9.6214,
-          "forwardPE": 19.9207,
+          "forwardPE": 20.9056,
           "forwardPEBasis": "NTM",
-          "forwardEps": 15.128
+          "forwardEps": 14.941
         },
         "sec-xbrl": {
-          "trailingPE": 31.39,
+          "trailingPE": 32.54,
           "epsUsed": 9.6,
           "quartersUsed": [
             "2026-06-30",
@@ -100,47 +100,47 @@
           "derivedQuarters": [
             "2025-12-31"
           ],
-          "anchorPrice": 301.36,
+          "anchorPrice": 312.35,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 19.9207,
+          "value": 20.9056,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 19.9207
+            "cnbc": 20.9056
           },
           "deltaPct": null
         }
       }
     },
     "AVGO": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 60.3781,
-      "eps": 6.0035,
-      "trailingVerified": true,
-      "forwardPE": 23.0439,
+      "asOf": "2026-09-08",
+      "trailingPE": 45.7093,
+      "eps": 7.8298,
+      "trailingVerified": false,
+      "forwardPE": 20.647,
       "forwardPEBasis": "NTM",
-      "forwardEps": 15.73,
+      "forwardEps": 17.334,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 60.3781,
-          "eps": 6.0035,
-          "forwardPE": 23.0439,
+          "trailingPE": 45.7093,
+          "eps": 7.8298,
+          "forwardPE": 20.647,
           "forwardPEBasis": "NTM",
-          "forwardEps": 15.73
+          "forwardEps": 17.334
         },
         "sec-xbrl": {
-          "trailingPE": 60.31,
+          "trailingPE": 59.55,
           "epsUsed": 6.01,
           "quartersUsed": [
             "2026-05-03",
@@ -151,98 +151,98 @@
           "derivedQuarters": [
             "2025-11-02"
           ],
-          "anchorPrice": 362.48,
+          "anchorPrice": 357.895,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 23.0439,
+          "value": 20.647,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 23.0439
+            "cnbc": 20.647
           },
           "deltaPct": null
         }
       }
     },
     "MRVL": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 81.2708,
-      "eps": 2.9195,
+      "asOf": "2026-09-08",
+      "trailingPE": 73.7764,
+      "eps": 3.0301,
       "trailingVerified": true,
-      "forwardPE": 52.5864,
+      "forwardPE": 41.4212,
       "forwardPEBasis": "NTM",
-      "forwardEps": 4.512,
+      "forwardEps": 5.397,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 81.2708,
-          "eps": 2.9195,
-          "forwardPE": 52.5864,
+          "trailingPE": 73.7764,
+          "eps": 3.0301,
+          "forwardPE": 41.4212,
           "forwardPEBasis": "NTM",
-          "forwardEps": 4.512
+          "forwardEps": 5.397
         },
         "sec-xbrl": {
-          "trailingPE": 81.54,
-          "epsUsed": 2.91,
+          "trailingPE": 74.02,
+          "epsUsed": 3.02,
           "quartersUsed": [
+            "2026-08-01",
             "2026-05-02",
             "2026-01-31",
-            "2025-11-01",
-            "2025-08-02"
+            "2025-11-01"
           ],
           "derivedQuarters": [
             "2026-01-31"
           ],
-          "anchorPrice": 237.27,
+          "anchorPrice": 223.55,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 52.5864,
+          "value": 41.4212,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 52.5864
+            "cnbc": 41.4212
           },
           "deltaPct": null
         }
       }
     },
     "MU": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 21.2149,
+      "asOf": "2026-09-08",
+      "trailingPE": 23.0143,
       "eps": 44.1721,
       "trailingVerified": true,
-      "forwardPE": 6.5055,
+      "forwardPE": 7.0615,
       "forwardPEBasis": "NTM",
-      "forwardEps": 144.049,
+      "forwardEps": 143.962,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 21.2149,
+          "trailingPE": 23.0143,
           "eps": 44.1721,
-          "forwardPE": 6.5055,
+          "forwardPE": 7.0615,
           "forwardPEBasis": "NTM",
-          "forwardEps": 144.049
+          "forwardEps": 143.962
         },
         "sec-xbrl": {
-          "trailingPE": 21.22,
+          "trailingPE": 23.02,
           "epsUsed": 44.17,
           "quartersUsed": [
             "2026-05-28",
@@ -253,53 +253,53 @@
           "derivedQuarters": [
             "2025-08-28"
           ],
-          "anchorPrice": 937.105,
+          "anchorPrice": 1016.59,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 6.5055,
+          "value": 7.0615,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 6.5055
+            "cnbc": 7.0615
           },
           "deltaPct": null
         }
       }
     },
     "TSM": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 29.9728,
+      "asOf": "2026-09-08",
+      "trailingPE": 31.1962,
       "eps": 13.7488,
       "trailingVerified": false,
-      "forwardPE": 20.9811,
+      "forwardPE": 21.8208,
       "forwardPEBasis": "NTM",
-      "forwardEps": 19.641,
+      "forwardEps": 19.656,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 1,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 29.9728,
+          "trailingPE": 31.1962,
           "eps": 13.7488,
-          "forwardPE": 20.9811,
+          "forwardPE": 21.8208,
           "forwardPEBasis": "NTM",
-          "forwardEps": 19.641
+          "forwardEps": 19.656
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 20.9811,
+          "value": 21.8208,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 20.9811
+            "cnbc": 21.8208
           },
           "deltaPct": null
         }
@@ -307,13 +307,13 @@
       "note": "TSM is a Taiwan 20-F foreign private issuer — SEC XBRL companyconcept has no quarterly EarningsPerShareDiluted facts (annual-only reporting); sec-xbrl leg not attempted for this reason, not a fetch failure."
     },
     "PLTR": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 149.2885,
+      "asOf": "2026-09-08",
+      "trailingPE": 148.5556,
       "eps": 1.1735,
       "trailingVerified": true,
-      "forwardPE": 101.9139,
+      "forwardPE": 101.4136,
       "forwardPEBasis": "NTM",
       "forwardEps": 1.719,
       "forwardVerified": false,
@@ -322,14 +322,14 @@
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 149.2885,
+          "trailingPE": 148.5556,
           "eps": 1.1735,
-          "forwardPE": 101.9139,
+          "forwardPE": 101.4136,
           "forwardPEBasis": "NTM",
           "forwardEps": 1.719
         },
         "sec-xbrl": {
-          "trailingPE": 149.74,
+          "trailingPE": 149,
           "epsUsed": 1.17,
           "quartersUsed": [
             "2026-06-30",
@@ -340,98 +340,98 @@
           "derivedQuarters": [
             "2025-12-31"
           ],
-          "anchorPrice": 175.19,
+          "anchorPrice": 174.33,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 101.9139,
+          "value": 101.4136,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 101.9139
+            "cnbc": 101.4136
           },
           "deltaPct": null
         }
       }
     },
     "NVDA": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 33.317,
-      "eps": 6.53,
+      "asOf": "2026-09-08",
+      "trailingPE": 29.1201,
+      "eps": 7.9107,
       "trailingVerified": true,
-      "forwardPE": 21.6953,
+      "forwardPE": 19.0553,
       "forwardPEBasis": "NTM",
-      "forwardEps": 10.028,
+      "forwardEps": 12.089,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 33.317,
-          "eps": 6.53,
-          "forwardPE": 21.6953,
+          "trailingPE": 29.1201,
+          "eps": 7.9107,
+          "forwardPE": 19.0553,
           "forwardPEBasis": "NTM",
-          "forwardEps": 10.028
+          "forwardEps": 12.089
         },
         "sec-xbrl": {
-          "trailingPE": 33.32,
-          "epsUsed": 6.53,
+          "trailingPE": 29.12,
+          "epsUsed": 7.91,
           "quartersUsed": [
+            "2026-07-26",
             "2026-04-26",
             "2026-01-25",
-            "2025-10-26",
-            "2025-07-27"
+            "2025-10-26"
           ],
           "derivedQuarters": [
             "2026-01-25"
           ],
-          "anchorPrice": 217.56,
+          "anchorPrice": 230.36,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 21.6953,
+          "value": 19.0553,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 21.6953
+            "cnbc": 19.0553
           },
           "deltaPct": null
         }
       }
     },
     "AMD": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 119.0424,
+      "asOf": "2026-09-08",
+      "trailingPE": 121.8882,
       "eps": 3.9181,
       "trailingVerified": true,
-      "forwardPE": 41.9707,
+      "forwardPE": 42.9663,
       "forwardPEBasis": "NTM",
-      "forwardEps": 11.113,
+      "forwardEps": 11.115,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 119.0424,
+          "trailingPE": 121.8882,
           "eps": 3.9181,
-          "forwardPE": 41.9707,
+          "forwardPE": 42.9663,
           "forwardPEBasis": "NTM",
-          "forwardEps": 11.113
+          "forwardEps": 11.115
         },
         "sec-xbrl": {
-          "trailingPE": 119.9,
+          "trailingPE": 122.77,
           "epsUsed": 3.89,
           "quartersUsed": [
             "2026-06-27",
@@ -442,31 +442,31 @@
           "derivedQuarters": [
             "2025-12-27"
           ],
-          "anchorPrice": 466.42,
+          "anchorPrice": 477.57,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 41.9707,
+          "value": 42.9663,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 41.9707
+            "cnbc": 42.9663
           },
           "deltaPct": null
         }
       }
     },
     "ARM": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 294.5888,
+      "asOf": "2026-09-08",
+      "trailingPE": 297.8379,
       "eps": 0.8464,
       "trailingVerified": false,
-      "forwardPE": 104.4575,
+      "forwardPE": 105.6096,
       "forwardPEBasis": "NTM",
       "forwardEps": 2.387,
       "forwardVerified": false,
@@ -475,14 +475,14 @@
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 294.5888,
+          "trailingPE": 297.8379,
           "eps": 0.8464,
-          "forwardPE": 104.4575,
+          "forwardPE": 105.6096,
           "forwardPEBasis": "NTM",
           "forwardEps": 2.387
         },
         "sec-xbrl": {
-          "trailingPE": 254.43,
+          "trailingPE": 257.23,
           "epsUsed": 0.98,
           "quartersUsed": [
             "2026-06-30",
@@ -493,98 +493,98 @@
           "derivedQuarters": [
             "2026-03-31"
           ],
-          "anchorPrice": 249.34,
+          "anchorPrice": 252.09,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 104.4575,
+          "value": 105.6096,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 104.4575
+            "cnbc": 105.6096
           },
           "deltaPct": null
         }
       }
     },
     "AMAT": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 42.7486,
+      "asOf": "2026-09-08",
+      "trailingPE": 39.2184,
       "eps": 11.5943,
-      "trailingVerified": false,
-      "forwardPE": 28.1182,
+      "trailingVerified": true,
+      "forwardPE": 25.6074,
       "forwardPEBasis": "NTM",
-      "forwardEps": 17.627,
+      "forwardEps": 17.757,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 42.7486,
+          "trailingPE": 39.2184,
           "eps": 11.5943,
-          "forwardPE": 28.1182,
+          "forwardPE": 25.6074,
           "forwardPEBasis": "NTM",
-          "forwardEps": 17.627
+          "forwardEps": 17.757
         },
         "sec-xbrl": {
-          "trailingPE": 46.68,
-          "epsUsed": 10.63,
+          "trailingPE": 39.27,
+          "epsUsed": 11.58,
           "quartersUsed": [
+            "2026-07-26",
             "2026-04-26",
             "2026-01-25",
-            "2025-10-26",
-            "2025-07-27"
+            "2025-10-26"
           ],
           "derivedQuarters": [
             "2025-10-26"
           ],
-          "anchorPrice": 496.17,
+          "anchorPrice": 454.71,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 28.1182,
+          "value": 25.6074,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 28.1182
+            "cnbc": 25.6074
           },
           "deltaPct": null
         }
       }
     },
     "LRCX": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 53.2902,
+      "asOf": "2026-09-08",
+      "trailingPE": 53.3735,
       "eps": 5.7641,
       "trailingVerified": true,
-      "forwardPE": 32.6221,
+      "forwardPE": 32.6592,
       "forwardPEBasis": "NTM",
-      "forwardEps": 9.416,
+      "forwardEps": 9.42,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 53.2902,
+          "trailingPE": 53.3735,
           "eps": 5.7641,
-          "forwardPE": 32.6221,
+          "forwardPE": 32.6592,
           "forwardPEBasis": "NTM",
-          "forwardEps": 9.416
+          "forwardEps": 9.42
         },
         "sec-xbrl": {
-          "trailingPE": 53.33,
+          "trailingPE": 53.41,
           "epsUsed": 5.76,
           "quartersUsed": [
             "2026-06-28",
@@ -595,47 +595,47 @@
           "derivedQuarters": [
             "2026-06-28"
           ],
-          "anchorPrice": 307.17,
+          "anchorPrice": 307.65,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 32.6221,
+          "value": 32.6592,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 32.6221
+            "cnbc": 32.6592
           },
           "deltaPct": null
         }
       }
     },
     "KLAC": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 51.1415,
+      "asOf": "2026-09-08",
+      "trailingPE": 50.6855,
       "eps": 3.6618,
       "trailingVerified": true,
-      "forwardPE": 33.8216,
+      "forwardPE": 33.4958,
       "forwardPEBasis": "NTM",
-      "forwardEps": 5.537,
+      "forwardEps": 5.541,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 51.1415,
+          "trailingPE": 50.6855,
           "eps": 3.6618,
-          "forwardPE": 33.8216,
+          "forwardPE": 33.4958,
           "forwardPEBasis": "NTM",
-          "forwardEps": 5.537
+          "forwardEps": 5.541
         },
         "sec-xbrl": {
-          "trailingPE": 51.17,
+          "trailingPE": 50.71,
           "epsUsed": 3.66,
           "quartersUsed": [
             "2026-06-30",
@@ -646,47 +646,47 @@
           "derivedQuarters": [
             "2026-06-30"
           ],
-          "anchorPrice": 187.27,
+          "anchorPrice": 185.6,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 33.8216,
+          "value": 33.4958,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 33.8216
+            "cnbc": 33.4958
           },
           "deltaPct": null
         }
       }
     },
     "MSFT": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 26.9353,
+      "asOf": "2026-09-08",
+      "trailingPE": 27.8436,
       "eps": 17.9467,
       "trailingVerified": true,
-      "forwardPE": 24.608,
+      "forwardPE": 25.408,
       "forwardPEBasis": "NTM",
-      "forwardEps": 19.644,
+      "forwardEps": 19.667,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 26.9353,
+          "trailingPE": 27.8436,
           "eps": 17.9467,
-          "forwardPE": 24.608,
+          "forwardPE": 25.408,
           "forwardPEBasis": "NTM",
-          "forwardEps": 19.644
+          "forwardEps": 19.667
         },
         "sec-xbrl": {
-          "trailingPE": 26.98,
+          "trailingPE": 27.84,
           "epsUsed": 17.95,
           "quartersUsed": [
             "2026-06-30",
@@ -697,47 +697,47 @@
           "derivedQuarters": [
             "2026-06-30"
           ],
-          "anchorPrice": 484.31,
+          "anchorPrice": 499.7,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 24.608,
+          "value": 25.408,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 24.608
+            "cnbc": 25.408
           },
           "deltaPct": null
         }
       }
     },
     "META": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 18.908,
+      "asOf": "2026-09-08",
+      "trailingPE": 21.3576,
       "eps": 28.8783,
       "trailingVerified": false,
-      "forwardPE": 17.9485,
+      "forwardPE": 20.3662,
       "forwardPEBasis": "NTM",
-      "forwardEps": 30.422,
+      "forwardEps": 30.284,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 18.908,
+          "trailingPE": 21.3576,
           "eps": 28.8783,
-          "forwardPE": 17.9485,
+          "forwardPE": 20.3662,
           "forwardPEBasis": "NTM",
-          "forwardEps": 30.422
+          "forwardEps": 30.284
         },
         "sec-xbrl": {
-          "trailingPE": 20.57,
+          "trailingPE": 23.24,
           "epsUsed": 26.54,
           "quartersUsed": [
             "2026-06-30",
@@ -748,47 +748,47 @@
           "derivedQuarters": [
             "2025-12-31"
           ],
-          "anchorPrice": 546.03,
+          "anchorPrice": 616.77,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 17.9485,
+          "value": 20.3662,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 17.9485
+            "cnbc": 20.3662
           },
           "deltaPct": null
         }
       }
     },
     "TSLA": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 351.4011,
+      "asOf": "2026-09-08",
+      "trailingPE": 354.3635,
       "eps": 0.9992,
       "trailingVerified": false,
-      "forwardPE": 185.9746,
+      "forwardPE": 204.5523,
       "forwardPEBasis": "NTM",
-      "forwardEps": 1.888,
+      "forwardEps": 1.731,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 351.4011,
+          "trailingPE": 354.3635,
           "eps": 0.9992,
-          "forwardPE": 185.9746,
+          "forwardPE": 204.5523,
           "forwardPEBasis": "NTM",
-          "forwardEps": 1.888
+          "forwardEps": 1.731
         },
         "sec-xbrl": {
-          "trailingPE": 325.11,
+          "trailingPE": 327.85,
           "epsUsed": 1.08,
           "quartersUsed": [
             "2026-06-30",
@@ -799,47 +799,47 @@
           "derivedQuarters": [
             "2025-12-31"
           ],
-          "anchorPrice": 351.12,
+          "anchorPrice": 354.08,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 185.9746,
+          "value": 204.5523,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 185.9746
+            "cnbc": 204.5523
           },
           "deltaPct": null
         }
       }
     },
     "ORCL": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 23.399,
+      "asOf": "2026-09-08",
+      "trailingPE": 25.8347,
       "eps": 6.146,
       "trailingVerified": false,
-      "forwardPE": 17.8513,
+      "forwardPE": 19.6973,
       "forwardPEBasis": "NTM",
-      "forwardEps": 8.056,
+      "forwardEps": 8.061,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 23.399,
+          "trailingPE": 25.8347,
           "eps": 6.146,
-          "forwardPE": 17.8513,
+          "forwardPE": 19.6973,
           "forwardPEBasis": "NTM",
-          "forwardEps": 8.056
+          "forwardEps": 8.061
         },
         "sec-xbrl": {
-          "trailingPE": 24.67,
+          "trailingPE": 27.23,
           "epsUsed": 5.83,
           "quartersUsed": [
             "2026-05-31",
@@ -850,33 +850,33 @@
           "derivedQuarters": [
             "2026-05-31"
           ],
-          "anchorPrice": 143.81,
+          "anchorPrice": 158.78,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 17.8513,
+          "value": 19.6973,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 17.8513
+            "cnbc": 19.6973
           },
           "deltaPct": null
         }
       }
     },
     "SNOW": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
+      "asOf": "2026-09-08",
       "trailingPE": null,
-      "eps": -3.5145,
+      "eps": -3.1744,
       "trailingVerified": false,
-      "forwardPE": 153.09,
+      "forwardPE": 133.5366,
       "forwardPEBasis": "NTM",
-      "forwardEps": 2.123,
+      "forwardEps": 2.525,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 0,
@@ -884,101 +884,101 @@
       "perSource": {
         "cnbc": {
           "trailingPE": null,
-          "eps": -3.5145,
-          "forwardPE": 153.09,
+          "eps": -3.1744,
+          "forwardPE": 133.5366,
           "forwardPEBasis": "NTM",
-          "forwardEps": 2.123
+          "forwardEps": 2.525
         },
         "sec-xbrl": {
           "trailingPE": null,
-          "epsUsed": -3.52,
+          "epsUsed": -3.18,
           "quartersUsed": [
+            "2026-07-31",
             "2026-04-30",
             "2026-01-31",
-            "2025-10-31",
-            "2025-07-31"
+            "2025-10-31"
           ],
           "derivedQuarters": [
             "2026-01-31"
           ],
-          "anchorPrice": 325.01,
+          "anchorPrice": 337.18,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 153.09,
+          "value": 133.5366,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 153.09
+            "cnbc": 133.5366
           },
           "deltaPct": null
         }
       }
     },
     "CRWD": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": null,
-      "eps": -0.0258,
+      "asOf": "2026-09-08",
+      "trailingPE": 3738.5965,
+      "eps": 0.057,
       "trailingVerified": false,
-      "forwardPE": 154.5057,
+      "forwardPE": 151.1348,
       "forwardPEBasis": "NTM",
-      "forwardEps": 1.305,
+      "forwardEps": 1.41,
       "forwardVerified": false,
       "verified": false,
-      "sourceCount": 0,
+      "sourceCount": 1,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": null,
-          "eps": -0.0258,
-          "forwardPE": 154.5057,
+          "trailingPE": 3738.5965,
+          "eps": 0.057,
+          "forwardPE": 151.1348,
           "forwardPEBasis": "NTM",
-          "forwardEps": 1.305
+          "forwardEps": 1.41
         },
         "sec-xbrl": {
           "trailingPE": null,
-          "epsUsed": -0.12,
+          "epsUsed": -0.04,
           "quartersUsed": [
+            "2026-07-31",
             "2026-04-30",
             "2026-01-31",
-            "2025-10-31",
-            "2025-07-31"
+            "2025-10-31"
           ],
           "derivedQuarters": [
             "2026-01-31"
           ],
-          "anchorPrice": 201.63,
+          "anchorPrice": 213.1,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 154.5057,
+          "value": 151.1348,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 154.5057
+            "cnbc": 151.1348
           },
           "deltaPct": null
         }
       }
     },
     "INTC": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
+      "asOf": "2026-09-08",
       "trailingPE": null,
       "eps": -2.1203,
       "trailingVerified": false,
-      "forwardPE": 55.87,
+      "forwardPE": 57.503,
       "forwardPEBasis": "NTM",
-      "forwardEps": 1.661,
+      "forwardEps": 1.666,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 0,
@@ -987,9 +987,9 @@
         "cnbc": {
           "trailingPE": null,
           "eps": -2.1203,
-          "forwardPE": 55.87,
+          "forwardPE": 57.503,
           "forwardPEBasis": "NTM",
-          "forwardEps": 1.661
+          "forwardEps": 1.666
         },
         "sec-xbrl": {
           "trailingPE": null,
@@ -1003,47 +1003,47 @@
           "derivedQuarters": [
             "2025-12-27"
           ],
-          "anchorPrice": 92.8,
+          "anchorPrice": 95.8,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 55.87,
+          "value": 57.503,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 55.87
+            "cnbc": 57.503
           },
           "deltaPct": null
         }
       }
     },
     "PANW": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 296.2207,
-      "eps": 1.2145,
-      "trailingVerified": true,
-      "forwardPE": 92.2225,
+      "asOf": "2026-09-08",
+      "trailingPE": 650.2634,
+      "eps": 0.5125,
+      "trailingVerified": false,
+      "forwardPE": 79.6701,
       "forwardPEBasis": "NTM",
-      "forwardEps": 3.901,
+      "forwardEps": 4.183,
       "forwardVerified": false,
       "verified": false,
       "sourceCount": 2,
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 296.2207,
-          "eps": 1.2145,
-          "forwardPE": 92.2225,
+          "trailingPE": 650.2634,
+          "eps": 0.5125,
+          "forwardPE": 79.6701,
           "forwardPEBasis": "NTM",
-          "forwardEps": 3.901
+          "forwardEps": 4.183
         },
         "sec-xbrl": {
-          "trailingPE": 294.89,
+          "trailingPE": 273.16,
           "epsUsed": 1.22,
           "quartersUsed": [
             "2026-04-30",
@@ -1054,31 +1054,31 @@
           "derivedQuarters": [
             "2025-07-31"
           ],
-          "anchorPrice": 359.76,
+          "anchorPrice": 333.26,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 92.2225,
+          "value": 79.6701,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 92.2225
+            "cnbc": 79.6701
           },
           "deltaPct": null
         }
       }
     },
     "SNDK": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
-      "asOf": "2026-08-20",
-      "trailingPE": 21.2882,
+      "asOf": "2026-09-08",
+      "trailingPE": 23.6103,
       "eps": 73.6968,
       "trailingVerified": true,
-      "forwardPE": 7.3169,
+      "forwardPE": 8.115,
       "forwardPEBasis": "NTM",
       "forwardEps": 214.417,
       "forwardVerified": false,
@@ -1087,14 +1087,14 @@
       "notApplicable": false,
       "perSource": {
         "cnbc": {
-          "trailingPE": 21.2882,
+          "trailingPE": 23.6103,
           "eps": 73.6968,
-          "forwardPE": 7.3169,
+          "forwardPE": 8.115,
           "forwardPEBasis": "NTM",
           "forwardEps": 214.417
         },
         "sec-xbrl": {
-          "trailingPE": 21.27,
+          "trailingPE": 23.59,
           "epsUsed": 73.76,
           "quartersUsed": [
             "2026-07-03",
@@ -1105,51 +1105,56 @@
           "derivedQuarters": [
             "2026-07-03"
           ],
-          "anchorPrice": 1568.87,
+          "anchorPrice": 1740,
           "anchorVerified": true,
           "anchorSource": "data/price-quotes.json"
         }
       },
       "forwardPEByBasis": {
         "NTM": {
-          "value": 7.3169,
+          "value": 8.115,
           "verified": false,
           "sourceCount": 1,
           "perSource": {
-            "cnbc": 7.3169
+            "cnbc": 8.115
           },
           "deltaPct": null
         }
       }
     },
     "TSMU": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
       "trailingPE": null,
       "forwardPE": null,
       "notApplicable": true,
       "reason": "Leveraged single-stock ETF (2x daily-reset TSM exposure) — P/E not meaningful, no issuer earnings",
       "expenseRatio": 0,
-      "aum": "62,605",
-      "etfBeta": 3.58,
-      "etfAsOf": "2026-08-20"
+      "aum": "66,302",
+      "etfBeta": 3.53,
+      "etfAsOf": "2026-09-08"
     },
     "SOXL": {
-      "updated": "2026-08-20",
+      "updated": "2026-09-08",
       "agent": "refresher",
       "trailingPE": null,
       "forwardPE": null,
       "notApplicable": true,
       "reason": "Leveraged ETF — PE not meaningful (NAV tracks 3x SOX basket, no issuer earnings)",
       "expenseRatio": 0.009000000000000001,
-      "aum": "21,869,541",
+      "aum": "19,867,232",
       "etfBeta": 5.73,
-      "etfAsOf": "2026-08-20"
+      "etfAsOf": "2026-09-08"
     }
   },
   "failures": [
     {
       "symbol": "MRVL",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "AVGO",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1164,7 +1169,17 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "AVGO",
+      "symbol": "TSM",
+      "source": "sec-xbrl",
+      "reason": "sec:http_404"
+    },
+    {
+      "symbol": "MU",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "NVDA",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1179,27 +1194,12 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "MU",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "TSM",
-      "source": "sec-xbrl",
-      "reason": "sec:http_404"
-    },
-    {
       "symbol": "AMD",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
       "symbol": "ARM",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "NVDA",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1215,6 +1215,11 @@
     },
     {
       "symbol": "KLAC",
+      "source": "stockanalysis",
+      "reason": "stockanalysis:extract_miss"
+    },
+    {
+      "symbol": "TSLA",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
@@ -1244,17 +1249,12 @@
       "reason": "stockanalysis:extract_miss"
     },
     {
-      "symbol": "TSLA",
+      "symbol": "INTC",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
     {
       "symbol": "PANW",
-      "source": "stockanalysis",
-      "reason": "stockanalysis:extract_miss"
-    },
-    {
-      "symbol": "INTC",
       "source": "stockanalysis",
       "reason": "stockanalysis:extract_miss"
     },
