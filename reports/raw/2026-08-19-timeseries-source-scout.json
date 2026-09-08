@@ -1,0 +1,300 @@
+{
+  "agent": "collector",
+  "collectedAt": "2026-08-19T12:00:00Z",
+  "purpose": "phase-3 source scouting: sovereign yields, memory share, NAND pricing",
+  "collectionMethod": "WebSearch (allowed_domains not used — broad queries against public search) for candidate discovery + citation snippets; WebFetch attempted once per host for the most promising government/statistical CSV endpoints and for TrendForce/DRAMeXchange press pages. Every WebFetch call in this sandbox returned error_type=EGRESS_BLOCKED at the network proxy layer (fred.stlouisfed.org, home.treasury.gov, www.mof.go.jp, data-api.ecb.europa.eu, www.bankofengland.co.uk, www.trendforce.com, dramexchange.com — all blocked). This is a sandbox-side block, not evidence the target server itself rejects the request (contrast with a 403/405). No candidate below was directly HTTP-verified from this session; all statuses are 'untested' unless a WebSearch snippet itself surfaced live page content (noted as 'search-indexed', a weaker positive signal — it shows a crawler could reach the page recently, not that a GitHub Actions datacenter IP can). A CI probe script with real egress must make the final call.",
+  "domains": {
+    "sovereign-yields": {
+      "candidates": [
+        {
+          "name": "FRED fredgraph.csv (per-series CSV, US daily constant maturity)",
+          "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
+          "format": "csv",
+          "coverage": ["US-10y (DGS10)", "US-2y (DGS2)", "US-30y (DGS30)"],
+          "historyDepth": "Full series history from inception (DGS10 back to 1962-01-02); two columns DATE,DGS10, missing days marked '.'",
+          "keyless": true,
+          "headersRequired": "None documented; no API key. Polite User-Agent recommended but not required — this is the plain graph-export CSV used by browsers, not the fred/api key-gated JSON API.",
+          "status": "untested",
+          "evidence": "Multiple independent sources (ivo-welch.org FRED CSV Gateway writeup, FRED help docs, general familiarity with the FRED graph-export mechanism) describe this exact URL shape as the key-less CSV download used by scrapers; WebFetch to fred.stlouisfed.org was sandbox-blocked so the live response was not observed this session.",
+          "notes": "Swap id= for DGS2 / DGS30. Update cadence: next business day after each print (Treasury constant-maturity daily series). This is the strongest single candidate for the US leg."
+        },
+        {
+          "name": "FRED fredgraph.csv — OECD MEI long-term (10y) government bond yield, per country",
+          "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01DEM156N",
+          "format": "csv",
+          "coverage": ["Germany-10y (IRLTLT01DEM156N)", "France-10y (IRLTLT01FRM156N)", "Italy-10y (IRLTLT01ITM156N)", "UK-10y (IRLTLT01GBM156N)", "Japan-10y (IRLTLT01JPM156N)"],
+          "historyDepth": "OECD MEI-sourced, typically multi-decade monthly history per country (varies by country, generally 1980s/1990s onward)",
+          "keyless": true,
+          "headersRequired": "Same as DGS10 above — none documented.",
+          "status": "untested",
+          "evidence": "FRED series pages confirmed via search to exist under exactly these mnemonics (IRLTLT01<CC>M156N), each labeled 'Long-Term Government Bond Yields: 10-Year: Main (Including Benchmark)', source OECD.",
+          "notes": "Important finding: this single CSV pattern is the only candidate that covers all six target countries' 10y yield through one key-less mechanism. Caveat: MONTHLY frequency (OECD MEI), not daily, and 10y only — no 2y/30y for the non-US countries via this route. Treat as the cross-country baseline/fallback tier; use country-primary sources below for daily granularity and 2y/30y."
+        },
+        {
+          "name": "US Treasury Daily Par Yield Curve — CSV export",
+          "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv",
+          "format": "csv",
+          "coverage": ["US-2y", "US-10y", "US-30y", "plus 1mo/3mo/6mo/1y/3y/5y/7y/20y in the same row"],
+          "historyDepth": "Per-year files (path segment /2026/all); archive page indexes back through prior years. Full curve, one row per trading day.",
+          "keyless": true,
+          "headersRequired": "None documented for the CSV export; the site also exposes an XML feed at a similar path.",
+          "status": "untested",
+          "evidence": "The `daily-treasury-rates.csv/{year}/all?type=...&_format=csv` shape is the pattern used by multiple public scrapers/packages (per WebSearch — e.g. dailytreasuryrates PyPI package, data-ust GitHub repo) that mirror Treasury's own 'download as CSV' link on the TextView page. WebFetch to home.treasury.gov was sandbox-blocked, not independently confirmed live this session.",
+          "notes": "Useful as a SECOND, independent US source alongside FRED DGS10/DGS2/DGS30 — gives the repo's existing 'verified=true requires >=2 independent sources within tolerance' pattern (see data/README.md) something to cross-check against for the sovereign-yield domain, same as price-quotes.json does for equities."
+        },
+        {
+          "name": "Japan MoF JGB yield CSV (current)",
+          "url": "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv",
+          "format": "csv",
+          "coverage": ["Japan-1y..40y including 2y, 10y, 30y — full curve in one row per date"],
+          "historyDepth": "Rolling recent-year file; the companion 'jgbcm_all.csv' has full history back to 1974.",
+          "keyless": true,
+          "headersRequired": "None documented — plain static CSV file served from mof.go.jp.",
+          "status": "untested",
+          "evidence": "URL and description surfaced directly in WebSearch results (page title '国債金利情報(令和7年4月25日)' linking to this exact jgbcm.csv path, plus an official English mirror jgbcme.csv). WebFetch to www.mof.go.jp was sandbox-blocked, not independently confirmed live.",
+          "notes": "Best single candidate for Japan — daily, multi-maturity, official primary source, no analyst-house involvement. English column headers available via jgbcme.csv."
+        },
+        {
+          "name": "Japan MoF JGB yield CSV (full history, 1974-present)",
+          "url": "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcm_all.csv",
+          "format": "csv",
+          "coverage": ["Japan-1y..40y, full curve, one row per date"],
+          "historyDepth": "1974 to present per WebSearch snippet describing the file.",
+          "keyless": true,
+          "headersRequired": "None documented.",
+          "status": "untested",
+          "evidence": "Surfaced via WebSearch snippet describing content and date coverage; not independently fetched.",
+          "notes": "Use for backfill/history; use jgbcm.csv or jgbcme.csv for the rolling current-period pull to keep payload small."
+        },
+        {
+          "name": "Japan MoF JGB yield CSV (English column headers, current period)",
+          "url": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv",
+          "format": "csv",
+          "coverage": ["Japan-1y..40y including 2y, 10y, 30y"],
+          "historyDepth": "Rolling recent period, English-labeled mirror of jgbcm.csv.",
+          "keyless": true,
+          "headersRequired": "None documented.",
+          "status": "untested",
+          "evidence": "Surfaced via WebSearch snippet; not independently fetched.",
+          "notes": "Prefer this over the Japanese-only jgbcm.csv purely for column-header readability in a Node parser; same underlying data."
+        },
+        {
+          "name": "ECB Data Portal SDW REST API — estimated euro area AAA yield curve (YC dataset)",
+          "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=5&format=csvdata",
+          "format": "csv",
+          "coverage": ["Euro area (AAA-rated) estimated spot yield — NOT country-specific; would cover a euro-area benchmark, not Germany/France/Italy individually"],
+          "historyDepth": "Daily, published since the curve estimation began (multi-year); lastNObservations= param controls how much history is returned per call.",
+          "keyless": true,
+          "headersRequired": "None documented for data-api.ecb.europa.eu (successor to the deprecated sdw-wsrest.ecb.europa.eu, redirects retired Oct 2025 per WebSearch).",
+          "status": "untested",
+          "evidence": "Exact URL shape surfaced verbatim in a WebSearch result (GitHub econ_data/APIs/ECB.ipynb example), matching documented SDMX 2.1 REST conventions (service/data/{flow}/{key}?format=csvdata).",
+          "notes": "IMPORTANT CAVEAT: the YC dataset is the ECB's own estimated euro-area curve (AAA collateral), not a per-country France/Germany/Italy yield. It is the wrong dataset for country-level 10y comparison — flagging so the probe doesn't waste a cycle confirming the wrong series. Use Eurostat irt_lt_mcby_m (below) or FRED IRLTLT01<CC>M156N for country-level euro-area yields instead."
+        },
+        {
+          "name": "Eurostat API — EMU convergence-criterion bond yields (per country, monthly)",
+          "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_lt_mcby_m?format=JSON&lang=EN",
+          "format": "json",
+          "coverage": ["Germany-~10y", "France-~10y", "Italy-~10y", "plus all other EU/EEA member states in one call"],
+          "historyDepth": "Monthly, multi-year (Eurostat databrowser shows long-run monthly series per country).",
+          "keyless": true,
+          "headersRequired": "None documented — Eurostat's dissemination API (JSON-stat 2.0) is publicly key-less and widely used by third-party tools (DBnomics mirrors this exact dataset).",
+          "status": "untested",
+          "evidence": "Dataset code irt_lt_mcby_m confirmed via WebSearch (Eurostat databrowser product page + DBnomics mirror Eurostat/irt_lt_mcby_m/M.MCBY.AT); exact REST URL pattern is Eurostat's documented dissemination API shape, not independently fetched this session.",
+          "notes": "Response is JSON-stat (nested dims/values), needs a small parser (~20 lines, no npm dep needed) — more parsing work than a flat CSV but still zero-dependency-friendly. Monthly cadence and 'around 10 years residual maturity' only — same 2y/30y gap as the FRED OECD route. This and FRED-IRLTLT01 are likely reporting the same underlying OECD/Eurostat series — good redundant pair for a >=2-source verified flag on DE/FR/IT specifically."
+        },
+        {
+          "name": "Eurostat API — central government bond yields, higher-frequency/more maturities (unconfirmed maturity breadth)",
+          "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_h_cgby?format=JSON&lang=EN",
+          "format": "json",
+          "coverage": ["EU member state central government bond yields — maturity breakdown not confirmed"],
+          "historyDepth": "Unconfirmed — metadata page (irt_h_cgby_esms.htm) exists but was not fetched.",
+          "keyless": true,
+          "headersRequired": "None documented (same Eurostat API family as above).",
+          "status": "untested",
+          "evidence": "Dataset code and metadata page URL surfaced via WebSearch only; contents/maturity breakdown not verified.",
+          "notes": "Lower-confidence candidate — listed because the 'h' (harmonised/higher-frequency) naming suggests it might carry more maturities than irt_lt_mcby_m, but this is a guess. Probe should fetch the metadata ESMS page first to check maturity coverage before wiring this in."
+        },
+        {
+          "name": "Bank of England IADB — CSV query interface",
+          "url": "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&SeriesCodes=IUAAMNPY&UsingCodes=Y&CSVF=TN&Datefrom=01/Jan/2024&Dateto=01/Jan/2027",
+          "format": "csv",
+          "coverage": ["UK — exact 2y/10y/30y series codes NOT yet confirmed; IUAAMNPY (found via search) is an ANNUAL AVERAGE 10y nominal par yield series, not the daily spot/par curve needed"],
+          "historyDepth": "Unknown per-series; the query mechanism supports arbitrary Datefrom/Dateto ranges.",
+          "keyless": true,
+          "headersRequired": "None documented.",
+          "status": "untested",
+          "evidence": "URL query shape (SeriesCodes=, UsingCodes=Y, CSVF=TN/TT/CN/CT, csv.x=yes) confirmed via WebSearch (R package 'boe' documentation, CRAN). The specific series code used here (IUAAMNPY) was also surfaced via search but is annual-average, not daily — placeholder for the probe to replace once it browses the BoE 'Nominal par yield, 10 year' category (CategId=6, NewMeaningId=RNPY10, reachable at https://www.bankofengland.co.uk/boeapps/database/FromShowColumns.asp?Travel=NIxAZxI1x&FromCategoryList=Yes&NewMeaningId=RNPY10&CategId=6) to find the correct daily series codes for 2y/10y/30y nominal spot.",
+          "notes": "WEAKEST-CONFIRMED candidate of the six countries. Separately, BoE also publishes full daily gilt yield curves (spot + instantaneous forward, multiple tenors) as downloadable spreadsheets at bankofengland.co.uk/statistics/yield-curves — but WebSearch results describe these as spreadsheet downloads (XLS/XLSX), which a zero-npm-dependency Node scraper cannot parse without a bundled XLSX parser. The IADB CSV route above is scraper-friendly IF the right series codes are found; the spreadsheet route is richer but likely not zero-dependency-parseable. Probe should try the IADB CSV route first and only fall back to noting the XLSX route as curated/manual."
+        },
+        {
+          "name": "IUAAMNPY reference series code for context",
+          "url": "https://www.bankofengland.co.uk/boeapps/database/FromShowColumns.asp?Travel=NIxAZxI1x&FromCategoryList=Yes&NewMeaningId=RNPY10&CategId=6&HighlightCatValueDisplay=Nominal+par+yield,+10+year",
+          "format": "csv",
+          "coverage": ["UK-10y nominal par yield category landing page — used to discover the correct series code, not itself the data endpoint"],
+          "historyDepth": "n/a — landing/discovery page",
+          "keyless": true,
+          "headersRequired": "None documented.",
+          "status": "untested",
+          "evidence": "Surfaced via WebSearch as the BoE database category page for 'Nominal par yield, 10 year'.",
+          "notes": "Probe should visit this page to enumerate the exact daily series code(s), then construct the _iadb-fromshowcolumns.asp CSV query with the confirmed code(s) for 2y/10y/30y."
+        }
+      ]
+    },
+    "memory-share": {
+      "candidates": [
+        {
+          "name": "TrendForce Press Center — quarterly DRAM/NAND market share press releases",
+          "url": "https://www.trendforce.com/presscenter/news/20260601-13070.html",
+          "format": "html (unstructured prose, no table/JSON)",
+          "coverage": ["Samsung", "SK Hynix", "Micron — quarterly DRAM and NAND revenue share %, published free"],
+          "historyDepth": "Per-release, one quarter at a time; press center archive (trendforce.com/presscenter) goes back years but each entry is a separate page requiring its own fetch.",
+          "keyless": true,
+          "headersRequired": "None documented — these are public marketing/PR pages (not the paywalled 'research report' downloads), unlike the priced DRAMeXchange intelligence portal.",
+          "status": "search-indexed",
+          "evidence": "WebSearch itself returned verbatim quarter-over-quarter share numbers pulled from this exact press release URL and sibling releases (e.g. 'Samsung retained its leading position in 1Q26 ... market share to 38.5%. SK hynix ... 28.8%... Micron ... 22.4%' from https://www.trendforce.com/presscenter/news/20260601-13070.html), meaning a crawler reached and indexed the full page text recently. Direct WebFetch to www.trendforce.com was sandbox-blocked this session, so live reachability from a GitHub Actions IP is not confirmed.",
+          "notes": "The numbers exist in free, key-less HTML — but as narrative prose ('Samsung ... increasing market share to 38.5%'), not a consistent table/JSON schema across releases. A regex/text scraper is technically possible but fragile (release-to-release wording varies, ordering of vendors varies, sometimes only 2 of 3 vendors are mentioned in a given release). Recommend treating this as a semi-automatable source: a scraper CAN fetch+regex-extract as a best-effort signal, but a human/collector should verify each quarter's numbers against the source page before they're trusted as validator-stamped data."
+        },
+        {
+          "name": "Counterpoint Research — free insight blog pages (quarterly DRAM/HBM/NAND share)",
+          "url": "https://counterpointresearch.com/en/insights/global-dram-and-hbm-market-share",
+          "format": "html (prose + embedded chart, no JSON API observed)",
+          "coverage": ["Samsung", "SK Hynix", "Micron — DRAM, HBM and NAND market share, quarterly"],
+          "historyDepth": "Rolling — page appears to be updated in place each quarter based on the 'Quarterly' page title; no separate historical archive endpoint identified.",
+          "keyless": true,
+          "headersRequired": "None documented — public insights blog, no login wall evident from search snippets.",
+          "status": "untested",
+          "evidence": "URL and title ('Global DRAM and HBM Market Share: Quarterly', 'Global NAND Memory Market Share: Quarterly') surfaced via WebSearch; secondary outlets (Sammy Fans, TechTimes, Seoul Economic Daily) cite specific numbers attributed to Counterpoint, suggesting the underlying figures are public even if picked up second-hand. Not independently fetched — WebFetch not attempted for this host (out of the one-try-per-host budget prioritized toward government sources).",
+          "notes": "Same caveat as TrendForce: likely prose/chart, not structured data. Good secondary cross-check source for whatever the collector curates from TrendForce."
+        },
+        {
+          "name": "SEC EDGAR full-text search — 10-K/10-Q market-share mentions (Micron only; SK Hynix/Samsung don't file with SEC)",
+          "url": "https://efts.sec.gov/LATEST/search-index?q=%22market+share%22&forms=10-K&dateRange=custom&startdt=2026-01-01&enddt=2026-08-19&entityName=Micron+Technology",
+          "format": "json",
+          "coverage": ["Micron only — SK Hynix and Samsung Electronics are Korean issuers and do not file 10-K/8-K with the SEC"],
+          "historyDepth": "Full-text search covers EDGAR filings from 2001 onward.",
+          "keyless": true,
+          "headersRequired": "SEC requires a descriptive User-Agent with contact info on all EDGAR requests (per repo's own scripts/README note on SEC conventions) — same requirement as any other EDGAR pull.",
+          "status": "untested",
+          "evidence": "EDGAR full-text search API endpoint shape is well-documented (efts.sec.gov/LATEST/search-index) but not fetched this session.",
+          "notes": "Even where present, US filers' risk-factor language about competitors' share is almost always qualitative ('we compete with...', 'we may lose market share') rather than a quantified %. Low expected yield for this specific domain; listed for completeness since the task asked to check IR/filings."
+        },
+        {
+          "name": "Samsung Electronics / SK Hynix IR earnings decks (PDF, quarterly)",
+          "url": "https://www.samsung.com/global/ir/reports-disclosures/audited-financial-statements/ (search landing — no stable direct-link pattern found)",
+          "format": "pdf",
+          "coverage": ["Samsung's own qualitative characterization of its position; rarely a quantified market-share %"],
+          "historyDepth": "Quarterly IR decks, several years of archive typically available.",
+          "keyless": true,
+          "headersRequired": "None documented, but PDF parsing is out of scope for a zero-npm-dependency Node scraper without a bundled PDF text extractor.",
+          "status": "untested",
+          "evidence": "Not fetched; general knowledge that both companies' earnings calls/decks discuss competitive position qualitatively.",
+          "notes": "Not a realistic automation target given (a) PDF format with no zero-dep parser in this repo's toolchain, and (b) companies rarely disclose a precise, analyst-house-comparable % figure themselves."
+        }
+      ],
+      "verdict": "mixed — leaning curated",
+      "reasoning": "The share numbers themselves ARE published free (TrendForce press-center marketing pages, Counterpoint insight blog) and are technically fetchable key-lessly with a plain HTTP GET — this is not a hard paywall like the DRAMeXchange intelligence portal. But the data arrives as inconsistent narrative prose embedded in HTML, not a stable table/JSON schema, and publication cadence/wording varies release to release. A Node scraper could attempt best-effort regex extraction as a secondary/flagged signal, but given this repo's standing rule that 'every conclusion must be fact-verification based' and the validator's >=2-source tolerance-check pattern, the safer design is: collector fetches the raw press-release HTML/text into reports/raw/ each quarter (mechanical, low-risk), and a human (or the validator, reading the rawExcerpt) transcribes the actual share % into data/*.json rather than trusting an automated regex parse as ground truth. Company IR/SEC filings do not supply the quantified % and are not a workable substitute."
+    },
+    "nand-pricing": {
+      "candidates": [
+        {
+          "name": "TrendForce DRAM Price Trends page",
+          "url": "https://www.trendforce.com/price/dram/dram_spot",
+          "format": "html — public layer appears to be a summary/index chart, not a raw priced table",
+          "coverage": ["DRAM spot price trend — depth of free data unconfirmed"],
+          "historyDepth": "Unconfirmed from free tier.",
+          "keyless": true,
+          "headersRequired": "None documented for the public page; underlying detailed multi-part pricing is described elsewhere as 'Gold+ Member' gated.",
+          "status": "untested",
+          "evidence": "URL surfaced via WebSearch; snippet did not reveal actual price figures, suggesting either a chart-only public view or partial gating. WebFetch to www.trendforce.com sandbox-blocked.",
+          "notes": "Likely a marketing/summary view of the paid DRAMeXchange price database — probe should confirm whether numeric values are present in the raw HTML or only rendered client-side from a gated API call."
+        },
+        {
+          "name": "DRAMeXchange Market Activity page (free layer)",
+          "url": "https://www.dramexchange.com/Market/market_activity",
+          "format": "html — 'Monthly Worldwide DRAM output, DXI, Daily Express' per page title; depth unconfirmed",
+          "coverage": ["Aggregate market activity indices; not per-part contract/spot price"],
+          "historyDepth": "Unconfirmed.",
+          "keyless": true,
+          "headersRequired": "None documented.",
+          "status": "untested",
+          "evidence": "WebSearch snippet noted 'spot index data is available from free primary sources' and 'DRAMeXchange spot snapshot provides mainstream DDR4 pricing information' but also that detailed contract prices are 'available to Gold+ Members' — i.e., mixed free/paid within the same site. Not fetched.",
+          "notes": "Best-effort free layer for a coarse DDR4 spot indicator only; not a substitute for full contract-price granularity by density/speed grade."
+        },
+        {
+          "name": "api.dramexchange.com (WitsView infrastructure) — unconfirmed nature",
+          "url": "https://api.dramexchange.com/intelligence/",
+          "format": "unknown",
+          "coverage": ["Unknown — could be the same subscriber portal under a different subdomain, or a genuine API"],
+          "historyDepth": "Unknown.",
+          "keyless": false,
+          "headersRequired": "Unknown — likely requires login given the 'intelligence'/WitsView branding matches TrendForce's paid research-portal product line.",
+          "status": "untested",
+          "evidence": "Subdomain surfaced via WebSearch (title 'WitsView Market Status' / 'WitsView - TFT-LCD market research, panel price, street price') alongside dramexchange.com. Not fetched; naming strongly suggests this is the same paid portal, not a public API.",
+          "notes": "Low-confidence, low-priority — flagged only so the probe doesn't waste time assuming 'api.' implies open/free."
+        },
+        {
+          "name": "FRED/BLS Producer Price Index — Semiconductor & Electronic Component Manufacturing (macro proxy only)",
+          "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCU33443344",
+          "format": "csv",
+          "coverage": ["Broad semiconductor/electronic-component PPI — NOT DRAM/NAND-specific"],
+          "historyDepth": "Monthly, multi-decade (Index Dec-1984=100).",
+          "keyless": true,
+          "headersRequired": "None documented (same fredgraph.csv mechanism as the sovereign-yields FRED candidates).",
+          "status": "untested",
+          "evidence": "Series ID and description confirmed via WebSearch (FRED tag pages, TradingView mirror); sub-series like PCU3344133344131 (integrated circuit packages) exist but none map cleanly to 'DRAM' or 'NAND' specifically.",
+          "notes": "Not a real substitute for contract/spot memory pricing — it's a lagging, broad-category PPI blending many electronic components. Only useful as a very rough macro sanity-check trend line, explicitly NOT as a DRAM/NAND price series. Including for completeness since it is genuinely key-less and CSV, in case a directional macro proxy is ever wanted."
+        },
+        {
+          "name": "TrendForce Press Center — QoQ % price-change commentary (same mechanism as memory-share domain)",
+          "url": "https://www.trendforce.com/presscenter/news/20260602-13074.html",
+          "format": "html (prose)",
+          "coverage": ["Qualitative/percentage QoQ price-change commentary for DRAM/NAND/HBM contract prices, no absolute $ price levels"],
+          "historyDepth": "Per-release, quarterly cadence.",
+          "keyless": true,
+          "headersRequired": "None documented (same public press-center pages as memory-share domain).",
+          "status": "search-indexed",
+          "evidence": "WebSearch snippets surfaced specific QoQ % figures directly from TrendForce press-center headlines/bodies (e.g. '1Q26 conventional DRAM contract prices to rise 58-63% QoQ and NAND Flash 70-75% QoQ').",
+          "notes": "Same fetchability/parsing caveat as the memory-share domain: free HTML, but prose not structured data, and gives % change commentary rather than an absolute price level or index a scraper could chart. Best treated as curated quarterly entries, same workflow as memory-share."
+        }
+      ],
+      "verdict": "curated-only",
+      "reasoning": "No key-less, machine-readable (CSV/JSON) endpoint was found that returns actual DRAM/NAND contract or spot price LEVELS. The primary source (DRAMeXchange/TrendForce) gates the priced, per-part-number tables behind paid 'Gold+' membership; the free layer is limited to summary charts/indices of unconfirmed depth and to prose QoQ%-change commentary in press releases (same fragile-HTML pattern as memory-share). The one genuinely key-less numeric time series found (BLS/FRED semiconductor PPI) is too broad a category to stand in for DRAM/NAND pricing specifically. Recommend this domain stay a manual/curated quarterly entry sourced from the TrendForce press-center commentary (percentage change only, not absolute price) with the collector recording the rawExcerpt for validator self-verification, same as the memory-share domain — do not build an automated price-level scraper against this data source."
+    }
+  },
+  "recommendedProbe": [
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01DEM156N",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01FRM156N",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01ITM156N",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01GBM156N",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01JPM156N",
+    "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv",
+    "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv",
+    "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv",
+    "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcm_all.csv",
+    "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_lt_mcby_m?format=JSON&lang=EN",
+    "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_h_cgby?format=JSON&lang=EN",
+    "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=5&format=csvdata",
+    "https://www.bankofengland.co.uk/boeapps/database/FromShowColumns.asp?Travel=NIxAZxI1x&FromCategoryList=Yes&NewMeaningId=RNPY10&CategId=6&HighlightCatValueDisplay=Nominal+par+yield,+10+year",
+    "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&SeriesCodes=IUAAMNPY&UsingCodes=Y&CSVF=TN&Datefrom=01/Jan/2024&Dateto=01/Jan/2027",
+    "https://www.trendforce.com/presscenter/news/20260601-13070.html",
+    "https://www.trendforce.com/presscenter",
+    "https://counterpointresearch.com/en/insights/global-dram-and-hbm-market-share",
+    "https://counterpointresearch.com/en/insights/global-nand-memory-market-share",
+    "https://www.trendforce.com/price/dram/dram_spot",
+    "https://www.dramexchange.com/Market/market_activity",
+    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCU33443344"
+  ],
+  "failures": [
+    { "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by this session's network egress proxy (sandbox-side, not a server response)", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=5&format=csvdata", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://www.bankofengland.co.uk/boeapps/database/Bank-Rate.asp", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://www.trendforce.com/presscenter/news/20260601-13070.html", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://www.trendforce.com/price/dram/dram_spot", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" },
+    { "url": "https://dramexchange.com/", "status": "fetch-failed", "reason": "EGRESS_BLOCKED by network egress proxy", "attemptedAt": "2026-08-19T12:00:00Z" }
+  ]
+}

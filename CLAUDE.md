@@ -28,6 +28,13 @@ This repo is the working dashboard behind Daniel's **LLM Wiki Trading OS**
   (Codex) sessions, plus a GitHub Actions bot. Follow the conventions in this
   file strictly and append to `SESSION_LOG.md` so cross-tool sessions can
   reconstruct state.
+- **Work-start declaration (착수 선언)**: before beginning any multi-step
+  session, append a one-line start entry to `SESSION_LOG.md` (mark it `⏳`)
+  naming the scope and branch, and push it early. Append the completion
+  summary as a separate line when done — never edit the start line (the log
+  is append-only). A tool seeing another tool's open `⏳` entry must not
+  start overlapping work. (Added 2026-08-18 after a Claude/Codex duplicate
+  implementation of the watchlist view.)
 
 ## Coding Behavior — Karpathy Guidelines
 
@@ -103,6 +110,12 @@ Strong success criteria let me loop independently. Weak criteria ("make it work"
 │   ├── scrape-quotes.mjs         # quotes → data/price-quotes.json + reports/raw/ drop
 │   ├── scrape-news.mjs           # headlines → data/news-feed.json (verified=false)
 │   ├── verify-quotes.mjs         # cross-source verify pass → reports/validation/ drop
+│   ├── validate-data.mjs         # read-only integrity gate (no network, no writes)
+│   ├── test/                     # fixture suite — runs BEFORE the live pass in CI
+│   ├── commit-refresh.sh         # the cron's writer — guard, stage, commit, replay-on-reject
+│   ├── merge-yields-shard.mjs    # per-(country,tenor,date) merge for a replayed history shard
+│   ├── merge-keyed-records.mjs   # per-record delta merge for a replayed quotes/fundamentals table
+│   ├── local/sync-vault.mjs      # LOCAL ONLY — reports → Obsidian vault, one-way
 │   └── lib/io.mjs                # readJson / writeJsonAtomic / timeouts / semaphore
 ├── .github/workflows/data-refresh.yml  # cron 11:00 & 21:00 UTC weekdays → commits to main
 ├── .claude/agents/               # 9 subagents (see orchestration below)
@@ -132,8 +145,10 @@ planner → (architect* → builder*) → collector → validator → evaluator 
 
 ### Lane 2 — Automated refresh (GitHub Actions + refresher/comparator agents)
 
-`data-refresh.yml` runs the three scripts twice each weekday (pre-market +
+`data-refresh.yml` runs five scripts twice each weekday (pre-market +
 post-close) and commits changed data as `data-refresh-bot` **directly to main**.
+Quotes, news, verify and yields run on both slots; fundamentals only on the
+post-close slot.
 The `refresher` agent runs the same scripts interactively ("quotes look stale");
 the `comparator` agent diffs any two quote feeds (e.g. Kapture import vs scrape).
 Refresh updates `currentPrice`-type fields only — **FV bands never move on a
@@ -172,17 +187,63 @@ price refresh**; that requires the evaluator.
 python3 -m http.server 8765
 
 # Run the refresh pipeline manually (same as CI)
-node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs
+node scripts/scrape-quotes.mjs && node scripts/scrape-news.mjs && node scripts/verify-quotes.mjs \
+  && node scripts/scrape-yields.mjs && node scripts/scrape-fundamentals.mjs
+
+# Tests first, then the committed data layer (what CI runs)
+node scripts/test/validate-data.test.mjs && node scripts/test/scrape-news.test.mjs \
+  && node scripts/test/commit-refresh.test.mjs && node scripts/validate-data.mjs
 
 # Validate JSON
-for f in data/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f'))" && echo OK $f; done
+find data -name '*.json' -print0 | while IFS= read -r -d '' f; do node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" && echo OK "$f"; done
 
 # Syntax-check inline scripts
 node -e "const html=require('fs').readFileSync('index.html','utf8');[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].forEach((m,i)=>{try{new Function('async function __(){'+m[1]+'}');console.log('script',i,'OK')}catch(e){console.log('script',i,e.message)}})"
 ```
 
-There is no test suite or linter — the JSON-validate and script-syntax checks
-above are the verification gate, plus loading the page and watching the console.
+There is no linter. The verification gate is `scripts/validate-data.mjs` —
+read-only integrity checks over the committed data layer — plus three test suites
+in `scripts/test/`, and `.github/workflows/validate.yml` runs all four on every
+PR and on every push except to `main`.
+
+The tests run **first**: a green pass over live data proves nothing if the
+checks themselves have been weakened.
+
+- `validate-data.test.mjs` covers the READER — 29 cases over 28 fixture files,
+  each either a recorded shape this repo shipped (16) or a minimal construction
+  of a defect path the code actually permitted (12, each verified by reproducing
+  `fail: []` against the pre-fix check). Every must-fail case pins the expected
+  failure *reason*, so a check cannot be weakened and still pass on a
+  technicality. One case is not a fixture at all but a wiring assertion over
+  `data-refresh.yml`.
+- `scrape-news.test.mjs` covers the news-feed WRITER, which had no tests at all
+  while it shipped three ways to destroy the feed inside a run that exited 0. It
+  runs no network: the fail-closed cases refuse before the scrape, and the
+  append case drives `main()` against a stubbed `fetch`.
+- `commit-refresh.test.mjs` covers `scripts/commit-refresh.sh`, the cron's own
+  writer. **Four files under `data/` are keyed collections, not snapshots**, and
+  restoring any of them wholesale on replay drops records a concurrent run
+  wrote — with the validator passing every time, because a collection missing an
+  entry it never saw is still a valid file. This was found four separate times;
+  assume a new data file has the same shape until checked. The rules:
+  `news-feed.json` unions by id keeping the earliest `collectedAt`;
+  `data/history/yields-YYYY.json` upserts per `(country, tenor, date)`;
+  `price-quotes.json` and `fundamentals.json` share the
+  `{ …meta, <container>: { ticker: record } }` shape and take origin's table
+  with only the records this run changed laid over it. `yields-latest.json` is
+  DERIVED and must be rebuilt, never restored. Everything else in the scoped
+  paths is a real snapshot where this run's copy wins. It builds a scratch repository with a real `origin`, runs the script,
+  and asserts on what git ends up holding — whether HEAD moved, what the commit
+  contains, what was left staged, and that a rejected push replays and
+  re-validates. That writer used to live inline in `data-refresh.yml` and was
+  tested by pattern-matching the YAML; **every round of that was bypassable**
+  (`git -c … commit -am`, a line continuation, a decoy `if`, a guard wrapped in
+  `if false`, and CRLF), which is why it is a file now. Do not move it back
+  inline — a regex over a shell script cannot say what the script does.
+
+Add a case with every new invariant, on whichever side owns it. The
+JSON-validate and script-syntax checks above still apply, plus loading the page
+and watching the console.
 
 ## Git workflow
 
@@ -193,10 +254,67 @@ above are the verification gate, plus loading the page and watching the console.
   long-lived branch, fetch and rebase; conflicts in `data/price-quotes.json`,
   `data/news-feed.json`, `reports/raw/`, `reports/validation/` should be
   resolved by taking the newer bot data or re-running the scripts — never
-  hand-merged.
+  hand-merged. **"Newer" means newer output of the same scraper.** If the
+  branch changes a scraper, `main`'s bot data is newer by clock but is the
+  old code's output — take the branch's, and let the bot regenerate after
+  merge. (2026-08-20: main's `price-quotes.json` was 43 min newer and
+  0/27 verified against the branch's 27/29.)
 - Never commit localStorage exports — they live in the user's browser. To
   persist, the user clicks "JSON 내보내기" and commits the contents of
   `data/assets-history.json` manually.
+
+## Repo and vault — one boundary, one direction
+
+The Obsidian vault (`D:\Obsidian\Trading_OS\Trading_OS`) and this repo are
+**not** two halves of one store, and must not be merged:
+
+- **Repo** — the data pipeline, the dashboard, and the analyst reports. Most of
+  it is machine-written: cron-scraped data, bot commits, generated drops.
+- **Vault** — canon. Hand-authored, where judgments live, and the thing the
+  standing quality bar ("fact-verification based") is ultimately about.
+
+The verification discipline depends on those staying distinguishable. A
+cron-written price table sitting inside the knowledge base would be
+indistinguishable from a stamped conclusion the moment someone reads it a month
+later.
+
+**Data flows repo → vault only.** The interpreter's `reports/YYYY-MM/*.md` and
+relay-canon blocks go out to the vault; nothing in the vault flows back into
+generated data. `scripts/local/sync-vault.mjs` implements exactly that and
+nothing more.
+
+A report opts in by carrying one marker near its top:
+
+```
+<!-- VAULT-WRITE target="01_Daily_Market/2026-08-19.md" from="## §7." to="## 이 저장소 쪽 연결" -->
+```
+
+The sync appends the named block with a provenance comment and skips any target
+that already carries it, so re-running is safe and vault-side edits survive.
+
+**It is currently pinned to dry run and writes nothing.** The write path is
+implemented; the entry point does not reach it. The rails it carries came from a
+read-only audit, and they are not yet what Trading OS governance requires of a
+canon writer — the vault fingerprint accepts any one of three markers rather
+than all three, containment is lexical so a Windows junction inside the vault
+still escapes it, `appendFile` races a concurrent Obsidian save, and there is no
+target allowlist, no approval reference and no receipt of what landed. Run it to
+see what it *would* do. Un-pinning is Daniel's decision and needs those rails
+plus behavioural tests of their own — not a follow-up commit.
+
+### What runs where
+
+| | remote session / CI | local Claude Code |
+|---|---|---|
+| scrapers, validator, fixtures | yes | yes |
+| dashboard (`python3 -m http.server`) | yes | yes |
+| **vault sync (dry run only)** | **no — no D: drive** | **yes, only here** |
+
+Vault access is the only thing local can do that a remote session cannot.
+Everything else in this repo is zero-dependency Node and a static HTML file, so
+it behaves identically in both. `scripts/local/` is excluded from
+`data-refresh.yml` on purpose and exits non-zero when the vault is unreachable —
+in CI that exit is the guard working, not a failure.
 
 ## Known non-goals
 
@@ -212,14 +330,33 @@ above are the verification gate, plus loading the page and watching the console.
 
 ## Gotchas
 
-- **Quote sources drifted from the docs.** `data/README.md` and the
-  refresher/comparator agent files still say "Yahoo + Saveticker", but the
-  actual sources are **Stooq (primary) + NASDAQ public API + Yahoo v8 chart
-  (fallback)** for quotes and **Google News RSS** for headlines — Saveticker
-  403s non-browser UAs and Yahoo v7 requires crumb auth. The header comments
-  in `scripts/*.mjs` are authoritative on source selection and rate limits.
+- **The refresher/comparator agent files still name dead sources.**
+  `.claude/agents/refresher.md` and `.claude/agents/comparator.md` describe
+  "Yahoo + Saveticker". All three of those are gone: Saveticker 403s
+  non-browser UAs, and **Yahoo and Stooq were removed 2026-08-18** after a
+  runner-IP probe found Yahoo 429ing the first request of every run from a
+  freshly warmed cookie, and Stooq's endpoint returning a branded 404 on both
+  stooq.com and the .pl mirror (`reports/validation/2026-08-18-source-probe.md`).
+  The live roster is **NASDAQ + Cboe + CNBC** for quotes, **CNBC + SEC XBRL +
+  stockanalysis + NASDAQ** for fundamentals, and **Google News RSS** for
+  headlines. `data/README.md` was corrected in that pass; the two agent files
+  were not. The header comments in `scripts/*.mjs` are authoritative on source
+  selection and rate limits.
 - **`data/news-feed.json` is multi-MB** (cron-appended). Never read it whole
-  into context — slice with `node -e` / `grep` by ticker or date.
+  into context — slice with `node -e` / `grep` by ticker or date. When two
+  writers merge it, run `node scripts/dedupe-news-feed.mjs` — **including
+  when git reports no conflict**, because a clean textual merge keeps both
+  copies of an id whose `collectedAt` differs. The rule is earliest
+  `collectedAt` wins, not first-in-array: `collectedAt` records when a run
+  first saw the item, and array order is whatever git chose. Validator check
+  [7] asserts the result (ids unique) but cannot assert the retention — once
+  the later copy is dropped, the evidence it existed is gone. **Then stage it
+  again**: `git merge` has already staged the feed, and the dedupe rewrites the
+  worktree, so a `git commit` after it ships the pre-dedupe bytes while the
+  validator — which reads the worktree — reports the deduped count and passes.
+  Verify the commit, not the checkout: `git show HEAD:data/news-feed.json`.
+  (2026-09-02: `7c769f2` was pushed with 9,696 items and a duplicate id behind
+  a green local gate.)
 - **`valuation-dashboard-v3.6.html` is legacy.** It predates `index.html` and
   is kept for reference; new work goes in `index.html` only.
 - **Never edit `data/price-quotes.json` by hand** — always go through the

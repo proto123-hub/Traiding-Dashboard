@@ -1,0 +1,25 @@
+{
+  "note": "The corrected shape: same claim, provenance declared. Must PASS.",
+  "portfolio": { "asOf": "2026-05-05" },
+  "riskScores": {
+    "portfolioBasis": { "asOf": "2026-05-05", "status": "BROKER-REFRESH-REQUIRED" },
+    "scores": {
+      "MRVL": {
+        "score": 33,
+        "risks": [
+          { "tag": "concentration", "severity": "medium", "provisional": true,
+            "basis": "data/portfolio-current.json asOf 2026-05-05 (share counts); data/price-quotes.json 2026-08-19 (prices, verified)",
+            "note": "MODEL / PROVISIONAL (BROKER-REFRESH-REQUIRED) — MRVL crossed >20% of book = 21.05%." },
+          { "tag": "macro", "severity": "medium", "note": "AI chip export restrictions curbing datacenter rev, +8 pts" }
+        ]
+      },
+      "LRCX": {
+        "score": 40,
+        "risks": [
+          { "tag": "concentration", "severity": "low",
+            "note": "Customer capex concentration in Samsung/SK Hynix/Micron memory cycles" }
+        ]
+      }
+    }
+  }
+}

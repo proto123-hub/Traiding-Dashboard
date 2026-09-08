@@ -1,0 +1,70 @@
+name: validate
+
+# Attaches a check to the commit being reviewed. data-refresh.yml cannot do
+# this: it commits its own output, so its run always takes the PARENT as input
+# and produces the head — the head SHA can never carry that workflow's check.
+# This workflow fetches nothing and writes nothing, so it runs on the head
+# itself.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Script syntax
+        run: |
+          for f in scripts/*.mjs scripts/lib/*.mjs scripts/local/*.mjs; do
+            node --check "$f" && echo "OK $f"
+          done
+          for f in scripts/*.sh; do
+            bash -n "$f" && echo "OK $f"
+          done
+
+      - name: Inline dashboard scripts parse
+        run: |
+          node -e "
+            const html = require('fs').readFileSync('index.html','utf8');
+            const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+            if (!blocks.length) { console.error('no inline script found'); process.exit(1); }
+            let bad = 0;
+            blocks.forEach((m, i) => {
+              try { new Function('async function __(){' + m[1] + '}'); console.log('OK inline script ' + i); }
+              catch (e) { console.error('FAIL inline script ' + i + ': ' + e.message); bad++; }
+            });
+            process.exit(bad ? 1 : 0);
+          "
+
+      # Runs BEFORE the live check: if the checks themselves have been
+      # weakened, a green run over live data proves nothing. The fixtures are
+      # recorded shapes of bugs this repo shipped.
+      - name: Validator regression fixtures
+        run: node scripts/test/validate-data.test.mjs
+
+      # The reader has fixtures; the WRITER had none, and every defect it
+      # shipped — a rebuilt feed, a coalesced null, a truthy "0" — exited 0.
+      # Runs no network: every case either refuses before the scrape or drives
+      # main() against a stubbed fetch.
+      - name: News writer regression tests
+        run: node scripts/test/scrape-news.test.mjs
+
+      # The workflow's own writer, driven end-to-end against a scratch
+      # repository with a real origin. It replaced four rounds of
+      # pattern-matching data-refresh.yml, each of which was bypassable.
+      - name: Refresh writer end-to-end
+        run: node scripts/test/commit-refresh.test.mjs
+
+      - name: Data integrity
+        run: node scripts/validate-data.mjs

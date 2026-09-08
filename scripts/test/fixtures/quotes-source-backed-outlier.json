@@ -1,0 +1,14 @@
+{
+  "note": "RECORDED BUG SHAPE — 2026-08-18 GOOGL. A fixed source priority published NASDAQ's 342.4922 while Cboe and CNBC both said 344.00, and stamped verified:true. Two sources DO agree here (cboe/cnbc) and a source in verifiedBy DOES hold the published price (nasdaq) — each weaker phrasing of the check passes, because each is satisfied by a different pair. Must FAIL.",
+  "toleranceByClass": { "equity": 0.002, "index": 0.005, "fx": 0.001 },
+  "quotes": {
+    "GOOGL": {
+      "assetClass": "equity",
+      "price": 342.4922,
+      "verified": true,
+      "verifiedBy": ["nasdaq"],
+      "sourceCount": 3,
+      "perSource": { "nasdaq": 342.4922, "cboe": 344.0, "cnbc": 344.0 }
+    }
+  }
+}

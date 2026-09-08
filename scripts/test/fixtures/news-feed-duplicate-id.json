@@ -1,0 +1,27 @@
+{
+  "note": "RECORDED BUG SHAPE — 2026-08-24. news-feed.json is append-only and written by two merging writers, so the same id can arrive twice with different collectedAt. The workflow's replay path unions by id and a hand-resolved conflict does too, but git's TEXTUAL auto-merge does neither: different collectedAt means different lines, so a clean merge keeps both. This META item was collected 08-19 and re-collected 08-24 and survived a merge that reported no conflict. Must FAIL.",
+  "feed": {
+    "note": "Owned by collector agent; verified field set by validator. Each item must have ≥2 cross-sources to be verified=true.",
+    "updated": "2026-06-07T00:00:00Z",
+    "items": [
+      {
+        "id": "2026-08-18-meta-meta-stock-sinks-as-landmark-social-media-addiction-trial-ge",
+        "ticker": "META",
+        "collectedAt": "2026-08-19T10:28:43Z",
+        "verified": false
+      },
+      {
+        "id": "2026-08-21-mrvl-marvell-s-12-2-billion-google-deal",
+        "ticker": "MRVL",
+        "collectedAt": "2026-08-21T21:25:18Z",
+        "verified": false
+      },
+      {
+        "id": "2026-08-18-meta-meta-stock-sinks-as-landmark-social-media-addiction-trial-ge",
+        "ticker": "META",
+        "collectedAt": "2026-08-24T11:23:23Z",
+        "verified": false
+      }
+    ]
+  }
+}

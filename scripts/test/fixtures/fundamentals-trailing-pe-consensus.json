@@ -1,0 +1,17 @@
+{
+  "note": "The corrected pe-leg shape. Three sources, cnbc dissenting at 30 while stockanalysis and sec-xbrl agree near 20. The scraper used to answer 'did any pair agree?' for the flag and then publish cnbc by fixed priority — verified:true on the outlier, the same defect fixed in scrape-quotes.mjs for GOOGL. It now publishes from the cluster and names the dissenter. Must PASS.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "fundamentals": {
+    "TSM": {
+      "trailingPE": 20,
+      "trailingVerified": true,
+      "trailingVerifiedBy": ["stockanalysis", "sec-xbrl"],
+      "trailingOutlierSources": ["cnbc"],
+      "perSource": {
+        "cnbc": { "trailingPE": 30 },
+        "stockanalysis": { "trailingPE": 20 },
+        "sec-xbrl": { "trailingPE": 20.2 }
+      }
+    }
+  }
+}

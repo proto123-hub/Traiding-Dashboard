@@ -1,0 +1,15 @@
+{
+  "note": "RECORDED GAP — the scraper's resolveTrailingVerification decides the trailing flag on the EPS leg at 1% whenever two EPS figures exist, and only falls back to the P/E leg at 5% when they do not. The validator compared trailingPE at 5% unconditionally, a DIFFERENT claim: here both sources report P/E 60 off materially different EPS (6 vs 4, 50% apart), so the scraper's own rule rejects it while the validator passed. All 13 live trailing-verified symbols resolve on the EPS leg, so this was the leg that mattered. Must FAIL, naming the eps leg.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "fundamentals": {
+    "AVGO": {
+      "trailingPE": 60,
+      "eps": 6,
+      "trailingVerified": true,
+      "perSource": {
+        "cnbc": { "trailingPE": 60, "eps": 6 },
+        "sec-xbrl": { "trailingPE": 60, "epsUsed": 4 }
+      }
+    }
+  }
+}

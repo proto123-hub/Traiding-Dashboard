@@ -1,0 +1,24 @@
+{
+  "note": "Same duplicate-source defect on both fundamentals legs. One source counted twice is not corroboration. Must FAIL on both.",
+  "tolerance": { "trailingEps": 0.01, "trailingPE": 0.05, "forwardPE": 0.05 },
+  "fundamentals": {
+    "TSM": {
+      "trailingPE": 20,
+      "trailingVerified": true,
+      "trailingVerifiedBy": ["stockanalysis", "stockanalysis"],
+      "perSource": {
+        "cnbc": { "trailingPE": 30 },
+        "stockanalysis": { "trailingPE": 20 },
+        "sec-xbrl": { "trailingPE": 20.2 }
+      }
+    },
+    "GOOGL": {
+      "forwardPE": 20,
+      "forwardPEBasis": "NTM",
+      "forwardVerified": true,
+      "forwardPEByBasis": {
+        "NTM": { "value": 20, "verified": true, "sourceCount": 3, "verifiedBy": ["stockanalysis", "stockanalysis"], "perSource": { "cnbc": 30, "stockanalysis": 20, "sec-xbrl": 20.2 } }
+      }
+    }
+  }
+}
