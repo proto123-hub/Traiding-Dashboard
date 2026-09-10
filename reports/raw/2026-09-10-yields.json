@@ -1,22 +1,14 @@
 {
   "agent": "refresher",
-  "runAt": "2026-09-10T14:46:14Z",
+  "runAt": "2026-09-10T22:57:57Z",
   "asOfDate": "2026-09-10",
   "perSourceRaw": {
     "treasury": {
       "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv",
-      "rowCount": 173,
+      "rowCount": 174,
       "latest": {
         "date": "2026-01-02",
         "yield": 4.19
-      }
-    },
-    "mof": {
-      "url": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv",
-      "rowCount": 7,
-      "latest": {
-        "date": "2026-09-09",
-        "yield": 2.891
       }
     },
     "eurostat": {
@@ -24,5 +16,11 @@
       "rowCount": 1677
     }
   },
-  "failures": []
+  "failures": [
+    {
+      "country": "JP",
+      "source": "mof-jgbcme-csv",
+      "reason": "timeout:https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv"
+    }
+  ]
 }
