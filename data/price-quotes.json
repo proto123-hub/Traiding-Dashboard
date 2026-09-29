@@ -1,7 +1,7 @@
 {
   "note": "Owned by refresher agent + GitHub Actions data-refresh workflow. Sources: NASDAQ public API (primary) + Cboe delayed-quotes CDN (secondary) + CNBC restQuote (tertiary, full coverage) — see scripts/scrape-quotes.mjs header for the 2026-08-18 session-aware redesign and the Yahoo/Stooq removal rationale. quotes[sym].price/changePct/verified describe the official REGULAR-SESSION close only; a live pre/after-hours (or intraday) print, when available, is reported separately under quotes[sym].extended and is NEVER blended into the verified close. Kapture (TradingView) imports merge into perSource.kapture (regular only).",
-  "updated": "2026-09-28T18:23:42Z",
-  "asOfDate": "2026-09-28",
+  "updated": "2026-09-29T00:51:42Z",
+  "asOfDate": "2026-09-29",
   "agent": "refresher",
   "sources": [
     "nasdaq",
@@ -17,765 +17,843 @@
   },
   "quotes": {
     "GOOGL": {
-      "price": 342.62,
-      "change": -1.3,
-      "changePct": -0.378,
+      "price": 342.75,
+      "change": -1.17,
+      "changePct": -0.3402,
       "prevClose": 343.92,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 342.62,
-        "cnbc": 342.16
+        "nasdaq": 342.75,
+        "cboe": 342.75,
+        "cnbc": 342.75
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 342.23,
-        "changePct": -0.1138,
-        "verified": false,
+        "price": 342.2238,
+        "changePct": -0.1535,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 342.23,
-          "cnbc": 340.78
+          "nasdaq": 342.2238,
+          "cnbc": 342.22
         }
       }
     },
     "CLS": {
-      "price": 354.3701,
-      "change": -11.0699,
-      "changePct": -3.0292,
+      "price": 356.7,
+      "change": -8.74,
+      "changePct": -2.3916,
       "prevClose": 365.44,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 354.3701,
-        "cnbc": 352.98
+        "nasdaq": 356.7,
+        "cboe": 356.53,
+        "cnbc": 356.53
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 353.275,
-        "changePct": -0.309,
-        "verified": false,
+        "price": 355.24,
+        "changePct": -0.4093,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 353.275,
-          "cnbc": 363.65
+          "nasdaq": 355.24,
+          "cnbc": 355.32
         }
       }
     },
     "AVGO": {
-      "price": 351.2136,
-      "change": -1.5964,
-      "changePct": -0.4525,
+      "price": 349.57,
+      "change": -3.24,
+      "changePct": -0.9183,
       "prevClose": 352.81,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 351.2136,
-        "cnbc": 350.86
+        "nasdaq": 349.57,
+        "cboe": 349.57,
+        "cnbc": 349.57
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 351.04,
-        "changePct": -0.0494,
-        "verified": false,
+        "price": 349.4217,
+        "changePct": -0.0424,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 351.04,
-          "cnbc": 352.67
+          "nasdaq": 349.4217,
+          "cnbc": 349.47
         }
       }
     },
     "MRVL": {
-      "price": 253.55,
-      "change": -8.38,
-      "changePct": -3.1993,
-      "prevClose": 261.93,
+      "price": 251.9,
+      "change": -10.035,
+      "changePct": -3.8311,
+      "prevClose": 261.935,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 253.55,
-        "cnbc": 252.1
+        "nasdaq": 251.9,
+        "cboe": 251.9,
+        "cnbc": 251.9
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 252.301,
-        "changePct": -0.4926,
-        "verified": false,
+        "price": 252.35,
+        "changePct": 0.1786,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 252.301,
-          "cnbc": 259.36
+          "nasdaq": 252.35,
+          "cnbc": 252.35
         }
       }
     },
     "MU": {
-      "price": 1055.54,
-      "change": -26.74,
-      "changePct": -2.4707,
+      "price": 1053.98,
+      "change": -28.3,
+      "changePct": -2.6149,
       "prevClose": 1082.28,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 1055.54,
-        "cnbc": 1054.76
+        "nasdaq": 1053.98,
+        "cboe": 1053.98,
+        "cnbc": 1053.98
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 1055.25,
-        "changePct": -0.0275,
-        "verified": false,
+        "price": 1055.3746,
+        "changePct": 0.1323,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 1055.25,
-          "cnbc": 1079.25
+          "nasdaq": 1055.3746,
+          "cnbc": 1055.37
         }
       }
     },
     "TSM": {
-      "price": 453.65,
-      "change": 3.04,
-      "changePct": 0.6746,
+      "price": 452.91,
+      "change": 2.3,
+      "changePct": 0.5104,
       "prevClose": 450.61,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 453.65,
-        "cnbc": 453.19
+        "nasdaq": 452.91,
+        "cboe": 452.88,
+        "cnbc": 452.88
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 453.46,
-        "changePct": -0.0419,
-        "verified": false,
+        "price": 452.4,
+        "changePct": -0.1126,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 453.46,
-          "cnbc": 448.61
+          "nasdaq": 452.4,
+          "cnbc": 452.21
         }
       }
     },
     "PLTR": {
-      "price": 188.705,
-      "change": -0.965,
-      "changePct": -0.5088,
+      "price": 187.48,
+      "change": -2.19,
+      "changePct": -1.1546,
       "prevClose": 189.67,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 188.705,
-        "cnbc": 188.17
+        "nasdaq": 187.48,
+        "cboe": 187.48,
+        "cnbc": 187.48
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 188.1403,
-        "changePct": -0.2993,
-        "verified": false,
+        "price": 187.93,
+        "changePct": 0.24,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 188.1403,
-          "cnbc": 186.37
+          "nasdaq": 187.93,
+          "cnbc": 187.93
         }
       }
     },
     "TSMU": {
-      "price": 77.2,
-      "change": 0.67,
-      "changePct": 0.8755,
+      "price": 77.0498,
+      "change": 0.5198,
+      "changePct": 0.6792,
       "prevClose": 76.53,
       "regularSessionDate": "2026-09-28",
       "verified": true,
       "sourceCount": 2,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 77.2,
-        "cnbc": 77.2
+        "cboe": 77.0498,
+        "cnbc": 77.05
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 77.2,
-        "changePct": 0,
+        "price": 74.88,
+        "changePct": -2.8161,
         "verified": false,
-        "sessionType": null,
+        "sessionType": "pre-market",
         "perSource": {
-          "nasdaq": 77.2,
           "cnbc": 74.88
         }
       }
     },
     "NVDA": {
-      "price": 230.14,
-      "change": 5.07,
-      "changePct": 2.2526,
+      "price": 228.86,
+      "change": 3.79,
+      "changePct": 1.6839,
       "prevClose": 225.07,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 230.14,
-        "cnbc": 230.01
+        "nasdaq": 228.86,
+        "cboe": 228.86,
+        "cnbc": 228.86
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 230.155,
-        "changePct": 0.0065,
+        "price": 229.48,
+        "changePct": 0.2709,
         "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 230.155,
-          "cnbc": 229.74
+          "nasdaq": 229.48,
+          "cnbc": 229.42
         }
       }
     },
     "AMD": {
-      "price": 604.675,
-      "change": -25.955,
-      "changePct": -4.1157,
+      "price": 607.87,
+      "change": -22.76,
+      "changePct": -3.6091,
       "prevClose": 630.63,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 604.675,
-        "cnbc": 604.62
+        "nasdaq": 607.87,
+        "cboe": 607.87,
+        "cnbc": 607.87
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 604.875,
-        "changePct": 0.0331,
-        "verified": false,
+        "price": 610.7875,
+        "changePct": 0.48,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 604.875,
-          "cnbc": 627.21
+          "nasdaq": 610.7875,
+          "cnbc": 610.3
         }
       }
     },
     "ARM": {
-      "price": 287.315,
-      "change": -23.005,
-      "changePct": -7.4133,
+      "price": 283.33,
+      "change": -26.99,
+      "changePct": -8.6975,
       "prevClose": 310.32,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 287.315,
-        "cnbc": 285.38
+        "nasdaq": 283.33,
+        "cboe": 283.33,
+        "cnbc": 283.33
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 285.7203,
-        "changePct": -0.555,
-        "verified": false,
+        "price": 285.99,
+        "changePct": 0.9388,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 285.7203,
-          "cnbc": 306
+          "nasdaq": 285.99,
+          "cnbc": 285.99
         }
       }
     },
     "AMAT": {
-      "price": 484.38,
-      "change": -0.62,
-      "changePct": -0.1278,
+      "price": 486.76,
+      "change": 1.76,
+      "changePct": 0.3629,
       "prevClose": 485,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 484.38,
-        "cnbc": 485.08
+        "nasdaq": 486.76,
+        "cboe": 486.76,
+        "cnbc": 486.76
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 485.085,
-        "changePct": 0.1455,
-        "verified": false,
+        "price": 484.99,
+        "changePct": -0.3636,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 485.085,
-          "cnbc": 481.52
+          "nasdaq": 484.99,
+          "cnbc": 485
         }
       }
     },
     "LRCX": {
-      "price": 314.865,
-      "change": -0.345,
-      "changePct": -0.1095,
+      "price": 314.47,
+      "change": -0.74,
+      "changePct": -0.2348,
       "prevClose": 315.21,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 314.865,
-        "cnbc": 315.41
+        "nasdaq": 314.47,
+        "cboe": 314.47,
+        "cnbc": 314.47
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 315.47,
-        "changePct": 0.1921,
-        "verified": false,
+        "price": 313.5,
+        "changePct": -0.3085,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 315.47,
-          "cnbc": 312.88
+          "nasdaq": 313.5,
+          "cnbc": 313.51
         }
       }
     },
     "KLAC": {
-      "price": 189.76,
-      "change": 1.84,
-      "changePct": 0.9791,
+      "price": 189.17,
+      "change": 1.25,
+      "changePct": 0.6652,
       "prevClose": 187.92,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 189.76,
-        "cnbc": 189.99
+        "nasdaq": 189.17,
+        "cboe": 189.17,
+        "cnbc": 189.17
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 190.11,
-        "changePct": 0.1844,
-        "verified": false,
+        "price": 189.4,
+        "changePct": 0.1216,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 190.11,
-          "cnbc": 186.34
+          "nasdaq": 189.4,
+          "cnbc": 189.22
         }
       }
     },
     "MSFT": {
-      "price": 511.355,
-      "change": -4.815,
-      "changePct": -0.9328,
+      "price": 509.22,
+      "change": -6.95,
+      "changePct": -1.3465,
       "prevClose": 516.17,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 511.355,
-        "cnbc": 511.19
+        "nasdaq": 509.22,
+        "cboe": 509.22,
+        "cnbc": 509.22
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 511.31,
-        "changePct": -0.0088,
-        "verified": false,
+        "price": 509.3,
+        "changePct": 0.0157,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 511.31,
-          "cnbc": 504.5
+          "nasdaq": 509.3,
+          "cnbc": 509.3
         }
       }
     },
     "META": {
-      "price": 721.52,
-      "change": -30.14,
-      "changePct": -4.0098,
+      "price": 715.62,
+      "change": -36.04,
+      "changePct": -4.7947,
       "prevClose": 751.66,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 721.52,
-        "cnbc": 721.72
+        "nasdaq": 715.62,
+        "cboe": 715.62,
+        "cnbc": 715.62
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 721.3,
-        "changePct": -0.0305,
-        "verified": false,
+        "price": 718.1007,
+        "changePct": 0.3467,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 721.3,
-          "cnbc": 746.75
+          "nasdaq": 718.1007,
+          "cnbc": 718.1
         }
       }
     },
     "TSLA": {
-      "price": 359.63,
-      "change": -12.48,
-      "changePct": -3.3538,
+      "price": 357.45,
+      "change": -14.66,
+      "changePct": -3.9397,
       "prevClose": 372.11,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 359.63,
-        "cnbc": 359.55
+        "nasdaq": 357.45,
+        "cboe": 357.45,
+        "cnbc": 357.45
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 359.64,
-        "changePct": 0.0028,
-        "verified": false,
+        "price": 358.115,
+        "changePct": 0.186,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 359.64,
-          "cnbc": 368.31
+          "nasdaq": 358.115,
+          "cnbc": 358.1
         }
       }
     },
     "ORCL": {
-      "price": 133.43,
-      "change": -3.67,
-      "changePct": -2.6769,
+      "price": 132.61,
+      "change": -4.49,
+      "changePct": -3.275,
       "prevClose": 137.1,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 133.43,
-        "cnbc": 133.63
+        "nasdaq": 132.61,
+        "cboe": 132.6,
+        "cnbc": 132.6
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 133.67,
-        "changePct": 0.1799,
-        "verified": false,
+        "price": 132.38,
+        "changePct": -0.1734,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 133.67,
-          "cnbc": 132.84
+          "nasdaq": 132.38,
+          "cnbc": 132.4
         }
       }
     },
     "SNOW": {
-      "price": 330.3201,
-      "change": -5.6199,
-      "changePct": -1.6729,
+      "price": 328.05,
+      "change": -7.89,
+      "changePct": -2.3486,
       "prevClose": 335.94,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 330.3201,
-        "cnbc": 330.5
+        "nasdaq": 328.05,
+        "cboe": 328.12,
+        "cnbc": 328.12
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 330.425,
-        "changePct": 0.0318,
-        "verified": false,
+        "price": 329.23,
+        "changePct": 0.3597,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 330.425,
-          "cnbc": 321
+          "nasdaq": 329.23,
+          "cnbc": 328.72
         }
       }
     },
     "CRWD": {
-      "price": 258.8725,
-      "change": 6.7425,
-      "changePct": 2.6742,
+      "price": 259.25,
+      "change": 7.12,
+      "changePct": 2.8239,
       "prevClose": 252.13,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
-      "assetClass": "equity",
-      "perSource": {
-        "cboe": 258.8725,
-        "cnbc": 259.4
-      },
-      "lastUpdated": "2026-09-28T18:23:38Z",
-      "extended": {
-        "price": 259.48,
-        "changePct": 0.2347,
-        "verified": false,
-        "sessionType": null,
-        "perSource": {
-          "nasdaq": 259.48,
-          "cnbc": 247.87
-        }
-      }
-    },
-    "INTC": {
-      "price": 115.325,
-      "change": -7.675,
-      "changePct": -6.2398,
-      "prevClose": 123,
-      "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 115.325,
-        "cnbc": 115.13
+        "nasdaq": 259.25,
+        "cboe": 259.25,
+        "cnbc": 259.25
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 115.25,
-        "changePct": -0.065,
-        "verified": false,
+        "price": 259.4659,
+        "changePct": 0.0833,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 115.25,
-          "cnbc": 120.54
+          "nasdaq": 259.4659,
+          "cnbc": 259.27
+        }
+      }
+    },
+    "INTC": {
+      "price": 116.03,
+      "change": -6.97,
+      "changePct": -5.6667,
+      "prevClose": 123,
+      "regularSessionDate": "2026-09-28",
+      "verified": true,
+      "sourceCount": 3,
+      "assetClass": "equity",
+      "perSource": {
+        "nasdaq": 116.03,
+        "cboe": 116.03,
+        "cnbc": 116.03
+      },
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
+      "extended": {
+        "price": 116.07,
+        "changePct": 0.0345,
+        "verified": true,
+        "sessionType": null,
+        "perSource": {
+          "nasdaq": 116.07,
+          "cnbc": 116.06
         }
       }
     },
     "SPX": {
-      "price": 7701.6602,
-      "change": -41.7498,
-      "changePct": -0.5392,
+      "price": 7683.6899,
+      "change": -59.7201,
+      "changePct": -0.7712,
       "prevClose": 7743.41,
       "regularSessionDate": "2026-09-28",
       "verified": true,
       "sourceCount": 2,
       "assetClass": "index",
       "perSource": {
-        "cboe": 7701.6602,
-        "cnbc": 7698.67
+        "cboe": 7683.6899,
+        "cnbc": 7683.69
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
         "cboe",
         "cnbc"
       ]
     },
     "NDX": {
-      "price": 30345.1777,
-      "change": -262.9223,
-      "changePct": -0.859,
+      "price": 30276.8105,
+      "change": -331.2895,
+      "changePct": -1.0824,
       "prevClose": 30608.1,
       "regularSessionDate": "2026-09-28",
       "verified": true,
       "sourceCount": 2,
       "assetClass": "index",
       "perSource": {
-        "cboe": 30345.1777,
-        "cnbc": 30337.613
+        "cboe": 30276.8105,
+        "cnbc": 30276.81
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
         "cboe",
         "cnbc"
       ]
     },
     "SOXL": {
-      "price": 142.345,
-      "change": -9.105,
-      "changePct": -6.0119,
+      "price": 142.3195,
+      "change": -9.1305,
+      "changePct": -6.0287,
       "prevClose": 151.45,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 142.345,
-        "cnbc": 141.76
+        "nasdaq": 142.3195,
+        "cboe": 142.29,
+        "cnbc": 142.29
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 142.05,
-        "changePct": -0.2072,
-        "verified": false,
+        "price": 142.7,
+        "changePct": 0.2674,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 142.05,
-          "cnbc": 148.23
+          "nasdaq": 142.7,
+          "cnbc": 142.69
         }
       }
     },
     "VIX": {
-      "price": 15.89,
-      "change": 1.02,
-      "changePct": 6.8594,
+      "price": 16.07,
+      "change": 1.2,
+      "changePct": 8.0699,
       "prevClose": 14.87,
       "regularSessionDate": "2026-09-28",
       "verified": true,
       "sourceCount": 2,
       "assetClass": "index",
       "perSource": {
-        "cboe": 15.89,
-        "cnbc": 15.89
+        "cboe": 16.07,
+        "cnbc": 16.07
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
         "cboe",
         "cnbc"
       ]
     },
     "US10Y": {
-      "price": 5.238,
-      "change": 0.54,
-      "changePct": 11.4943,
-      "prevClose": 4.698,
+      "price": 5.24,
+      "change": 0,
+      "changePct": 0,
+      "prevClose": 5.24,
       "regularSessionDate": "2026-09-28",
       "verified": true,
       "sourceCount": 2,
       "assetClass": "index",
       "perSource": {
-        "cboe": 5.238,
+        "cboe": 5.24,
         "cnbc": 5.236
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
         "cboe",
         "cnbc"
       ]
     },
     "DXY": {
-      "price": 101.14,
-      "change": 0.169,
-      "changePct": 0.1674,
-      "prevClose": 100.971,
+      "price": 101.245,
+      "change": 0.048,
+      "changePct": 0.0474,
+      "prevClose": 101.197,
       "regularSessionDate": "2026-09-28",
       "verified": false,
       "sourceCount": 1,
       "assetClass": "index",
       "perSource": {
-        "cnbc": 101.14
+        "cnbc": 101.245
       },
-      "lastUpdated": "2026-09-28T18:23:38Z"
+      "lastUpdated": "2026-09-29T00:51:38Z"
     },
     "PANW": {
-      "price": 390.67,
-      "change": 15.93,
-      "changePct": 4.2509,
+      "price": 392.09,
+      "change": 17.35,
+      "changePct": 4.6299,
       "prevClose": 374.74,
       "regularSessionDate": "2026-09-28",
       "verified": true,
-      "sourceCount": 2,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 390.67,
-        "cnbc": 390.99
+        "nasdaq": 392.09,
+        "cboe": 392.09,
+        "cnbc": 392.09
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
       "verifiedBy": [
+        "nasdaq",
         "cboe",
         "cnbc"
       ],
       "extended": {
-        "price": 390.98,
-        "changePct": 0.0794,
+        "price": 392.99,
+        "changePct": 0.2295,
         "verified": false,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 390.98,
-          "cnbc": 368.27
+          "nasdaq": 392.99,
+          "cnbc": 392.2
         }
       }
     },
     "SNDK": {
-      "price": 1716.6227,
-      "change": -61.1773,
-      "changePct": -3.4412,
+      "price": 1712.89,
+      "change": -64.91,
+      "changePct": -3.6511,
       "prevClose": 1777.8,
       "regularSessionDate": "2026-09-28",
-      "verified": false,
-      "sourceCount": 2,
+      "verified": true,
+      "sourceCount": 3,
       "assetClass": "equity",
       "perSource": {
-        "cboe": 1716.6227,
-        "cnbc": 1712.09
+        "nasdaq": 1712.89,
+        "cboe": 1712.89,
+        "cnbc": 1712.89
       },
-      "lastUpdated": "2026-09-28T18:23:38Z",
+      "lastUpdated": "2026-09-29T00:51:38Z",
+      "verifiedBy": [
+        "nasdaq",
+        "cboe",
+        "cnbc"
+      ],
       "extended": {
-        "price": 1713.53,
-        "changePct": -0.1802,
-        "verified": false,
+        "price": 1711,
+        "changePct": -0.1103,
+        "verified": true,
         "sessionType": null,
         "perSource": {
-          "nasdaq": 1713.53,
-          "cnbc": 1736.28
+          "nasdaq": 1711,
+          "cnbc": 1711.6
         }
       }
     }
   },
   "failures": [
+    {
+      "symbol": "TSMU",
+      "source": "nasdaq",
+      "reason": "nasdaq:no_primaryData@index"
+    },
     {
       "symbol": "NDX",
       "source": "nasdaq",
